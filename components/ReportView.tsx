@@ -11,6 +11,8 @@ import {
 import { Language, User, Results, Persona, AxisType, Trait } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS, GOOGLE_SCRIPT_URL, PERSONA_DATA, APP_ID } from '../constants';
 import { getAIInsights } from '../geminiService';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '../firebaseConfig';
 
 interface ReportViewProps {
   user: User;
@@ -103,6 +105,16 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   }, [user, avgFormal, avgDominant, currentPersona, aiInsight, aiFeedback, clicks, answers, language, refinementText]);
 
   const trackClick = (type: 'website' | 'schedule' | string) => {
+    // Log to Google Analytics
+    logEvent(analytics, 'link_click', {
+      link_type: type,
+      link_url: type === 'website' ? SOCIAL_LINKS.website
+        : type === 'schedule' ? 'https://app.magicalhq.com/dudi-adhdotech/_Mentoring_with_Dudido'
+          : (SOCIAL_LINKS as any)[type] || type,
+      persona: currentPersona.key,
+      user_name: user.name
+    });
+
     setClicks(prev => {
       let newState;
       if (type === 'website') newState = { ...prev, website: true };

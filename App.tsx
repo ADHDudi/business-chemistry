@@ -14,6 +14,8 @@ import SessionLobby from './components/SessionLobby';
 import ComparisonView from './components/ComparisonView';
 import LiveProgressBar from './components/LiveProgressBar';
 import { useSession } from './hooks/useSession';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from './firebaseConfig';
 
 
 const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => void }) => {
@@ -24,6 +26,11 @@ const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => vo
   const textSize = isLg ? "text-6xl" : "text-3xl";
 
   const handleLogoClick = (e: React.MouseEvent) => {
+    // Log to Google Analytics
+    logEvent(analytics, 'link_click', {
+      link_type: 'logo',
+      link_url: 'https://linktr.ee/ADHDudi'
+    });
     // Execute original callback if present (e.g. for debug mode)
     if (onClick) onClick();
     // Open external link

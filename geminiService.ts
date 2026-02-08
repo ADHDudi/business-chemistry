@@ -5,8 +5,8 @@ import { Persona, Results, Language, CompatibilityAnalysis } from "./types";
 const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getAIInsights = async (
-  persona: Persona, 
-  results: Results, 
+  persona: Persona,
+  results: Results,
   lang: Language,
   refinementComment?: string
 ): Promise<string> => {
@@ -47,13 +47,13 @@ export const getAIInsights = async (
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: finalPrompt,
     });
     return response.text || "No insights available.";
   } catch (error) {
-    console.error("AI Insights Error:", error);
-    return lang === 'he' ? "שגיאה קלה בהפקת תובנות ה-AI." : "A minor error occurred generating AI insights.";
+    console.error("AI Insights Error Details:", error);
+    return lang === 'he' ? "שגיאה זמנית בהפקת תובנות ה-AI. אנא נסו שוב מאוחר יותר." : "Temporary error generating AI insights. Please try again later.";
   }
 };
 
@@ -62,7 +62,7 @@ export const getCompatibilityAnalysis = async (
   userB: { name: string; persona: Persona; results: Results },
   lang: Language
 ): Promise<CompatibilityAnalysis> => {
-  
+
   const prompt = `
     Role: You are an expert Organizational Psychologist specializing in startup co-founder and team dynamics.
     Objective: Analyze the compatibility of two people based on their Business Chemistry profiles.
@@ -92,7 +92,7 @@ export const getCompatibilityAnalysis = async (
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
