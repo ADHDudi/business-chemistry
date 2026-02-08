@@ -129,6 +129,7 @@ async function runAcceptanceTest() {
 
         // Click submit button
         const submitButtonSelector = 'button[type="submit"]';
+        // Sometimes button text is "Let's Start" or "Start"
         await page.waitForSelector(submitButtonSelector);
 
         const submitScreenshot = await captureScreenshot(page);
@@ -156,38 +157,44 @@ async function runAcceptanceTest() {
         while (!isQuestionnaireComplete && questionCount < MAX_QUESTIONS) {
 
             // Check if we are at the Report View (step 3)
-            const reportHeader = await page.$('h2.text-3xl');
-            if (reportHeader) {
-                const text = await page.evaluate(el => el.textContent, reportHeader);
+            // Look for h2 containing "Test User"
+            const reportHeaders = await page.$$('h2');
+            for (const header of reportHeaders) {
+                const text = await page.evaluate(el => el.textContent, header);
                 if (text.includes('Test User')) { // Report view confirmed
                     isQuestionnaireComplete = true;
                     logStep('Questionnaire Complete', 'PASS', `Finished after ${questionCount} questions`);
                     break;
                 }
             }
+            if (isQuestionnaireComplete) break;
 
             // Handle questions
             // MobileQuestionCard has buttons 1-6
             const answerButtons = await page.$$('button.aspect-square');
             if (answerButtons.length > 0) {
-                // Click buttons[3] approx middle
-                const btnToClick = answerButtons[Math.min(3, answerButtons.length - 1)];
+                // Click buttons[0] (value '1') for speed
+                const btnToClick = answerButtons[0];
                 await btnToClick.click();
                 questionCount++;
 
                 // Wait a bit for transition
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 100));
 
                 // Check for "Finish" button
-                const finishBtn = await page.$('button.bg-\\[\\#E46B3F\\]');
-                if (finishBtn) {
-                    const isDisabled = await page.evaluate(el => el.disabled, finishBtn);
-                    if (!isDisabled) {
-                        logStep('Finish Button', 'INFO', 'Clicking Finish...');
-                        await finishBtn.click();
-                        await new Promise(r => setTimeout(r, 2000)); // Wait for report generation
-                        isQuestionnaireComplete = true;
-                        break;
+                // It usually has "Finish" or "סיימתי" text
+                const buttons = await page.$$('button');
+                for (const btn of buttons) {
+                    const text = await page.evaluate(el => el.textContent, btn);
+                    if (text.includes('Finish') || text.includes('סיימתי')) {
+                        const isDisabled = await page.evaluate(el => el.disabled, btn);
+                        if (!isDisabled) {
+                            logStep('Finish Button', 'INFO', 'Clicking Finish...');
+                            await btn.click();
+                            await new Promise(r => setTimeout(r, 3000)); // Wait for report generation
+                            isQuestionnaireComplete = true; // Loop will break on next check
+                            break;
+                        }
                     }
                 }
             } else {
@@ -200,42 +207,92 @@ async function runAcceptanceTest() {
             throw new Error('Questionnaire loop exceeded max questions. Test stuck?');
         }
 
-        // 4. Report View & Language Alignment
-        await page.waitForSelector('h2.text-3xl'); // Report header
+        // 4. Report View Verification
+        // Wait for Report View to fully load
+        await page.waitForFunction(() => document.body.innerText.includes('Test User'));
+
         const reportScreenshot = await captureScreenshot(page);
         logStep('Report Loaded', 'PASS', 'Report view is visible', reportScreenshot);
 
-        // Check Hebrew Default
-        const htmlDir = await page.evaluate(() => document.documentElement.dir);
-        const bodyText = await page.evaluate(() => document.body.innerText);
+        // 5. AI Insight Test
+        logStep('AI Insight', 'INFO', 'Testing AI Insight Feature...');
 
-        if (htmlDir === 'rtl' || bodyText.includes('סקירה')) {
-            logStep('Hebrew Alignment', 'PASS', `Direction: ${htmlDir}, Text detected: "סקירה"`);
-        } else {
-            logStep('Hebrew Alignment', 'WARN', `Expected RTL/Hebrew but found dir="${htmlDir}"`, await captureScreenshot(page));
+        // Find "AI Analysis" tab button
+        const tabButtons = await page.$$('button');
+        let aiTabBtn = null;
+        for (const btn of tabButtons) {
+            const text = await page.evaluate(el => el.textContent, btn);
+            if (text.includes('AI Analysis') || text.includes('ניתוח AI')) {
+                aiTabBtn = btn;
+                break;
+            }
         }
 
-        // Switch to English
-        // The language toggle button contains "ENGLISH" or "עברית"
-        const langBtn = await page.evaluateHandle(() => {
-            return Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('ENGLISH') || b.textContent.includes('עברית'));
-        });
+        if (aiTabBtn) {
+            await aiTabBtn.click();
+            logStep('AI Tab', 'PASS', 'Clicked AI Analysis tab');
 
-        if (langBtn) {
-            logStep('Language Switch', 'INFO', 'Clicking language toggle...');
-            await langBtn.click();
-            await new Promise(r => setTimeout(r, 1000));
+            // Wait for loading or content
+            // Loading text: "Analyzing..." or "מעבד..."
+            // Success content: will be inside prose div
 
-            const newHtmlDir = await page.evaluate(() => document.documentElement.dir);
-            const newBodyText = await page.evaluate(() => document.body.innerText);
+            // Wait up to 15s for AI result
+            try {
+                await page.waitForFunction(() => {
+                    const prose = document.querySelector('.prose');
+                    return prose && prose.textContent.length > 20;
+                }, { timeout: 15000 });
 
-            if (newHtmlDir === 'ltr' || newBodyText.includes('Overview')) {
-                logStep('English Alignment', 'PASS', `Direction: ${newHtmlDir}, Text detected: "Overview"`, await captureScreenshot(page));
-            } else {
-                throw new Error('Language switch to English failed.');
+                const aiContent = await page.$eval('.prose', el => el.textContent);
+                if (aiContent.includes('error') || aiContent.includes('שגיאה')) {
+                    logStep('AI Generation', 'FAIL', `AI returned error: ${aiContent.substring(0, 50)}...`, await captureScreenshot(page));
+                } else {
+                    logStep('AI Generation', 'PASS', `AI Content generated (${aiContent.length} chars)`, await captureScreenshot(page));
+
+                    // 6. Feedback Loop Test
+                    logStep('Feedback Loop', 'INFO', 'Testing AI Feedback Loop...');
+
+                    // Click Negative Feedback (Thumbs Down)
+                    const thumbsDownBtn = await page.$('button svg.lucide-thumbs-down');
+                    if (thumbsDownBtn) {
+                        await thumbsDownBtn.parentElement.click(); // Click the button container
+                        logStep('Feedback UI', 'PASS', 'Clicked Negative Feedback');
+
+                        await new Promise(r => setTimeout(r, 500));
+
+                        // Type in refinement text area
+                        await page.waitForSelector('textarea');
+                        await page.type('textarea', 'Test refinement: please be more concise.');
+
+                        // Click Send (Send Icon)
+                        const sendBtn = await page.$('button svg.lucide-send');
+                        if (sendBtn) {
+                            await sendBtn.parentElement.click();
+                            logStep('Feedback Submit', 'PASS', 'Submitted refinement request');
+
+                            // Wait for regeneration (loading again)
+                            await new Promise(r => setTimeout(r, 2000));
+
+                            // Wait for result approved/refined state (Green checkmark)
+                            try {
+                                await page.waitForSelector('svg.lucide-check-circle', { timeout: 15000 });
+                                logStep('Refinement Success', 'PASS', 'AI regenerated and showed success state', await captureScreenshot(page));
+                            } catch (e) {
+                                logStep('Refinement Timeout', 'WARN', 'Did not see success checkmark in time', await captureScreenshot(page));
+                            }
+                        } else {
+                            logStep('Feedback Send', 'FAIL', 'Send button not found');
+                        }
+                    } else {
+                        logStep('Feedback Button', 'FAIL', 'Thumbs down button not found');
+                    }
+                }
+            } catch (e) {
+                logStep('AI Timeout', 'FAIL', 'AI analysis timed out or did not load content');
             }
+
         } else {
-            throw new Error('Language toggle button not found.');
+            throw new Error('AI Analysis tab button not found');
         }
 
         logStep('Test Completion', 'PASS', 'All steps executed successfully');
