@@ -47,7 +47,7 @@ export const getAIInsights = async (
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: finalPrompt,
     });
     return response.text || "No insights available.";
@@ -92,7 +92,7 @@ export const getCompatibilityAnalysis = async (
 
   try {
     const response = await genAI.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
