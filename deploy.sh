@@ -3,48 +3,51 @@ set -e
 
 # Configuration
 PROJECT_NAME="business-chemistry"
-TEMP_BUILD_DIR="/private/tmp/${PROJECT_NAME}-build"
+TEMP_DIR="/tmp/${PROJECT_NAME}-deploy"
 PROJECT_DIR="$(pwd)"
-LOCAL_CACHE="${PROJECT_DIR}/local_npm_cache"
 
-echo "🚀 Starting automated deployment workaround..."
+echo "🚀 Starting deployment workaround..."
 
 # 1. Prepare temporary directory
-echo "📁 Preparing temporary build directory: ${TEMP_BUILD_DIR}"
-rm -rf "${TEMP_BUILD_DIR}"
-mkdir -p "${TEMP_BUILD_DIR}"
+echo "📁 Preparing temporary directory: ${TEMP_DIR}"
+rm -rf "${TEMP_DIR}"
+mkdir -p "${TEMP_DIR}"
 
-# 2. Sync project files (excluding locked/heavy dirs)
+# Set TMPDIR to a local directory to avoid system temp permission issues
+export TMPDIR="${TEMP_DIR}/tmp"
+mkdir -p "$TMPDIR"
+
+# 2. Sync project files
 echo "📦 Syncing project files..."
-# Ignore status 23 (some files could not be transferred)
-rsync -av --progress . "${TEMP_BUILD_DIR}" \
+# Exclude node_modules, dist, and other non-essential/locked files
+rsync -av \
     --exclude "node_modules" \
+    --exclude "functions/node_modules" \
     --exclude ".git" \
     --exclude "dist" \
     --exclude ".firebase" \
-    --exclude ".npm-cache" \
-    --exclude "local_npm_cache" \
-    --exclude ".DS_Store" || [ $? -eq 23 ]
+    --exclude ".DS_Store" \
+    . "${TEMP_DIR}" || [ $? -eq 23 ]
 
-# 2.5 Inject API Key (Workaround for permission locked .env.local)
-echo "🔑 Injecting API Key..."
-echo "VITE_GEMINI_API_KEY=AIzaSyCEGHZ3CMPXSx6nwwwLBaXEtkOl1MLXECI" > "${TEMP_BUILD_DIR}/.env.local"
+# 3. Install dependencies and build frontend
+echo "🛠️ Installing frontend dependencies and building..."
+cd "${TEMP_DIR}"
+# We use a local cache within the temp to avoid global cache permission issues if they persist
+npm install --cache "${TEMP_DIR}/.npm-cache"
+npm run build
 
-# 3. Install dependencies and build in temp dir
-echo "🛠️ Installing dependencies and building in temporary directory..."
-cd "${TEMP_BUILD_DIR}"
-npm install --cache "${LOCAL_CACHE}" --prefer-offline
-./node_modules/.bin/vite build
+# 4. Install backend dependencies
+echo "🛠️ Installing backend dependencies..."
+cd functions
+# Copy the .env file if it wasn't picked up (though rsync should have caught it)
+if [ -f "${PROJECT_DIR}/functions/.env" ] && [ ! -f .env ]; then
+    cp "${PROJECT_DIR}/functions/.env" .
+fi
+npm install --cache "${TEMP_DIR}/.npm-cache-functions"
 
-# 4. Deploy to Firebase
+# 5. Deploy
 echo "🔥 Deploying to Firebase..."
+cd "${TEMP_DIR}"
 firebase deploy
 
-# 5. Git synchronization in original project dir
-echo "📂 Synchronizing Git in original directory..."
-cd "${PROJECT_DIR}"
-git add .
-git commit -m "Auto-deploy: $(date)"
-git push
-
-echo "✅ Deployment complete! View at https://business-chemistry.web.app/"
+echo "✅ Deployment complete!"
