@@ -355,7 +355,24 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       )}
 
       {activeTab === 'ai' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4">
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+          {/* Card 1: The Vibe Check (Profile) */}
+          {aiInsight && (
+            <div className={`bg-white rounded-[2.5rem] shadow-xl border-2 ${colors.border} overflow-hidden`}>
+              <div className={`p-4 bg-gradient-to-r ${colors.from} ${colors.to} text-white flex items-center gap-2`}>
+                <Zap size={18} />
+                <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
+              </div>
+              <div className="p-6 text-center space-y-4">
+                <h2 className={`text-2xl font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</h2>
+                <p className="text-slate-600 font-medium leading-relaxed">{language === 'he' ? 'המוח שלך הוא מנוע חדשנות.' : 'Your brain is an innovation engine.'}</p>
+                <div className="inline-block px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-400">
+                  VS Kryptonite: {aiInsight.user_profile.kryptonite}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Target Profile Selector */}
           <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
@@ -392,21 +409,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             </div>
           ) : aiInsight ? (
             <div className="space-y-6">
-              {/* Card 1: The Vibe Check (Profile) */}
-              <div className={`bg-white rounded-[2.5rem] shadow-xl border-2 ${colors.border} overflow-hidden`}>
-                <div className={`p-4 bg-gradient-to-r ${colors.from} ${colors.to} text-white flex items-center gap-2`}>
-                  <Zap size={18} />
-                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
-                </div>
-                <div className="p-6 text-center space-y-4">
-                  <h2 className={`text-2xl font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</h2>
-                  <p className="text-slate-600 font-medium leading-relaxed">{language === 'he' ? 'המוח שלך הוא מנוע חדשנות.' : 'Your brain is an innovation engine.'}</p>
-                  <div className="inline-block px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-400">
-                    VS Kryptonite: {aiInsight.user_profile.kryptonite}
-                  </div>
-                </div>
-              </div>
-
               {/* Card 2: The Game Plan (Interaction) */}
               <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">

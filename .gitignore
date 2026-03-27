@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Environment / secrets — never commit these
+.env
+.env.*
+functions/.env
+functions/*.env
+
+# Test/scratch files
+test_module.js
+test_genai.ts
+simulate_session.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

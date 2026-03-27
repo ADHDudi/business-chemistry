@@ -1,53 +1,59 @@
 #!/bin/bash
+# ==============================================================================
+# Business Chemistry — Deploy Script
+# Commits to GitHub and deploys to Firebase Hosting + Functions.
+#
+# Prerequisites:
+#   - firebase CLI logged in  (run: firebase login)
+#   - git remote 'origin' configured
+#   - functions/.env file present locally with GEMINI_API_KEY (never committed)
+# ==============================================================================
 set -e
 
-# Configuration
-PROJECT_NAME="business-chemistry"
-TEMP_DIR="/tmp/${PROJECT_NAME}-deploy"
-PROJECT_DIR="$(pwd)"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$PROJECT_DIR"
 
-echo "🚀 Starting deployment workaround..."
+echo "🚀 Starting deployment for Business Chemistry..."
 
-# 1. Prepare temporary directory
-echo "📁 Preparing temporary directory: ${TEMP_DIR}"
-rm -rf "${TEMP_DIR}"
-mkdir -p "${TEMP_DIR}"
+# ── 1. Git: commit & push ──────────────────────────────────────────────────────
+echo ""
+echo "📦 Syncing with GitHub..."
 
-# Set TMPDIR to a local directory to avoid system temp permission issues
-export TMPDIR="${TEMP_DIR}/tmp"
-mkdir -p "$TMPDIR"
+git add .
 
-# 2. Sync project files
-echo "📦 Syncing project files..."
-# Exclude node_modules, dist, and other non-essential/locked files
-rsync -av \
-    --exclude "node_modules" \
-    --exclude "functions/node_modules" \
-    --exclude ".git" \
-    --exclude "dist" \
-    --exclude ".firebase" \
-    --exclude ".DS_Store" \
-    . "${TEMP_DIR}" || [ $? -eq 23 ]
+if [ -n "$(git status --porcelain)" ]; then
+  git commit -m "deploy: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "✅ Changes committed."
+else
+  echo "ℹ️  Nothing new to commit."
+fi
 
-# 3. Install dependencies and build frontend
-echo "🛠️ Installing frontend dependencies and building..."
-cd "${TEMP_DIR}"
-# We use a local cache within the temp to avoid global cache permission issues if they persist
-npm install --cache "${TEMP_DIR}/.npm-cache"
+BRANCH=$(git branch --show-current)
+git push -u origin "$BRANCH"
+echo "✅ Pushed to GitHub ($BRANCH)."
+
+# ── 2. Install frontend dependencies ──────────────────────────────────────────
+echo ""
+echo "📥 Installing frontend dependencies..."
+npm install
+
+# ── 3. Build frontend ──────────────────────────────────────────────────────────
+echo ""
+echo "🛠️  Building frontend..."
 npm run build
 
-# 4. Install backend dependencies
-echo "🛠️ Installing backend dependencies..."
+# ── 4. Install functions dependencies ─────────────────────────────────────────
+echo ""
+echo "📥 Installing Cloud Functions dependencies..."
 cd functions
-# Copy the .env file if it wasn't picked up (though rsync should have caught it)
-if [ -f "${PROJECT_DIR}/functions/.env" ] && [ ! -f .env ]; then
-    cp "${PROJECT_DIR}/functions/.env" .
-fi
-npm install --cache "${TEMP_DIR}/.npm-cache-functions"
+npm install
+cd "$PROJECT_DIR"
 
-# 5. Deploy
+# ── 5. Deploy to Firebase ──────────────────────────────────────────────────────
+echo ""
 echo "🔥 Deploying to Firebase..."
-cd "${TEMP_DIR}"
 firebase deploy
 
+echo ""
 echo "✅ Deployment complete!"
+echo "🌍 App is live at: https://business-chemistry.web.app/"
