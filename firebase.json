@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "business-chemistry--business-chemistry",
     "public": "dist",
     "ignore": [
       "firebase.json",
