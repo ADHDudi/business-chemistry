@@ -5,7 +5,7 @@ const { GoogleGenAI } = require("@google/genai");
 const GEMINI_API_KEY = defineString("GEMINI_API_KEY");
 
 exports.generateAIInsights = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+    const genAI = new GoogleGenAI(GEMINI_API_KEY.value());
     const { persona, results, lang, refinementComment } = request.data;
 
     if (!persona || !results || !lang) {
@@ -62,7 +62,7 @@ exports.generateAIInsights = onCall(async (request) => {
 });
 
 exports.generateCompatibilityAnalysis = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+    const genAI = new GoogleGenAI(GEMINI_API_KEY.value());
     const { userA, userB, lang } = request.data;
 
     if (!userA || !userB || !lang) {
