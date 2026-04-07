@@ -14,8 +14,9 @@ import SessionLobby from './components/SessionLobby';
 import ComparisonView from './components/ComparisonView';
 import LiveProgressBar from './components/LiveProgressBar';
 import { useSession } from './hooks/useSession';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider, analytics } from './firebaseConfig';
 import { logEvent } from 'firebase/analytics';
-import { analytics } from './firebaseConfig';
 
 
 const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => void }) => {
@@ -134,6 +135,46 @@ export default function App() {
     startSession, joinExistingSession, submitAnswers
   } = useSession();
   const [isSessionMode, setIsSessionMode] = useState(false);
+  const [authUser, setAuthUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setAuthUser(fbUser);
+      if (fbUser) {
+        setUser({
+          name: fbUser.displayName || '',
+          email: fbUser.email || ''
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        setUser({
+          name: result.user.displayName || '',
+          email: result.user.email || ''
+        });
+        setStep(2);
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser({ name: '', email: '' });
+      setStep(1);
+      setAnswers({});
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   useEffect(() => {
     if (sessionId && myRole && sessionData) {
@@ -286,6 +327,16 @@ export default function App() {
           {language === 'he' ? 'ENGLISH' : 'עברית'}
         </button>
 
+        {authUser && (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-xs font-black px-3 py-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors ml-2"
+          >
+            <X size={14} />
+            {t.form.logout_btn}
+          </button>
+        )}
+
         {isSessionMode && sessionId ? (
           <div className="flex items-center gap-2">
             <div
@@ -406,6 +457,20 @@ export default function App() {
                   <button type="submit" className="relative z-10 w-full py-5 bg-gradient-to-r from-[#324FA2] to-[#4a6dc9] text-white rounded-2xl font-black text-xl flex items-center justify-center gap-2 shadow-xl shadow-blue-900/20 active:scale-95 transition-all hover:shadow-2xl hover:brightness-110">
                     {t.form.submit_btn}
                     {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
+                  </button>
+
+                  <div className="relative flex items-center justify-center py-2 z-10">
+                    <div className="border-t border-slate-100 w-full"></div>
+                    <span className="bg-white px-4 text-[10px] font-black text-slate-300 uppercase tracking-widest relative z-10">{t.form.or}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="relative z-10 w-full py-5 bg-white border-2 border-slate-100 text-slate-700 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-lg shadow-slate-100/50 active:scale-95 transition-all hover:bg-slate-50 hover:border-slate-200"
+                  >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+                    {t.form.google_btn}
                   </button>
                 </form>
 

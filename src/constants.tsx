@@ -61,7 +61,10 @@ export const TEXT = {
       name_placeholder: "איך לקרוא לך?",
       email_label: "אימייל לקבלת הדוח המלא",
       email_placeholder: "your@email.com",
-      submit_btn: "בואו נתחיל"
+      submit_btn: "בואו נתחיל",
+      google_btn: "כניסה עם Google",
+      or: "או",
+      logout_btn: "התנתק"
     },
     demo: {
       title: "מצב הדגמה (למפתחים/בודקים)",
@@ -147,7 +150,10 @@ export const TEXT = {
       name_placeholder: "What should we call you?",
       email_label: "Email for the Full Report",
       email_placeholder: "your@email.com",
-      submit_btn: "Let's Start"
+      submit_btn: "Let's Start",
+      google_btn: "Sign in with Google",
+      or: "OR",
+      logout_btn: "Logout"
     },
     demo: {
       title: "Demo Mode (Dev/Test)",
