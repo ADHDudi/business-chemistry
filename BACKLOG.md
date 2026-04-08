@@ -4,6 +4,9 @@ This backlog tracks pending feature improvements, risk mitigations, and systemic
 
 ## 🚨 High Priority (Legal, Compliance, & Safety)
 
+- [ ] **Email/Password Auth Bypass**
+  - **Issue:** The local login form currently accepts any email and proceeds to log the user in, even if they have never signed up via Firebase Email/Password Auth in the past.
+  - **Task:** Implement actual Firebase `signInWithEmailAndPassword` & `createUserWithEmailAndPassword` validation instead of bypassing local verification.
 - [ ] **Data Privacy & GDPR/CCPA Compliance**
   - **Issue:** No privacy section or data handling policy exists yet for sensitive behavioral data and emails.
   - **Task:** Create a Privacy Policy. Implement data scrubbing for PII and add a "Delete My Data" feature. Ensure session data is encrypted and not permanently stored unless explicitly agreed to.

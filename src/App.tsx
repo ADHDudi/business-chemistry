@@ -123,6 +123,7 @@ export default function App() {
   const [step, setStep] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [user, setUser] = useState<UserType>({ name: '', email: '' });
+  const [password, setPassword] = useState('');
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -203,7 +204,10 @@ export default function App() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (user.name && user.email) setStep(2);
+    if (user.email) {
+      if (!user.name) setUser({ ...user, name: 'Guest' });
+      setStep(2);
+    }
   };
 
   const handleDemoClick = (personaKey: string) => {
@@ -427,51 +431,50 @@ export default function App() {
                   />
                 </div>
 
-                <form onSubmit={handleRegister} className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border-2 border-white space-y-6 relative overflow-hidden">
-                  {/* Decorative background blur similar to ReportView */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-50 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
-
-                  <div className="space-y-2 relative z-10">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">{t.form.name_label}</label>
-                    <div className="relative group">
-                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#324FA2] transition-colors" size={20} />
-                      <input
-                        type="text" required value={user.name} onChange={e => setUser({ ...user, name: e.target.value })}
-                        placeholder={t.form.name_placeholder}
-                        className="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#324FA2] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800 placeholder:text-slate-300"
-                      />
-                    </div>
+                <form onSubmit={handleRegister} className="bg-white px-10 py-12 rounded-[2rem] shadow-xl border border-slate-100 space-y-6 relative overflow-hidden max-w-sm mx-auto">
+                  <div className="space-y-6 relative z-10 w-full mb-2">
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      className="w-full py-3 bg-white border border-slate-200 text-[#1e293b] rounded-xl font-bold font-sans text-[15px] flex items-center justify-center gap-3 transition-colors hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-[18px] h-[18px]" />
+                      Sign in with Google
+                    </button>
                   </div>
-                  <div className="space-y-2 relative z-10">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">{t.form.email_label}</label>
-                    <div className="relative group">
-                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#D9618E] transition-colors" size={20} />
-                      <input
-                        type="email" required value={user.email} onChange={e => setUser({ ...user, email: e.target.value })}
-                        placeholder={t.form.email_placeholder}
-                        className="w-full pl-14 pr-6 py-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#D9618E] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800 placeholder:text-slate-300"
-                      />
-                    </div>
-                  </div>
-                  <button type="submit" className="relative z-10 w-full py-5 bg-gradient-to-r from-[#324FA2] to-[#4a6dc9] text-white rounded-2xl font-black text-xl flex items-center justify-center gap-2 shadow-xl shadow-blue-900/20 active:scale-95 transition-all hover:shadow-2xl hover:brightness-110">
-                    {t.form.submit_btn}
-                    {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
-                  </button>
 
                   <div className="relative flex items-center justify-center py-2 z-10">
-                    <div className="border-t border-slate-100 w-full"></div>
-                    <span className="bg-white px-4 text-[10px] font-black text-slate-300 uppercase tracking-widest relative z-10">{t.form.or}</span>
+                    <div className="border-t border-slate-200 w-full"></div>
+                    <span className="bg-white px-4 text-xs font-black text-slate-400 uppercase tracking-widest relative z-10">OR</span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    className="relative z-10 w-full py-5 bg-white border-2 border-slate-100 text-slate-700 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-lg shadow-slate-100/50 active:scale-95 transition-all hover:bg-slate-50 hover:border-slate-200"
-                  >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-                    {t.form.google_btn}
+                  <div className="space-y-4 relative z-10">
+                    <input
+                      type="email" required value={user.email} onChange={e => setUser({ ...user, email: e.target.value })}
+                      placeholder="Email address"
+                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
+                    />
+                    <input
+                      type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="Password"
+                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  <div className="flex justify-end relative z-10 w-full -mt-2 mb-2">
+                    <button type="button" className="text-[13px] font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                      Forgot Password?
+                    </button>
+                  </div>
+
+                  <button type="submit" className="relative z-10 w-full py-3.5 bg-[#111827] text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform shadow-md hover:bg-[#1f2937]">
+                    Sign In
                   </button>
+
+                  <div className="text-center pt-2 relative z-10 w-full">
+                    <span className="text-slate-400 font-medium text-[13px]">Don't have an account? </span>
+                    <button type="button" className="text-[#8b5cf6] font-bold text-[13px] hover:text-purple-600 transition-colors">Sign up</button>
+                  </div>
                 </form>
 
                 {isDudiMode && (
