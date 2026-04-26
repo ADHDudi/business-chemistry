@@ -51,7 +51,7 @@ exports.generateAIInsights = onCall(async (request) => {
 
     try {
         const response = await genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-1.5-flash',
             contents: finalPrompt,
         });
         return { text: response.text || "No insights available." };
@@ -98,7 +98,7 @@ exports.generateCompatibilityAnalysis = onCall(async (request) => {
 
     try {
         const response = await genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -115,7 +115,7 @@ exports.generateCompatibilityAnalysis = onCall(async (request) => {
             }
         });
 
-        const json = JSON.parse(response.text() || "{}");
+        const json = JSON.parse(response.text || "{}");
         return json;
     } catch (error) {
         console.error("Compatibility AI Error:", error);
