@@ -135,17 +135,11 @@ async function runAcceptanceTest() {
         const submitScreenshot = await captureScreenshot(page);
         logStep('Registration', 'PASS', 'User details entered, submitting...', submitScreenshot);
 
-        await Promise.all([
-            page.click(submitButtonSelector),
-            // We wait for some change. Navigation might happen or just state change.
-            // waiting for h2 "Which side are you on?" is safer
-            page.waitForNavigation({ waitUntil: 'networkidle0' }).catch(() => { })
-        ]);
-
-        // 3. Questionnaire Flow (Happy Path)
-        // Wait for the first question or the "Which side are you on?" text
-        // The h2 from step 2 says "Which side are you on?" or Hebrew equivalent
-        await page.waitForSelector('h2');
+        // Fire click without awaiting — clicking submit triggers a full React re-render
+        // that destroys the current execution context before Puppeteer can track the click.
+        page.click(submitButtonSelector).catch(() => {});
+        // Wait for the questionnaire UI to appear instead of relying on navigation events
+        await page.waitForSelector('h2', { timeout: 15000 });
         logStep('Questionnaire Start', 'PASS', 'Entered questionnaire section');
 
         let isQuestionnaireComplete = false;
@@ -171,11 +165,10 @@ async function runAcceptanceTest() {
 
             // Handle questions
             // MobileQuestionCard has buttons 1-6
-            const answerButtons = await page.$$('button.aspect-square');
-            if (answerButtons.length > 0) {
-                // Click buttons[0] (value '1') for speed
-                const btnToClick = answerButtons[0];
-                await btnToClick.click();
+            const hasAnswerButton = await page.$('button.aspect-square');
+            if (hasAnswerButton) {
+                // Click via selector to avoid stale element handle after React re-render
+                await page.click('button.aspect-square');
                 questionCount++;
 
                 // Wait a bit for transition
@@ -236,18 +229,18 @@ async function runAcceptanceTest() {
             // Loading text: "Analyzing..." or "מעבד..."
             // Success content: will be inside prose div
 
-            // Wait up to 15s for AI result
+            // Wait up to 30s for AI result (allows for cold start latency)
             try {
                 await page.waitForFunction(() => {
-                    const prose = document.querySelector('.prose');
-                    return prose && prose.textContent.length > 20;
-                }, { timeout: 15000 });
+                    return !!document.querySelector('[data-testid="ai-loaded"]') ||
+                           !!document.querySelector('[data-testid="ai-error"]');
+                }, { timeout: 30000 });
 
-                const aiContent = await page.$eval('.prose', el => el.textContent);
-                if (aiContent.includes('error') || aiContent.includes('שגיאה')) {
-                    logStep('AI Generation', 'FAIL', `AI returned error: ${aiContent.substring(0, 50)}...`, await captureScreenshot(page));
+                const hasError = await page.$('[data-testid="ai-error"]');
+                if (hasError) {
+                    logStep('AI Generation', 'FAIL', 'AI returned error state', await captureScreenshot(page));
                 } else {
-                    logStep('AI Generation', 'PASS', `AI Content generated (${aiContent.length} chars)`, await captureScreenshot(page));
+                    logStep('AI Generation', 'PASS', 'AI content cards rendered successfully', await captureScreenshot(page));
 
                     // 6. Feedback Loop Test
                     logStep('Feedback Loop', 'INFO', 'Testing AI Feedback Loop...');

@@ -110,9 +110,10 @@ export const getAIInsights = async (
     const text = response.text || "{}";
     return JSON.parse(text) as AICommunicationCoach;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Insights Error Details:", error);
-    return null; // Return null to trigger fallback UI
+    // Throw the error so the UI can catch it and display a proper message
+    throw new Error(error.message || "Failed to communicate with AI provider.");
   }
 };
 

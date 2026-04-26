@@ -54,7 +54,7 @@ exports.generateAIInsights = onCall(async (request) => {
             model: 'gemini-2.0-flash',
             contents: finalPrompt,
         });
-        return { text: response.text() || "No insights available." };
+        return { text: response.text || "No insights available." };
     } catch (error) {
         console.error("AI Insights Error Details:", error);
         throw new HttpsError('internal', 'Failed to generate AI insights', error);

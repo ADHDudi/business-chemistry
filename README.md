@@ -13,12 +13,19 @@ Welcome to the **Business Chemistry** app! This document guides you through runn
 **Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+2. Set your API keys and configuration in `.env.local` (e.g., `VITE_GEMINI_API_KEY`).
+3. Run the app on port 3002:
+   ```bash
+   npm run dev
+   ```
+   *The app will be available at `http://localhost:3002/`*
 
-View your app in AI Studio: https://ai.studio/apps/drive/12Z0s98PUWImGyeTTWzn_RUttA6PzAFWE
+### Deployed Application
+
+View the live application on Firebase Hosting: **[Business Chemistry App](https://business-chemistry.web.app/)**
 
 ---
 

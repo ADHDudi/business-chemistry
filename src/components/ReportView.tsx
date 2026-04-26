@@ -31,6 +31,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'ai'>('overview');
   // Auto-send replaces manual sending state
   const [aiInsight, setAiInsight] = useState<AICommunicationCoach | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [targetProfile, setTargetProfile] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<'positive' | 'negative' | 'refined' | null>(null);
@@ -163,52 +164,59 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     }
   };
 
-  const regenerateWithFeedback = async () => {
-    if (!refinementText.trim()) return;
-    setIsLoadingAI(true);
-    try {
-      const insight = await getAIInsights(currentPersona, results, language, refinementText, targetProfile || undefined);
-      setAiInsight(insight);
-      setAiFeedback('refined');
-      syncToSheet({
-        aiInsight: JSON.stringify(insight), // Stringify for sheet
-        aiFeedback: 'refined',
-        refinementReason: refinementText
-      });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoadingAI(false);
-    }
-  };
-
   const lastFetchRef = useRef<{ personaKey: string | null, targetProfile: string | null | undefined }>({ personaKey: null, targetProfile: undefined });
 
   useEffect(() => {
     const initAI = async () => {
       // If we already have insights and the target hasn't changed, don't regenerate
-      if (aiInsight &&
+      if (
         lastFetchRef.current.personaKey === currentPersona.key &&
-        lastFetchRef.current.targetProfile === targetProfile) {
+        lastFetchRef.current.targetProfile === targetProfile &&
+        aiInsight !== null
+      ) {
         return;
       }
 
       if (isLoadingAI) return;
 
       setIsLoadingAI(true);
+      setAiError(null);
       try {
         const insight = await getAIInsights(currentPersona, results, language, undefined, targetProfile || undefined);
-        setAiInsight(insight);
-        lastFetchRef.current = { personaKey: currentPersona.key, targetProfile };
-        syncToSheet({ aiInsight: JSON.stringify(insight), isFinal: false });
-      } catch (err) {
+        if (insight) {
+          setAiInsight(insight);
+          lastFetchRef.current = { personaKey: currentPersona.key, targetProfile };
+          syncToSheet({ aiInsight: JSON.stringify(insight), isFinal: false });
+        } else {
+          setAiError("Failed to generate insights from the AI provider.");
+        }
+      } catch (err: any) {
         console.error(err);
+        setAiError(err.message || "An unexpected error occurred while contacting AI.");
       } finally {
         setIsLoadingAI(false);
       }
     };
     initAI();
-  }, [currentPersona, results, language, syncToSheet, targetProfile, aiInsight]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPersona, results, language, targetProfile]);
+
+  const regenerateWithFeedback = async () => {
+    if (!refinementText.trim()) return;
+    setIsLoadingAI(true);
+    setAiError(null);
+    try {
+      const insight = await getAIInsights(currentPersona, results, language, refinementText, targetProfile || undefined);
+      if (!insight) throw new Error('No insight returned');
+      setAiInsight(insight);
+      setAiFeedback('refined');
+      syncToSheet({ aiInsight: JSON.stringify(insight), aiFeedback: 'refined', refinementReason: refinementText });
+    } catch (err: any) {
+      setAiError(err.message || "Error during refinement.");
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
 
   // Auto-send report on visibility change (close/switch tab)
   const hasSentFinalReport = useRef(false);
@@ -408,7 +416,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
               </div>
             </div>
           ) : aiInsight ? (
-            <div className="space-y-6">
+            <div className="space-y-6" data-testid="ai-loaded">
               {/* Card 2: The Game Plan (Interaction) */}
               <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
@@ -482,12 +490,23 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           ) : (
             // Fallback / Error State
             <div className="bg-slate-50 p-8 rounded-[2.5rem] text-center space-y-4 border border-slate-200">
-              <p className="text-slate-400 font-medium">System is thinking...</p>
+              {aiError ? (
+                <>
+                  <p className="text-red-500 font-bold">{aiError}</p>
+                  <p className="text-slate-400 text-sm">Please check the console or ensure your API key is correctly configured and has available quota.</p>
+                </>
+              ) : (
+                <p className="text-slate-400 font-medium">System is thinking...</p>
+              )}
               <button
-                onClick={() => setIsLoadingAI(false)}
-                className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500"
+                onClick={() => {
+                  lastFetchRef.current = { personaKey: null, targetProfile: undefined };
+                  setAiInsight(null);
+                  setAiError(null);
+                }}
+                className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Retry
+                Retry Analysis
               </button>
             </div>
           )}
