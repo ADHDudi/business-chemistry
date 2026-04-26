@@ -22,7 +22,7 @@ export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiCjN
 export const APP_ID = "ADHDudi-Chemistry";
 
 export const SOCIAL_LINKS = {
-  website: "https://adhtalentd.com/",
+  website: "https://www.adhdudi.com",
   linkedin: "https://www.linkedin.com/in/davidtsur/",
   facebook: "https://www.facebook.com/ADHDudi.D",
   youtube: "https://www.youtube.com/@ADHDudiDO"
