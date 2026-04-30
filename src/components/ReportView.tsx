@@ -489,7 +489,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             </div>
           ) : (
             // Fallback / Error State
-            <div className="bg-slate-50 p-8 rounded-[2.5rem] text-center space-y-4 border border-slate-200">
+            <div className="bg-slate-50 p-8 rounded-[2.5rem] text-center space-y-4 border border-slate-200" data-testid="ai-error">
               {aiError ? (
                 <>
                   <p className="text-red-500 font-bold">{aiError}</p>
