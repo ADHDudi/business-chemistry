@@ -25,10 +25,10 @@ const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => vo
   const handleLogoClick = (e: React.MouseEvent) => {
     logEvent(analytics, 'link_click', {
       link_type: 'logo',
-      link_url: 'https://www.just-ai.it'
+      link_url: 'https://justaiit.web.app/#app=business-chemistry'
     });
     if (onClick) onClick();
-    window.open('https://www.just-ai.it', '_blank');
+    window.open('https://justaiit.web.app/#app=business-chemistry', '_blank');
   };
 
   return (
