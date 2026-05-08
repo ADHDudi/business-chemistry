@@ -4,8 +4,8 @@ import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
+// Use Firebase config from hosting if available, otherwise use hardcoded config for localhost
+const firebaseConfig = (window as any).FIREBASE_CONFIG || {
     apiKey: "AIzaSyB9O_r05qM539ioQU7bBCgf__-GR6rg_pw",
     authDomain: "business-chemistry.firebaseapp.com",
     projectId: "business-chemistry",
