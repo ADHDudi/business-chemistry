@@ -1,1 +1,52 @@
-/* Main stylesheet */
+/* Just AI It — Design System Tokens */
+
+:root {
+  --brand-gradient: linear-gradient(135deg, #a014f0 0%, #8c50f0 28%, #5078ff 58%, #3cdcf0 100%);
+  --brand-shadow-sm: 0 6px 16px rgba(140, 80, 240, 0.20);
+  --brand-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* ── Brand utilities ── */
+.brand-gradient {
+  background: var(--brand-gradient);
+}
+
+.gradient-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #94a3b8;
+}
+
+/* ── Button utilities ── */
+.btn-gradient {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--brand-shadow-sm);
+}
+
+.btn-gradient:active {
+  transform: scale(0.98);
+}
+
+.btn-score-active {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--brand-shadow-sm);
+}

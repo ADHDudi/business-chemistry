@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Display Font Choice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f8fafc; font-family: 'Inter', sans-serif; padding: 32px 24px; color: #0f172a; }
+
+  h1 { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .option {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .option:hover { border-color: #8c50f0; box-shadow: 0 8px 24px rgba(140,80,240,0.12); }
+  .option.selected { border-color: #8c50f0; box-shadow: 0 0 0 4px rgba(140,80,240,0.15); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #6a2dd0; background: #f3ecff; border: 1px solid #e4d7ff;
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 20px;
+  }
+
+  .mock-hero-a {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 36px; font-weight: 700;
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: #0b1020; margin-bottom: 12px;
+  }
+  .mock-hero-b {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px; font-weight: 900;
+    line-height: 1.05; letter-spacing: -0.03em;
+    color: #0b1020; margin-bottom: 12px;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #a014f0 0%, #8c50f0 28%, #5078ff 58%, #3cdcf0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .mock-body { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 16px; }
+  .eyebrow { font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; }
+
+  .mock-h2-a { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: #0b1020; margin-bottom: 6px; }
+  .mock-h2-b { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: #0b1020; margin-bottom: 6px; }
+
+  .mock-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; margin-top: 14px; }
+
+  .mock-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #a014f0 0%, #5078ff 60%, #3cdcf0 100%);
+    color: #fff; border: none; border-radius: 999px; padding: 10px 18px;
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; margin-top: 14px;
+  }
+
+  .tag { font-size: 11px; font-weight: 600; color: #475569; margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+
+  @media (max-width: 640px) { .options { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Display font — which direction?</h1>
+<p class="subtitle">The design system adds Space Grotesk for hero headings; the codebase currently uses Inter only. Click to choose.</p>
+
+<div class="options">
+
+  <!-- Option A: Space Grotesk for display -->
+  <div class="option" data-choice="space-grotesk" onclick="toggleSelect(this)">
+    <div class="badge">Option A</div>
+
+    <div class="eyebrow">Compatibility Score</div>
+    <div class="mock-hero-a">Find Your <span class="gradient-text">Fit</span></div>
+    <div class="mock-body">Honest compatibility diagnostic for co-founders. Check your alignment before you build.</div>
+
+    <div class="mock-card">
+      <div class="eyebrow">Thinking & Decision Style</div>
+      <div class="mock-h2-a">High <span class="gradient-text">Alignment</span></div>
+      <div style="font-size:13px; color:#64748b; margin-top:4px;">Both founders share a bias toward action over analysis.</div>
+    </div>
+
+    <button class="mock-btn">Start Diagnostic →</button>
+
+    <div class="tag">Space Grotesk headings + Inter body — distinct display / UI pairing, geometric & chunky, matches logo letterforms</div>
+  </div>
+
+  <!-- Option B: Inter-only -->
+  <div class="option" data-choice="inter-only" onclick="toggleSelect(this)">
+    <div class="badge">Option B</div>
+
+    <div class="eyebrow">Compatibility Score</div>
+    <div class="mock-hero-b">Find Your <span class="gradient-text">Fit</span></div>
+    <div class="mock-body">Honest compatibility diagnostic for co-founders. Check your alignment before you build.</div>
+
+    <div class="mock-card">
+      <div class="eyebrow">Thinking & Decision Style</div>
+      <div class="mock-h2-b">High <span class="gradient-text">Alignment</span></div>
+      <div style="font-size:13px; color:#64748b; margin-top:4px;">Both founders share a bias toward action over analysis.</div>
+    </div>
+
+    <button class="mock-btn">Start Diagnostic →</button>
+
+    <div class="tag">Inter everywhere — weight 900 for headings, already in codebase, no new font load, ultra-clean system-ui feel</div>
+  </div>
+
+</div>
+
+<script>
+function toggleSelect(el) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const choice = el.dataset.choice;
+  const text = el.querySelector('.tag').textContent;
+  if (window.recordEvent) window.recordEvent({ type: 'click', choice, text });
+}
+</script>
+</body>
+</html>

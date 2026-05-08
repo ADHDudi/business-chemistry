@@ -46,7 +46,7 @@ export default function SessionLobby({ sessionData, myRole, language }: SessionL
     const isPartnerConnected = !!partnerName;
 
     return (
-        <div className="bg-white rounded-[2rem] shadow-xl border border-blue-100 p-6 mb-6 animate-in slide-in-from-top-4 duration-500">
+        <div className="bg-white rounded-[2rem] shadow-xl border border-[#e4d7ff] p-6 mb-6 animate-in slide-in-from-top-4 duration-500">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
 
                 {/* Connection Status / Code */}
@@ -60,13 +60,13 @@ export default function SessionLobby({ sessionData, myRole, language }: SessionL
                             <p className="text-slate-400 text-sm font-bold">{t.share_instr}</p>
                             <div
                                 onClick={handleCopy}
-                                className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors group"
+                                className="bg-slate-50 border-2 border-dashed border-[#e4d7ff] rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors group"
                             >
                                 <div className="space-y-1">
                                     <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">{t.code_label}</span>
-                                    <p className="text-3xl font-black text-slate-700 tracking-widest font-mono">{sessionData.sessionId}</p>
+                                    <p className="text-3xl font-black text-[#6a2dd0] tracking-widest font-mono">{sessionData.sessionId}</p>
                                 </div>
-                                <div className="bg-white p-2 rounded-lg shadow-sm text-slate-400 group-hover:text-[#324FA2] transition-colors">
+                                <div className="bg-white p-2 rounded-lg shadow-sm text-slate-400 group-hover:text-[#8c50f0] transition-colors">
                                     {copied ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
                                 </div>
                             </div>
@@ -92,7 +92,7 @@ export default function SessionLobby({ sessionData, myRole, language }: SessionL
                         <ProgressRow
                             label={t.you}
                             count={myRole === 'A' ? Object.keys(sessionData.answersA || {}).length : Object.keys(sessionData.answersB || {}).length}
-                            color="bg-[#324FA2]"
+                            color="bg-[#8c50f0]"
                         />
                         <ProgressRow
                             label={partnerName}
