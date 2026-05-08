@@ -295,10 +295,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col no-select">
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex flex-col items-start">
-          <Logo size="sm" onClick={onLogoClick} />
-          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-0.5">by Just AI It</span>
-        </div>
 
         <button
           onClick={() => setLanguage(l => l === 'he' ? 'en' : 'he')}
