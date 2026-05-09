@@ -5,14 +5,12 @@ const YEAR = new Date().getFullYear();
 
 const labels = {
   he: {
-    copyright: `© ${YEAR} Business Chemistry`,
     poweredBy: 'מופעל על ידי',
     terms: 'תנאי שימוש',
     privacy: 'מדיניות פרטיות',
     accessibility: 'הצהרת נגישות',
   },
   en: {
-    copyright: `© ${YEAR} Business Chemistry`,
     poweredBy: 'Powered by',
     terms: 'Terms of Use',
     privacy: 'Privacy Policy',
@@ -28,9 +26,6 @@ export default function Footer({ language }: { language: Language }) {
       className="border-t border-slate-100 mt-10 py-5 px-4"
     >
       <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center">
-        <p className="text-[11px] text-slate-400 font-bold">
-          {t.copyright}
-        </p>
         <div className="flex items-center gap-2 flex-col sm:flex-row">
           <span className="text-[11px] text-slate-400 font-bold">{t.poweredBy}:</span>
           <img
