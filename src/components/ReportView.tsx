@@ -422,7 +422,8 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           ) : aiInsight ? (
             <div className="space-y-6" data-testid="ai-loaded">
               {/* Card 2: The Game Plan (Interaction) */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden relative">
+                <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
                   <Target size={18} className="text-green-400" />
                   <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '2. תוכנית משחק' : '2. Game Plan'}</h3>
