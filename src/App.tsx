@@ -13,6 +13,10 @@ import SessionWizard from './components/SessionWizard';
 import SessionLobby from './components/SessionLobby';
 import ComparisonView from './components/ComparisonView';
 import LiveProgressBar from './components/LiveProgressBar';
+import Footer from './components/Footer';
+import TermsPage from './components/legal/TermsPage';
+import PrivacyPage from './components/legal/PrivacyPage';
+import AccessibilityPage from './components/legal/AccessibilityPage';
 import { useSession } from './hooks/useSession';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
@@ -20,50 +24,24 @@ import { logEvent } from 'firebase/analytics';
 
 
 const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => void }) => {
-  const isLg = size === "lg";
-  const boxW = isLg ? "w-14" : "w-8";
-  const boxH = isLg ? "h-16" : "h-9";
-  const iconSize = isLg ? 28 : 16;
-  const textSize = isLg ? "text-6xl" : "text-3xl";
+  const height = size === "lg" ? "h-16" : "h-8";
 
   const handleLogoClick = (e: React.MouseEvent) => {
-    // Log to Google Analytics
     logEvent(analytics, 'link_click', {
       link_type: 'logo',
-      link_url: 'https://linktr.ee/ADHDudi'
+      link_url: 'https://justaiit.web.app/#app=business-chemistry'
     });
-    // Execute original callback if present (e.g. for debug mode)
     if (onClick) onClick();
-    // Open external link
-    window.open('https://linktr.ee/ADHDudi', '_blank');
+    window.open('https://justaiit.web.app/#app=business-chemistry', '_blank');
   };
 
   return (
-    <div
+    <img
+      src="/justaiit-logo.svg"
+      alt="Just AI It"
       onClick={handleLogoClick}
-      className="flex items-end gap-1 select-none hover:opacity-80 transition-opacity cursor-pointer"
-      dir="ltr"
-    >
-      <div className="flex gap-1 items-end">
-        <div className={`${boxW} ${boxH} bg-[#E46B3F] rounded-t-full rounded-b-lg flex flex-col items-center justify-center relative shadow-sm`}>
-          <Zap size={iconSize} className="text-white fill-white -mt-1" />
-          <div className="absolute bottom-1 left-1.5 flex flex-col gap-0.5">
-            <div className={`${isLg ? 'w-4 h-1.5' : 'w-2.5 h-1'} bg-[#90BC6E] rounded-sm`} />
-            <div className={`${isLg ? 'w-4 h-1.5' : 'w-2.5 h-1'} bg-[#90BC6E] rounded-sm`} />
-          </div>
-        </div>
-        <div className={`${boxW} ${boxH} bg-[#D9618E] rounded-tr-[50%] rounded-br-lg rounded-tl-lg rounded-bl-lg flex items-center justify-center shadow-sm`}>
-          <Zap size={iconSize} className="text-white fill-white" />
-        </div>
-        <div className={`${boxW} ${boxH} bg-[#78A9D6] rounded-lg flex items-center justify-center shadow-sm`}>
-          <Zap size={iconSize} className="text-white fill-white" />
-        </div>
-        <div className={`${boxW} ${boxH} bg-[#324FA2] rounded-tr-[50%] rounded-br-lg rounded-tl-lg rounded-bl-lg flex items-center justify-center shadow-sm`}>
-          <Zap size={iconSize} className="text-white fill-white" />
-        </div>
-      </div>
-      <span className={`${textSize} font-black text-[#324FA2] leading-none tracking-tighter mb-0.5`}>udi</span>
-    </div>
+      className={`${height} select-none hover:opacity-80 transition-opacity cursor-pointer`}
+    />
   );
 };
 
@@ -120,6 +98,7 @@ const generateMockAnswers = (targetPersonaKey: string) => {
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('he');
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
   const [step, setStep] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [user, setUser] = useState<UserType>({ name: '', email: '' });
@@ -149,6 +128,12 @@ export default function App() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => setCurrentHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleGoogleLogin = async () => {
@@ -318,10 +303,17 @@ export default function App() {
   const currentTrait = traitsList[currentQuestionIndex];
   const isDudiMode = user.name.trim().toLowerCase().includes('dudi');
 
+  if (currentHash === '#terms') return <TermsPage language={language} />;
+  if (currentHash === '#privacy') return <PrivacyPage language={language} />;
+  if (currentHash === '#accessibility') return <AccessibilityPage language={language} />;
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col no-select">
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm">
-        <Logo size="sm" onClick={onLogoClick} />
+        <div className="flex flex-col items-start">
+          <Logo size="sm" onClick={onLogoClick} />
+          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-0.5">by Just AI It</span>
+        </div>
 
         <button
           onClick={() => setLanguage(l => l === 'he' ? 'en' : 'he')}
@@ -345,11 +337,11 @@ export default function App() {
           <div className="flex items-center gap-2">
             <div
               onClick={copySessionCode}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[#D9618E]/10 border border-[#D9618E]/20 rounded-full cursor-pointer hover:bg-[#D9618E]/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#f3ecff] border border-[#e4d7ff] rounded-full cursor-pointer hover:bg-[#e4d7ff] transition-colors"
             >
-              <span className="w-2 h-2 rounded-full bg-[#D9618E] animate-pulse" />
-              <span className="text-xs font-black text-[#D9618E] tracking-widest font-mono">{sessionId}</span>
-              {copiedCode ? <Check size={12} className="text-[#D9618E]" /> : <Copy size={12} className="text-[#D9618E]" />}
+              <span className="w-2 h-2 rounded-full bg-[#8c50f0] animate-pulse" />
+              <span className="text-xs font-black text-[#6a2dd0] tracking-widest font-mono">{sessionId}</span>
+              {copiedCode ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-[#8c50f0]" />}
             </div>
             <button
               onClick={() => {
@@ -367,7 +359,7 @@ export default function App() {
         ) : (
           <button
             onClick={() => setIsSessionMode(!isSessionMode)}
-            className={`flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-full transition-colors ml-2 ${isSessionMode ? 'bg-[#324FA2] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            className={`flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-full transition-colors ml-2 ${isSessionMode ? 'bg-[#8c50f0] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             <Users size={14} />
             {isSessionMode ? (language === 'he' ? 'חזרה לרגיל' : 'Exit Live') : (language === 'he' ? 'מצב Live' : 'Live Mode')}
@@ -382,7 +374,7 @@ export default function App() {
 
             <div className="text-center space-y-4 mt-8 mb-6">
               <>
-                <h1 className="text-5xl font-black leading-[0.9] text-[#324FA2] tracking-tight">{t.welcome_title}</h1>
+                <h1 className="text-5xl font-black leading-[0.9] gradient-text tracking-tight">{t.welcome_title}</h1>
                 <p className="text-xl text-slate-600 font-bold leading-relaxed">{t.welcome_subtitle}</p>
               </>
             </div>
@@ -452,12 +444,12 @@ export default function App() {
                     <input
                       type="email" required value={user.email} onChange={e => setUser({ ...user, email: e.target.value })}
                       placeholder="Email address"
-                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
+                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#8c50f0] focus:ring-1 focus:ring-purple-300 transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
                     />
                     <input
                       type="password" required value={password} onChange={e => setPassword(e.target.value)}
                       placeholder="Password"
-                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
+                      className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#8c50f0] focus:ring-1 focus:ring-purple-300 transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
                     />
                   </div>
 
@@ -467,7 +459,7 @@ export default function App() {
                     </button>
                   </div>
 
-                  <button type="submit" className="relative z-10 w-full py-3.5 bg-[#111827] text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform shadow-md hover:bg-[#1f2937]">
+                  <button type="submit" className="relative z-10 w-full py-3.5 btn-gradient text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform">
                     Sign In
                   </button>
 
@@ -501,19 +493,23 @@ export default function App() {
           step === 2 && (
             <div className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
               <div className="mb-6">
-                <div className="bg-[#324FA2] text-white p-5 rounded-[2rem] shadow-lg shadow-blue-200 relative overflow-hidden">
-                  <div className="relative z-10 space-y-1">
-                    <h2 className="text-lg font-black flex items-center gap-2 tracking-tight">
+                <div className="bg-white border border-slate-200 rounded-[2rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] p-5 relative overflow-hidden">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
                       <Zap size={18} fill="currentColor" />
-                      {language === 'he' ? 'באיזה צד אתם?' : 'Which side are you on?'}
-                    </h2>
-                    <p className="text-blue-100 text-xs font-medium leading-snug">
-                      {language === 'he'
-                        ? 'מקמו את עצמכם על הסקאלה בין שתי התכונות.'
-                        : 'Place yourself on the scale between the two traits.'}
-                    </p>
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-sm font-black text-slate-800 tracking-tight">
+                        {language === 'he' ? 'באיזה צד אתם?' : 'Which side are you on?'}
+                      </h2>
+                      <p className="eyebrow mt-0.5">
+                        {language === 'he'
+                          ? 'מקמו את עצמכם על הסקאלה בין שתי התכונות.'
+                          : 'Place yourself on the scale between the two traits.'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-[#f3ecff] rounded-full blur-2xl"></div>
                 </div>
               </div>
 
@@ -590,13 +586,13 @@ export default function App() {
                       <button
                         onClick={finishAndSave}
                         disabled={!isQuestionnaireComplete || isSubmitting}
-                        className={`px-8 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl ${isQuestionnaireComplete ? 'bg-[#E46B3F] text-white shadow-orange-200' : 'bg-slate-100 text-slate-400'}`}
+                        className={`px-8 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl ${isQuestionnaireComplete ? 'btn-gradient text-white' : 'bg-slate-100 text-slate-400'}`}
                       >
                         {isSubmitting ? <Loader2 className="animate-spin" /> : t.quiz.finish_btn}
                       </button>
                     </div>
                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#78A9D6] via-[#D9618E] to-[#E46B3F] transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
+                      <div className="h-full bg-gradient-to-r from-[#a014f0] via-[#5078ff] to-[#3cdcf0] transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
                     </div>
                   </div>
                 )}
@@ -606,7 +602,7 @@ export default function App() {
                     <button
                       onClick={finishAndSave}
                       disabled={!isQuestionnaireComplete || isSubmitting}
-                      className={`w-full max-w-xs py-4 rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl ${isQuestionnaireComplete ? 'bg-[#E46B3F] text-white shadow-orange-200' : 'bg-slate-100 text-slate-400'}`}
+                      className={`w-full max-w-xs py-4 rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl ${isQuestionnaireComplete ? 'btn-gradient text-white' : 'bg-slate-100 text-slate-400'}`}
                     >
                       {isSubmitting ? <Loader2 className="animate-spin" /> : t.quiz.finish_btn}
                     </button>
@@ -637,6 +633,7 @@ export default function App() {
         }
 
 
+        <Footer language={language} />
       </main>
     </div>
   );
@@ -645,7 +642,7 @@ export default function App() {
 function BenefitCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
   return (
     <div className={`flex gap-5 p-5 rounded-[2rem] border-2 border-white shadow-lg shadow-slate-200/40 items-center bg-white/80 backdrop-blur-sm transition-all hover:scale-[1.02]`}>
-      <div className="p-4 bg-white rounded-2xl shrink-0 shadow-sm border border-slate-100 text-[#324FA2]">{icon}</div>
+      <div className="p-4 bg-white rounded-2xl shrink-0 shadow-sm border border-slate-100 text-[#8c50f0]">{icon}</div>
       <div className="space-y-1">
         <h4 className="font-black text-slate-800 text-base leading-tight">{title}</h4>
         <p className="text-sm text-slate-500 font-bold leading-snug">{desc}</p>
@@ -656,16 +653,6 @@ function BenefitCard({ icon, title, desc }: { icon: React.ReactNode, title: stri
 
 function MobileQuestionCard({ trait, index, value, onChange, language }: { trait: Trait, index: number, value: number | undefined, onChange: (i: number, v: number) => void, language: Language }) {
   if (!trait || !trait.left || !trait.right) return null;
-
-  const colors = [
-    '',
-    'bg-[#324FA2] shadow-blue-200 ring-[#324FA2]',    // 1
-    'bg-[#324FA2]/80 shadow-blue-100 ring-[#324FA2]/50', // 2
-    'bg-[#78A9D6] shadow-sky-100 ring-[#78A9D6]/50',    // 3
-    'bg-[#D9618E]/80 shadow-pink-100 ring-[#D9618E]/50', // 4
-    'bg-[#E46B3F]/80 shadow-orange-100 ring-[#E46B3F]/50',// 5
-    'bg-[#E46B3F] shadow-orange-200 ring-[#E46B3F]'    // 6
-  ];
 
   const translations = {
     he: { mostly: 'בעיקר' },
@@ -693,7 +680,7 @@ function MobileQuestionCard({ trait, index, value, onChange, language }: { trait
       <div className="space-y-8">
         <div className="flex items-center justify-between gap-4 px-1">
           <div className={`flex-1 text-center transition-all duration-500 ${value && value <= 3 ? 'scale-110' : ''}`}>
-            <h3 className={`text-2xl font-black leading-tight text-[#324FA2]`}>
+            <h3 className={`text-2xl font-black leading-tight text-[#8c50f0]`}>
               {trait.left[language]}
             </h3>
           </div>
@@ -712,7 +699,7 @@ function MobileQuestionCard({ trait, index, value, onChange, language }: { trait
         <div className="relative py-10 px-2">
           <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-100 -translate-y-1/2 rounded-full overflow-hidden shadow-inner">
             <div
-              className={`h-full transition-all duration-700 ease-out bg-gradient-to-r from-[#324FA2] via-slate-100 to-[#E46B3F] opacity-10`}
+              className={`h-full transition-all duration-700 ease-out bg-gradient-to-r from-[#a014f0] via-slate-100 to-[#3cdcf0] opacity-10`}
             />
           </div>
 
@@ -722,7 +709,7 @@ function MobileQuestionCard({ trait, index, value, onChange, language }: { trait
                 <button
                   onClick={() => onChange(index, v)}
                   className={`w-full aspect-square rounded-2xl text-xl font-black transition-all duration-300 flex items-center justify-center ${value === v
-                    ? `${colors[v]} text-white shadow-xl scale-125 ring-4 ring-offset-2 ring-offset-white`
+                    ? `btn-score-active text-white shadow-xl scale-125 ring-4 ring-[#8c50f0]/30 ring-offset-2 ring-offset-white`
                     : 'bg-white border-2 border-slate-100 text-slate-300 hover:border-slate-200 active:scale-95'
                     }`}
                 >
@@ -734,7 +721,7 @@ function MobileQuestionCard({ trait, index, value, onChange, language }: { trait
 
           <div className="flex justify-between mt-6 px-1">
             <div className="text-center w-[45%]">
-              <span className={`text-[10px] font-black uppercase tracking-tight block transition-colors leading-tight ${value === 1 ? 'text-[#324FA2]' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-tight block transition-colors leading-tight ${value === 1 ? 'text-[#8c50f0]' : 'text-slate-400'}`}>
                 {getMostlyLabel('left')}
               </span>
             </div>

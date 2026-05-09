@@ -35,13 +35,13 @@ export default function LiveProgressBar({
     <div className="bg-white/90 backdrop-blur-sm border-b border-slate-200 p-4 sticky top-[73px] z-40 shadow-sm space-y-3">
       {/* My Progress */}
       <div className="space-y-1">
-        <div className="flex justify-between text-xs font-black uppercase tracking-wider text-[#324FA2]">
+        <div className="flex justify-between text-xs font-black uppercase tracking-wider text-[#8c50f0]">
           <span>{t.you}</span>
           <span>{Math.round(myPercent)}%</span>
         </div>
         <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-[#324FA2] to-[#78A9D6] transition-all duration-500 ease-out" 
+            className="h-full bg-gradient-to-r from-[#a014f0] via-[#5078ff] to-[#3cdcf0] transition-all duration-500 ease-out"
             style={{ width: `${myPercent}%` }} 
           />
         </div>

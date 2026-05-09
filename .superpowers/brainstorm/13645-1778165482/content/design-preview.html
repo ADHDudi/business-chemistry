@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Chemistry — Design Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brand-gradient: linear-gradient(135deg, #a014f0 0%, #8c50f0 28%, #5078ff 58%, #3cdcf0 100%);
+  --brand-violet: #8c50f0;
+  --shadow-xs: 0 1px 2px rgba(15,23,42,0.05);
+  --shadow-sm: 0 2px 6px rgba(15,23,42,0.06);
+  --shadow-md: 0 8px 24px rgba(15,23,42,0.08);
+  --shadow-brand-sm: 0 6px 16px rgba(140,80,240,0.20);
+  --shadow-brand-md: 0 14px 40px rgba(140,80,240,0.25);
+  --shadow-inset-sm: inset 0 1px 2px rgba(15,23,42,0.06);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body { background: #f8fafc; font-family: var(--font-ui); color: #0f172a; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+.gradient-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* ── Layout ── */
+.page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+.section-label { font-size: 10px; font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase; color: #94a3b8; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; }
+.section-label:first-child { margin-top: 0; }
+
+/* ── 1. HEADER ── */
+.header {
+  background: #fff; border-bottom: 1px solid #f1f5f9;
+  padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--shadow-xs); border-radius: 16px; margin-bottom: 8px;
+}
+.logo-area { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--brand-gradient); display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 900; font-size: 13px; letter-spacing: -0.5px;
+}
+.logo-text { display: flex; flex-direction: column; gap: 1px; }
+.logo-name { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #0b1020; letter-spacing: -0.02em; }
+.logo-studio { font-size: 9px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: #94a3b8; }
+.session-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: #f3ecff; border: 1px solid #e4d7ff;
+  padding: 6px 12px; border-radius: 999px;
+}
+.session-dot { width: 7px; height: 7px; border-radius: 999px; background: #8c50f0; animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.session-code { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #6a2dd0; }
+.btn-ghost { background: #fff; border: 1px solid #e2e8f0; color: #64748b; font-family: var(--font-ui); font-weight: 900; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+
+/* ── 2. AUTH CARD ── */
+.auth-card {
+  background: #fff; border-radius: 28px; padding: 48px; box-shadow: var(--shadow-md);
+  border: 1px solid #f1f5f9; max-width: 420px; text-align: center;
+}
+.auth-tagline { color: #64748b; font-size: 14px; font-weight: 500; line-height: 1.6; margin: 16px 0 36px; }
+.field-label { display: block; font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; text-align: left; }
+.field-input {
+  width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 14px;
+  font-family: var(--font-ui); font-size: 14px; color: #0f172a; outline: none;
+  transition: border-color 0.18s;
+}
+.field-input:focus { border-color: #a78bfa; box-shadow: 0 0 0 4px rgba(140,80,240,0.12); }
+.fields { display: flex; flex-direction: column; gap: 16px; }
+.btn-primary {
+  width: 100%; padding: 16px; border-radius: 14px; border: none;
+  background: var(--brand-gradient); color: #fff;
+  font-family: var(--font-ui); font-weight: 800; font-size: 13px;
+  cursor: pointer; box-shadow: var(--shadow-brand-sm);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 8px; transition: opacity 0.2s, transform 0.2s var(--ease-out);
+}
+.btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+.divider { position: relative; padding: 12px 0; margin: 4px 0; }
+.divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #f1f5f9; }
+.divider-text { position: relative; background: #fff; padding: 0 12px; font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; }
+.btn-secondary { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; font-family: var(--font-ui); font-weight: 700; font-size: 13px; cursor: pointer; }
+.demo-link { font-size: 10px; font-weight: 900; letter-spacing: 0.22em; text-transform: uppercase; color: #cbd5e1; background: none; border: none; cursor: pointer; margin-top: 16px; }
+
+/* ── 3. PROGRESS BAR ── */
+.progress-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px 24px; box-shadow: var(--shadow-sm); }
+.progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.progress-eyebrow { font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; }
+.progress-pct { color: #6a2dd0; font-weight: 900; font-size: 13px; }
+.progress-track { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; width: 65%; background: var(--brand-gradient); border-radius: 999px; transition: width 0.7s var(--ease-out); }
+
+/* ── 4. SCORE PICKER ── */
+.score-picker {
+  display: inline-flex; align-items: center; gap: 10px; padding: 8px;
+  background: rgba(248,250,252,.5); border: 1px solid #f1f5f9;
+  border-radius: 999px; box-shadow: var(--shadow-inset-sm);
+}
+.score-label { font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; padding: 0 10px; }
+.score-label.disagree { color: #e11d48; }
+.score-label.agree { color: #10b981; }
+.score-btn {
+  width: 42px; height: 42px; border-radius: 999px; border: 1px solid #e2e8f0;
+  background: #fff; color: #94a3b8; font-weight: 900; font-size: 14px;
+  cursor: pointer; transition: all 0.2s var(--ease-bounce);
+}
+.score-btn.active {
+  background: var(--brand-gradient); color: #fff; border: none;
+  box-shadow: var(--shadow-brand-sm);
+}
+
+/* ── 5. QUESTION CARD ── */
+.question-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 28px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.qcard-header {
+  background: rgba(248,250,252,.4); border-bottom: 1px solid #f1f5f9;
+  padding: 20px 28px; display: flex; align-items: center; gap: 14px;
+}
+.icon-tile { padding: 10px; border-radius: 14px; border: 1px solid #f1f5f9; background: #fff; color: #6a2dd0; box-shadow: var(--shadow-xs); }
+.qcard-title { font-weight: 900; color: #0b1020; font-size: 14px; letter-spacing: -0.01em; }
+.qcard-sub { font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; margin-top: 3px; }
+.question-row { padding: 28px; border-top: 1px solid #f1f5f9; }
+.question-text { font-size: 16px; font-weight: 600; color: #0f172a; line-height: 1.5; margin-bottom: 24px; }
+
+/* ── 6. CATEGORY CARDS ── */
+.cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.cat-card { padding: 18px; border-radius: 18px; box-shadow: var(--shadow-xs); }
+.cat-card.good { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.cat-card.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.cat-card.bad  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.cat-card.wait { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
+.cat-name { font-size: 9px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; line-height: 1.3; min-height: 26px; }
+.cat-avg { font-size: 32px; font-weight: 900; line-height: 1; margin: 12px 0 8px; }
+.cat-divider { border: none; border-top: 1px solid rgba(255,255,255,.5); margin-bottom: 10px; }
+.cat-status { display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.cat-dot { width: 8px; height: 8px; border-radius: 999px; }
+
+/* ── 7. VERDICT CARD ── */
+.verdict-card {
+  background: #0f172a; color: #fff; border-radius: 28px; padding: 40px 44px;
+  position: relative; overflow: hidden; box-shadow: 0 30px 80px rgba(15,23,42,0.14);
+}
+.verdict-strip { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--brand-gradient); }
+.verdict-star { position: absolute; top: 24px; right: 32px; font-size: 48px; font-weight: 900; color: rgba(196,181,253,0.12); }
+.verdict-eyebrow { font-size: 9px; font-weight: 900; letter-spacing: 0.3em; text-transform: uppercase; color: #c4b5fd; margin-bottom: 16px; }
+.verdict-text { font-size: 20px; font-weight: 700; line-height: 1.45; font-style: italic; color: #e2e8f0; }
+
+/* ── 8. INSIGHT LIST ── */
+.insight-card { background: #fff; border-radius: 28px; border: 1px solid #f1f5f9; padding: 32px; box-shadow: var(--shadow-sm); }
+.insight-eyebrow { font-size: 10px; font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+.insight-eyebrow.ok { color: #047857; }
+.insight-eyebrow.danger { color: #be123c; }
+.insight-item { margin-bottom: 24px; }
+.insight-item:last-child { margin-bottom: 0; }
+.insight-title { font-size: 15px; font-weight: 800; color: #0b1020; margin-bottom: 6px; }
+.insight-body { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 12px; }
+.tip-box { border-radius: 14px; padding: 14px 18px; }
+.tip-box.ok { background: #ecfdf5; border: 1px solid #d1fae5; }
+.tip-box.danger { background: #fff1f2; border: 1px solid #ffe4e6; }
+.tip-label { font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
+.tip-label.ok { color: #047857; }
+.tip-label.danger { color: #be123c; }
+.tip-body { font-size: 13px; font-weight: 500; line-height: 1.5; }
+.tip-body.ok { color: #065f46; }
+.tip-body.danger { color: #9f1239; }
+
+/* ── Overall page title ── */
+.page-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: #0b1020; letter-spacing: -0.02em; margin-bottom: 6px; }
+.page-sub { font-size: 14px; color: #64748b; margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div style="margin-bottom: 40px;">
+    <div class="page-title">Business Chemistry — Design Preview</div>
+    <div class="page-sub">All key components styled with the Just AI It design system. Scroll to review each section.</div>
+  </div>
+
+  <!-- 1. HEADER -->
+  <div class="section-label">1 · Header</div>
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-mark">BC</div>
+      <div class="logo-text">
+        <div class="logo-name">Business Chemistry</div>
+        <div class="logo-studio">by Just AI It</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="session-pill">
+        <div class="session-dot"></div>
+        <div class="session-code">XK-4972</div>
+      </div>
+      <button class="btn-ghost">EN</button>
+    </div>
+  </div>
+  <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Logo mark placeholder — the actual Just AI It logo image will be used at 28px height. Session code uses JetBrains Mono.</p>
+
+  <!-- 2. AUTH CARD -->
+  <div class="section-label">2 · Onboarding / Auth</div>
+  <div class="auth-card">
+    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="logo-mark" style="width:40px;height:40px;font-size:16px;">BC</div>
+        <div class="logo-text">
+          <div class="logo-name" style="font-size:18px;">Business Chemistry</div>
+          <div class="logo-studio">by Just AI It</div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-tagline">Honest compatibility diagnostic for co-founders. Check your alignment before you build.</div>
+    <div class="fields">
+      <div>
+        <label class="field-label">Your Name</label>
+        <input class="field-input" placeholder="e.g. Jane Doe" />
+      </div>
+      <div>
+        <label class="field-label">Your Email</label>
+        <input class="field-input" placeholder="e.g. jane@startup.com" />
+      </div>
+      <button class="btn-primary">Start Diagnostic →</button>
+      <div class="divider" style="text-align:center;">
+        <span class="divider-text">Have a code?</span>
+      </div>
+      <button class="btn-secondary">Join Partner Session</button>
+      <button class="demo-link">Fill with Demo Data</button>
+    </div>
+  </div>
+
+  <!-- 3. PROGRESS BAR -->
+  <div class="section-label">3 · Progress Bar</div>
+  <div class="progress-card">
+    <div class="progress-top">
+      <span class="progress-eyebrow">Your Progress</span>
+      <span class="progress-pct">65%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- 4. SCORE PICKER -->
+  <div class="section-label">4 · Score Picker</div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:28px;padding:28px;">
+    <p class="question-text" style="margin-bottom:24px;">I prefer to make decisions with 70% information rather than wait for certainty.</p>
+    <div style="display:flex;justify-content:center;">
+      <div class="score-picker">
+        <span class="score-label disagree">Disagree</span>
+        <div style="display:flex;gap:6px;">
+          <button class="score-btn">1</button>
+          <button class="score-btn">2</button>
+          <button class="score-btn">3</button>
+          <button class="score-btn active">4</button>
+          <button class="score-btn">5</button>
+        </div>
+        <span class="score-label agree">Agree</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. QUESTION CARD (section header pattern) -->
+  <div class="section-label">5 · Question Card — Section Header Pattern</div>
+  <div class="question-card">
+    <div class="qcard-header">
+      <div class="icon-tile">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 00-5.997.125A4 4 0 004 13a4 4 0 005.5 3.705A4 4 0 0012 20a4 4 0 002.5-3.295A4 4 0 0020 13a4 4 0 00-2.003-7.875A3 3 0 0012 5z"/></svg>
+      </div>
+      <div>
+        <div class="qcard-title">Thinking &amp; Decision Style</div>
+        <div class="qcard-sub">Intellectual Fit</div>
+      </div>
+    </div>
+    <div class="question-row">
+      <p class="question-text">I prefer to make decisions with 70% information rather than wait for certainty.</p>
+      <div style="display:flex;justify-content:center;">
+        <div class="score-picker">
+          <span class="score-label disagree">Disagree</span>
+          <div style="display:flex;gap:6px;">
+            <button class="score-btn">1</button>
+            <button class="score-btn">2</button>
+            <button class="score-btn active">3</button>
+            <button class="score-btn">4</button>
+            <button class="score-btn">5</button>
+          </div>
+          <span class="score-label agree">Agree</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. CATEGORY CARDS -->
+  <div class="section-label">6 · Category Gap Cards</div>
+  <div class="cat-grid">
+    <div class="cat-card good">
+      <div class="cat-name">Thinking &amp; Decision Style</div>
+      <div class="cat-avg">0.4</div>
+      <hr class="cat-divider">
+      <div class="cat-status"><div class="cat-dot" style="background:#10b981;"></div>High Alignment</div>
+    </div>
+    <div class="cat-card warn">
+      <div class="cat-name">Risk &amp; Ambition</div>
+      <div class="cat-avg">1.2</div>
+      <hr class="cat-divider">
+      <div class="cat-status"><div class="cat-dot" style="background:#d97706;"></div>Noticeable Gap</div>
+    </div>
+    <div class="cat-card bad">
+      <div class="cat-name">Personality &amp; Work Style</div>
+      <div class="cat-avg">2.8</div>
+      <hr class="cat-divider">
+      <div class="cat-status"><div class="cat-dot" style="background:#e11d48;"></div>Severe Friction</div>
+    </div>
+    <div class="cat-card wait">
+      <div class="cat-name">Communication</div>
+      <div class="cat-avg">–</div>
+      <hr class="cat-divider">
+      <div class="cat-status"><div class="cat-dot" style="background:#94a3b8;"></div>Awaiting Partner</div>
+    </div>
+  </div>
+
+  <!-- 7. VERDICT CARD -->
+  <div class="section-label">7 · Verdict Card (AI Results)</div>
+  <div class="verdict-card">
+    <div class="verdict-strip"></div>
+    <div class="verdict-star">✦</div>
+    <div class="verdict-eyebrow">Our Verdict</div>
+    <div class="verdict-text">"Strong strategic alignment undermined by a clear communication gap. Address this before scaling — it will become the fault line under pressure."</div>
+  </div>
+
+  <!-- 8. SYNERGIES / FRICTION LISTS -->
+  <div class="section-label">8 · AI Insights — Synergies &amp; Friction</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="insight-card">
+      <div class="insight-eyebrow ok">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Synergies
+      </div>
+      <div class="insight-item">
+        <div class="insight-title">Shared Bias for Action</div>
+        <div class="insight-body">Both founders prioritise speed over completeness — a rare alignment that compounds in early-stage execution.</div>
+        <div class="tip-box ok">
+          <div class="tip-label ok">💡 TIP</div>
+          <div class="tip-body ok">Formalise a "70% rule" in your decision log so future hires adopt the same tempo.</div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-eyebrow danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86l-8.18 14a2 2 0 001.71 3h16.36a2 2 0 001.71-3l-8.18-14a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Friction Points
+      </div>
+      <div class="insight-item">
+        <div class="insight-title">Conflict Resolution Style</div>
+        <div class="insight-body">A 3-point gap on direct confrontation vs. avoidance is the single largest delta in your diagnostic.</div>
+        <div class="tip-box danger">
+          <div class="tip-label danger">💡 TIP</div>
+          <div class="tip-body danger">Agree on a weekly "tension check-in" with a fixed format — surface friction before it compounds.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:48px;padding:24px;background:#fff;border:1px solid #e2e8f0;border-radius:20px;text-align:center;">
+    <div style="font-size:10px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;">Does this look right?</div>
+    <div style="font-size:15px;font-weight:600;color:#0f172a;">Review all sections above and reply in the terminal — any changes you want before we write the spec?</div>
+  </div>
+
+</div>
+</body>
+</html>

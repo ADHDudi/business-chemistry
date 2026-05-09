@@ -60,11 +60,11 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
     if (mode === 'menu') {
         return (
             <div className="p-8 bg-white rounded-[2.5rem] shadow-2xl border-2 border-slate-50 text-center space-y-8 animate-in zoom-in-95 duration-500 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-40 h-40 bg-[#f3ecff] rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f3ecff] rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
 
                 <div className="relative z-10 space-y-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-[#324FA2] to-[#4a6dc9] text-white rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-blue-200 rotate-3">
+                    <div className="w-20 h-20 brand-gradient text-white rounded-3xl flex items-center justify-center mx-auto shadow-[0_6px_16px_rgba(140,80,240,0.20)] rotate-3">
                         <Users size={40} />
                     </div>
                     <div className="space-y-3">
@@ -76,7 +76,7 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
                 <div className="grid gap-4 relative z-10">
                     <button
                         onClick={() => setMode('start')}
-                        className="w-full py-5 bg-[#324FA2] text-white rounded-2xl font-black text-xl shadow-xl shadow-blue-900/20 hover:shadow-2xl hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-3"
+                        className="w-full py-5 btn-gradient text-white rounded-2xl font-black text-xl hover:shadow-2xl hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-3"
                     >
                         {t.start_btn}
                         {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
@@ -94,11 +94,11 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
 
     return (
         <div className="p-8 bg-white rounded-[2.5rem] shadow-2xl border-2 border-slate-50 animate-in slide-in-from-bottom-8 duration-500 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#324FA2] via-[#D9618E] to-[#E46B3F]" />
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#a014f0] via-[#5078ff] to-[#3cdcf0]" />
 
             <button
                 onClick={() => setMode('menu')}
-                className="text-xs font-black text-slate-400 mb-8 hover:text-[#324FA2] transition-colors flex items-center gap-1 uppercase tracking-widest"
+                className="text-xs font-black text-slate-400 mb-8 hover:text-[#8c50f0] transition-colors flex items-center gap-1 uppercase tracking-widest"
             >
                 {language === 'he' ? <ArrowRight size={14} /> : <ArrowLeft size={14} />} {t.back}
             </button>
@@ -118,7 +118,7 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
                     <input
                         type="text" required
                         value={name} onChange={e => setName(e.target.value)}
-                        className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#324FA2] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
+                        className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#8c50f0] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
                     />
                 </div>
 
@@ -128,7 +128,7 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
                         <input
                             type="email" required
                             value={email} onChange={e => setEmail(e.target.value)}
-                            className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#324FA2] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
+                            className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#8c50f0] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
                         />
                     </div>
                 )}
@@ -141,7 +141,7 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
                                 type="text" required maxLength={6}
                                 value={joinCode} onChange={e => setJoinCode(e.target.value)}
                                 placeholder="______"
-                                className="w-full p-6 bg-slate-50 rounded-3xl font-black text-4xl tracking-[0.5em] text-center uppercase text-[#324FA2] border-2 border-slate-200 focus:border-[#324FA2] focus:ring-4 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-200"
+                                className="w-full p-6 bg-slate-50 rounded-3xl font-black text-4xl tracking-[0.5em] text-center uppercase text-[#6a2dd0] border-2 border-slate-200 focus:border-[#8c50f0] focus:ring-4 focus:ring-purple-100 outline-none transition-all placeholder:text-slate-200"
                                 style={{ fontFamily: 'monospace' }}
                             />
                         </div>
@@ -151,10 +151,10 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
                 <button
                     type="submit"
                     disabled={isProcessing || (mode === 'join' ? !isJoinValid : !isStartValid)}
-                    className={`w-full py-5 mt-6 rounded-2xl font-black text-xl shadow-xl flex items-center justify-center gap-2 transition-all 
+                    className={`w-full py-5 mt-6 rounded-2xl font-black text-xl shadow-xl flex items-center justify-center gap-2 transition-all
                         ${(mode === 'join' ? !isJoinValid : !isStartValid)
                             ? 'bg-slate-100 text-slate-300 shadow-none cursor-not-allowed'
-                            : 'bg-gradient-to-r from-[#324FA2] to-[#4a6dc9] text-white shadow-blue-900/20 hover:shadow-2xl hover:brightness-110 active:scale-95'}`}
+                            : 'btn-gradient text-white hover:shadow-2xl hover:brightness-110 active:scale-95'}`}
                 >
                     {isProcessing ? <Loader2 className="animate-spin" /> : (
                         <>

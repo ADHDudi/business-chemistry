@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120">
+  <defs>
+    <style>
+      .powered-by-text {
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        fill: #64748b;
+        letter-spacing: 0.5px;
+      }
+      .brand-text {
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        font-size: 24px;
+        font-weight: 900;
+        fill: #8c50f0;
+        letter-spacing: -0.5px;
+      }
+      .url-text {
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        fill: #94a3b8;
+        letter-spacing: 0.3px;
+      }
+      .logo-box {
+        filter: drop-shadow(0 2px 4px rgba(140, 80, 240, 0.15));
+      }
+    </style>
+  </defs>
+
+  <!-- Logo Boxes (Just AI It brand colors) -->
+  <g class="logo-box">
+    <!-- Box 1: Deep Purple -->
+    <rect x="180" y="20" width="18" height="18" rx="3" fill="#a014f0"/>
+
+    <!-- Box 2: Brand Purple -->
+    <rect x="200" y="20" width="18" height="18" rx="3" fill="#8c50f0"/>
+
+    <!-- Box 3: Brand Blue -->
+    <rect x="220" y="20" width="18" height="18" rx="3" fill="#5078ff"/>
+
+    <!-- Box 4: Cyan -->
+    <rect x="240" y="20" width="18" height="18" rx="3" fill="#3cdcf0"/>
+  </g>
+
+  <!-- Text Elements -->
+  <text x="10" y="48" class="powered-by-text">Powered by:</text>
+
+  <text x="180" y="85" class="brand-text">Just AI It</text>
+
+  <text x="180" y="105" class="url-text">www.just-ai.it</text>
+</svg>

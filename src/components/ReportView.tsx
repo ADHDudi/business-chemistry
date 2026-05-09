@@ -289,7 +289,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       {isDudiMode && (
         <button
           onClick={() => setShowDebug(true)}
-          className="fixed bottom-6 right-6 z-[60] bg-[#E46B3F] text-white p-4 rounded-full shadow-2xl active:scale-95 ring-4 ring-white border border-orange-600 transition-transform hover:scale-110"
+          className="fixed bottom-6 right-6 z-[60] bg-[#8c50f0] text-white p-4 rounded-full shadow-2xl active:scale-95 ring-4 ring-white border border-[#6a2dd0] transition-transform hover:scale-110"
         >
           <Terminal size={24} />
         </button>
@@ -333,11 +333,11 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         {(['overview', 'ai', 'matrix'] as const).map(tab => (
           <button
             key={tab} onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-white ${colors.text} shadow-md` : 'text-slate-500'}`}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-[#8c50f0] text-white shadow-md` : 'text-slate-500'}`}
           >
-            {tab === 'overview' && <Info size={14} className={activeTab === tab ? colors.text : 'text-slate-500'} />}
-            {tab === 'ai' && <BrainCircuit size={14} className={activeTab === tab ? colors.text : 'text-slate-500'} />}
-            {tab === 'matrix' && <Grid size={14} className={activeTab === tab ? colors.text : 'text-slate-500'} />}
+            {tab === 'overview' && <Info size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
+            {tab === 'ai' && <BrainCircuit size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
+            {tab === 'matrix' && <Grid size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
             <span>{tabLabels[tab]}</span>
           </button>
         ))}
@@ -345,10 +345,12 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 
       {activeTab === 'overview' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
-          <div className={`bg-white rounded-[2.5rem] ${colors.glow} border-2 ${colors.border} overflow-hidden transition-all duration-700`}>
-            <div className={`p-4 bg-gradient-to-r ${colors.from} ${colors.to} text-white flex items-center justify-center gap-2`}>
-              <Info size={18} />
-              <h3 className="text-xs font-black uppercase tracking-widest">
+          <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
+            <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Info size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
                 {language === 'he' ? 'סיכום הפרופיל' : 'Profile Summary'}
               </h3>
             </div>
@@ -366,10 +368,12 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
           {/* Card 1: The Vibe Check (Profile) */}
           {aiInsight && (
-            <div className={`bg-white rounded-[2.5rem] shadow-xl border-2 ${colors.border} overflow-hidden`}>
-              <div className={`p-4 bg-gradient-to-r ${colors.from} ${colors.to} text-white flex items-center gap-2`}>
-                <Zap size={18} />
-                <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
+            <div className={`bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden`}>
+              <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
+                <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                  <Zap size={18} />
+                </div>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
               </div>
               <div className="p-6 text-center space-y-4">
                 <h2 className={`text-2xl font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</h2>
@@ -392,7 +396,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                   key={p}
                   onClick={() => setTargetProfile(p)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
-                    ? 'bg-slate-900 text-white shadow-md transform scale-105'
+                    ? 'btn-gradient text-white shadow-md transform scale-105'
                     : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                     }`}
                 >
@@ -418,7 +422,8 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           ) : aiInsight ? (
             <div className="space-y-6" data-testid="ai-loaded">
               {/* Card 2: The Game Plan (Interaction) */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden relative">
+                <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
                   <Target size={18} className="text-green-400" />
                   <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '2. תוכנית משחק' : '2. Game Plan'}</h3>
@@ -443,17 +448,19 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
               </div>
 
               {/* Card 3: Executive Function Tool */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-indigo-100 overflow-hidden relative">
-                <div className="p-4 bg-indigo-600 text-white flex items-center gap-2">
-                  <BrainCircuit size={18} className="text-indigo-200" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '3. כלי לניהול אימפולסיביות' : '3. ADHD Hack'}</h3>
+              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden relative">
+                <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                    <BrainCircuit size={18} />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '3. כלי לניהול אימפולסיביות' : '3. ADHD Hack'}</h3>
                 </div>
                 <div className="p-6 space-y-4">
-                  <h3 className="text-lg font-black text-indigo-900">{aiInsight.executive_function_tool.tool_name}</h3>
+                  <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
                   <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
 
                   {aiInsight.executive_function_tool.template_ready && (
-                    <button className="w-full py-3 bg-indigo-50 text-indigo-600 font-black rounded-xl text-sm hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+                    <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
                       <span>📝</span>
                       {language === 'he' ? 'פתח דף טיוטה (Parking Lot)' : 'Open Parking Lot Widget'}
                     </button>
@@ -515,10 +522,12 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 
       {activeTab === 'matrix' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
-          <div className={`bg-white rounded-[2.5rem] ${colors.glow} border-2 ${colors.border} overflow-hidden transition-all duration-700`}>
-            <div className={`p-4 bg-gradient-to-r ${colors.from} ${colors.to} text-white flex items-center justify-center gap-2`}>
-              <Grid size={18} />
-              <h3 className="text-xs font-black uppercase tracking-widest">{t.report.matrix_title}</h3>
+          <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
+            <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Grid size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.matrix_title}</h3>
             </div>
 
             <div className="p-5 aspect-square relative overflow-hidden">
@@ -570,7 +579,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                   {t.report.labels.passive}
                 </div>
                 <div
-                  className={`absolute w-10 h-10 rounded-full border-4 border-white shadow-2xl bg-gradient-to-br ${colors.from} ${colors.to} transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20 transition-all duration-1000 ease-out ring-4 ring-white/50`}
+                  className={`absolute w-10 h-10 rounded-full border-4 border-white shadow-2xl brand-gradient transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20 transition-all duration-1000 ease-out ring-4 ring-white/50`}
                   style={{ left: `${positionX}%`, top: `${positionY}%` }}
                 >
                   <Star size={16} className="text-white animate-pulse" fill="white" />
@@ -616,15 +625,16 @@ function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona
   const cta = t.report.cta;
   return (
     <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-8 shadow-2xl overflow-hidden relative border border-white/5">
+      <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
       <div className="space-y-4 relative z-10">
         <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 ${colors.accent}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 text-purple-300`}>
             <BrainCircuit size={12} /> ADHD Insight
           </span>
         </div>
 
         <div className="space-y-3">
-          <h3 className={`text-2xl font-black leading-tight ${colors.accent}`}>{cta.title}</h3>
+          <h3 className={`text-2xl font-black leading-tight text-purple-300`}>{cta.title}</h3>
 
           <p className="text-slate-300 text-sm font-medium leading-relaxed">
             {persona.communication_challenge[language]}
@@ -639,9 +649,9 @@ function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona
         </div>
       </div>
 
-      <div className={`bg-gradient-to-r ${colors.from}/20 to-transparent p-4 rounded-2xl border border-white/5 relative z-10`}>
+      <div className={`bg-[#8c50f0]/15 p-4 rounded-2xl border border-white/5 relative z-10`}>
         <p className="text-xs text-slate-200 font-bold flex gap-2">
-          <Sparkles size={16} className={`${colors.accent.replace('text-', 'fill-')} shrink-0`} /> {persona.consultation_benefit[language]}
+          <Sparkles size={16} className={`fill-purple-300 text-purple-300 shrink-0`} /> {persona.consultation_benefit[language]}
         </p>
       </div>
 
@@ -649,7 +659,7 @@ function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona
         <a
           href="https://app.magicalhq.com/dudi-adhdotech/_Mentoring_with_Dudido" target="_blank" rel="noopener noreferrer"
           onClick={() => onTrack('schedule')}
-          className={`w-full py-5 bg-gradient-to-r ${colors.from} ${colors.to} text-white rounded-2xl font-black text-xl text-center block shadow-lg ${colors.shadow} active:scale-95 transition-all duration-300 group`}
+          className={`w-full py-5 brand-gradient text-white rounded-2xl font-black text-xl text-center block shadow-[0_6px_16px_rgba(140,80,240,0.20)] active:scale-95 transition-all duration-300 group`}
         >
           <span className="group-hover:scale-105 inline-block transition-transform">{cta.btn}</span>
         </a>
