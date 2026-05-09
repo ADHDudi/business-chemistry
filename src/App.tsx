@@ -13,6 +13,10 @@ import SessionWizard from './components/SessionWizard';
 import SessionLobby from './components/SessionLobby';
 import ComparisonView from './components/ComparisonView';
 import LiveProgressBar from './components/LiveProgressBar';
+import Footer from './components/Footer';
+import TermsPage from './components/legal/TermsPage';
+import PrivacyPage from './components/legal/PrivacyPage';
+import AccessibilityPage from './components/legal/AccessibilityPage';
 import { useSession } from './hooks/useSession';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
@@ -94,6 +98,7 @@ const generateMockAnswers = (targetPersonaKey: string) => {
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('he');
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
   const [step, setStep] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [user, setUser] = useState<UserType>({ name: '', email: '' });
@@ -123,6 +128,12 @@ export default function App() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => setCurrentHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleGoogleLogin = async () => {
@@ -291,6 +302,10 @@ export default function App() {
 
   const currentTrait = traitsList[currentQuestionIndex];
   const isDudiMode = user.name.trim().toLowerCase().includes('dudi');
+
+  if (currentHash === '#terms') return <TermsPage language={language} />;
+  if (currentHash === '#privacy') return <PrivacyPage language={language} />;
+  if (currentHash === '#accessibility') return <AccessibilityPage language={language} />;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col no-select">
@@ -614,6 +629,7 @@ export default function App() {
         }
 
 
+        <Footer language={language} />
       </main>
     </div>
   );
