@@ -8,6 +8,18 @@ Welcome to the **Business Chemistry** app! This document guides you through runn
 
 ---
 
+## What's New
+
+### May 2026
+- **Just AI It Design System** — Full visual overhaul: violet→cyan brand gradient, Space Grotesk display font, Inter body font, JetBrains Mono for codes, icon-in-tile card headers, and brand shadow tokens applied throughout all components
+- **Legal Compliance Pages** — Three bilingual (Hebrew/English) legal pages added: Terms of Use, Privacy Policy, and Accessibility Statement — all accessible via footer links and hash-based routing (`#terms`, `#privacy`, `#accessibility`)
+- **Header Redesign** — Streamlined header with language toggle and session/auth controls only; clean, distraction-free navigation
+- **Bilingual RTL Support** — Full Hebrew (RTL) and English (LTR) support across all screens including legal pages, forms, and the report view
+- **Firebase Authentication** — Google OAuth sign-in integrated; users can sign in with Google to access the assessment
+- **Session/Live Mode** — Real-time multiplayer assessment sessions using Firebase Realtime Database, with live progress sync and shared results
+
+---
+
 ## Run Locally
 
 **Prerequisites:** Node.js
@@ -98,32 +110,44 @@ By completing the journey, the user walks away with several high-value, personal
 
 ## 4. Design System & Brand
 
-The Business Chemistry application implements the **Just AI It Design System**, a unified brand and visual language:
+The Business Chemistry application implements the **Just AI It Design System** — a unified visual language applied through CSS tokens and Tailwind utility classes. The system is purely visual (no logo appears in navigation); all brand tokens live in `src/index.css` and are applied via Tailwind classes throughout the app.
 
 ### Brand Colors
-- **Violet (#8c50f0):** Primary brand color, used for CTAs, active states, and accents
-- **Deep Purple (#6a2dd0):** Secondary brand color for text and strong emphasis
-- **Cyan (#3cdcf0):** Accent color for gradients and highlights
-- **Soft Background (#f3ecff):** Light purple tint for pill backgrounds and cards
-- **Brand Gradient:** `linear-gradient(135deg, #a014f0 0%, #8c50f0 28%, #5078ff 58%, #3cdcf0 100%)` — Applied to buttons, icons, and visual separators
+| Token | Value | Usage |
+|-------|-------|-------|
+| Violet | `#8c50f0` | CTAs, active states, icons, focus rings |
+| Deep Purple | `#6a2dd0` | Strong text on soft backgrounds, session codes |
+| Cyan | `#3cdcf0` | Gradient endpoint, highlights |
+| Soft Background | `#f3ecff` | Pill/chip backgrounds, card tints |
+| Soft Border | `#e4d7ff` | Pill/chip borders, code box borders |
+| Brand Gradient | `linear-gradient(135deg, #a014f0 → #8c50f0 → #5078ff → #3cdcf0)` | Buttons, progress bars, icon badges, visual separators |
 
 ### Typography
-- **Display Font:** Space Grotesk 700 — Bold, modern headline typography
-- **Body Font:** Inter — Clean, accessible UI text
-- **Monospace Font:** JetBrains Mono — Code, session codes, and technical text
+| Font | Weight | Usage |
+|------|--------|-------|
+| Space Grotesk | 700 | Display headings, welcome title |
+| Inter | 300–900 | All UI body text |
+| JetBrains Mono | 400, 700 | Session codes, monospace elements |
+
+### CSS Utility Classes (`src/index.css`)
+- `.brand-gradient` — Applies the full violet→cyan gradient as background
+- `.gradient-text` — Applies gradient as clipped text fill (welcome heading)
+- `.btn-gradient` — Gradient button with brand shadow and active scale
+- `.btn-score-active` — Score picker active state with gradient background
+- `.eyebrow` — 10px uppercase label with wide letter-spacing
 
 ### Components
-- **Card Styling:** Rounded corners (28px), subtle shadows, clean white backgrounds
-- **Icon-in-Tile Pattern:** Section headers feature white background icons with purple text on light purple tiles
-- **Button Styling:** Gradient backgrounds (.btn-gradient class), rounded corners, active state feedback
-- **Form Inputs:** Rounded corners, purple focus states, clear error messaging
-- **Progress Indicators:** Brand gradient bars with smooth animations
+- **Card Styling:** `rounded-[1.75rem]` (28px) radius, `shadow-[0_8px_24px_rgba(15,23,42,0.08)]`
+- **Icon-in-Tile Pattern:** Section headers use a white `rounded-xl` tile with colored icon — replaces old solid-color headers
+- **Header:** Sticky, blurred white — language toggle on one side, session/auth controls on the other. Clean and controls-only (no logo in navigation)
+- **Progress Bars:** Brand gradient (`from-[#a014f0] via-[#5078ff] to-[#3cdcf0]`) with smooth CSS transitions
+- **Score Picker:** 6-step slider buttons using `.btn-score-active` for the selected value
 
 ### Responsive Design
-- Fully responsive layouts optimized for mobile, tablet, and desktop
-- Mobile-first approach with clear breakpoints
-- RTL (right-to-left) support for Hebrew language
-- Accessible focus indicators and keyboard navigation
+- Mobile-first approach; all views work on screens from 320px wide
+- RTL (`dir="rtl"`) applied on `<html>` when language is Hebrew
+- Accessible focus indicators on all interactive elements
+- Keyboard navigation supported throughout
 
 ---
 
