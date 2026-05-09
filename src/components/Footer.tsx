@@ -28,11 +28,13 @@ export default function Footer({ language }: { language: Language }) {
       <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center">
         <div className="flex items-center gap-2 flex-col sm:flex-row">
           <span className="text-[11px] text-slate-400 font-bold">{t.poweredBy}:</span>
-          <img
-            src="/justaiit-logo.svg"
-            alt="Just AI It"
-            className="h-4"
-          />
+          <a href="https://justaiit.web.app/#app=business-chemistry">
+            <img
+              src="/justaiit-logo.svg"
+              alt="Just AI It"
+              className="h-4"
+            />
+          </a>
         </div>
         <nav className="flex gap-5 text-[11px]">
           <a href="#terms" className="text-slate-400 hover:text-[#8c50f0] font-bold transition-colors">
