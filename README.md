@@ -2,15 +2,17 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Business Chemistry
+# Bond
+**Workplace Communication OS**
 
-Welcome to the **Business Chemistry** app! This document guides you through running the project locally, and breaks down the project from three key angles: the core business value, the end-to-end user journey, and the concrete outputs users receive.
+Welcome to **Bond** — a workplace communication tool that helps coworkers and teams understand each other better. This document guides you through running the project locally, and breaks down the project from three key angles: the core business value, the end-to-end user journey, and the concrete outputs users receive.
 
 ---
 
 ## What's New
 
 ### May 2026
+- **Rebranded to Bond** — the app is now "Bond" with the tagline "Workplace Communication OS". The methodology (4 personas on the Formal/Dominant axes) is unchanged; only the product surface and brand identity have evolved. New speech-bubbles icon + violet→cyan gradient.
 - **Just AI It Design System** — Full visual overhaul: violet→cyan brand gradient, Space Grotesk display font, Inter body font, JetBrains Mono for codes, icon-in-tile card headers, and brand shadow tokens applied throughout all components
 - **Legal Compliance Pages** — Three bilingual (Hebrew/English) legal pages added: Terms of Use, Privacy Policy, and Accessibility Statement — all accessible via footer links and hash-based routing (`#terms`, `#privacy`, `#accessibility`)
 - **Header Redesign** — Streamlined header with language toggle and session/auth controls only; clean, distraction-free navigation
@@ -37,7 +39,7 @@ Welcome to the **Business Chemistry** app! This document guides you through runn
 
 ### Deployed Application
 
-View the live application on Firebase Hosting: **[Business Chemistry App](https://business-chemistry.web.app/)**
+View the live application on Firebase Hosting: **[Bond](https://business-chemistry.web.app/)**
 
 ### Environment Configuration
 
@@ -50,12 +52,18 @@ Required environment variables (in `.env.local`):
 
 ## 1. Business Value Perspective
 
-The Business Chemistry application is designed as a deep psychological assessment and team-building tool specifically tailored for startups, co-founders, and modern working environments. Its primary business value includes:
+Bond is a workplace communication tool designed to improve how coworkers and teams understand and work with each other. Its primary business value includes:
+
+Communication persona analysis - analysis the user and determine his dominate persona as Pioneer, Driver, Guardian, or Integrator
 
 * **Team Alignment & Conflict Prevention:** By assessing individuals along two primary axes (Formal vs. Dominant), the app identifies potential behavioral clashes (e.g., a "Pioneer" clashing with a "Guardian") before they derail critical projects.
-* **Specialized ADHD Awareness:** Unlike generic personality tests, this product includes a specific focus on neurodiversity. It reframes ADHD traits—turning "low formality" into an "Innovation Engine"—and gives users concrete executive functioning hacks, acknowledging how modern neurodivergent founders operate.
+
 * **Actionable ROI through AI Coaching:** Rather than leaving users with a static result, the app uses Google's Gemini AI to act as an on-demand organizational psychologist. It generates targeted script strategies ("Strategy Cards") to help users communicate effectively with their polar opposites in high-stress business scenarios.
-* **Co-Founder Compatibility Verification:** For investors or accelerators, understanding shared risk parameters and friction points between co-founders is crucial. The app automatically calculates synergy and friction, providing structural de-risking for new ventures.
+
+The analysis and recommendation are based on the :
+1- Thomas Erickson - "surrounded by idiot" best seller   - https://www.surroundedbyidiots.com/en/books/surrounded-by-idiots/
+2- Deloitte's research methodology — https://www.deloitte.com/us/en/services/consulting/services/business-chemistry.html
+
 
 ---
 
@@ -63,9 +71,8 @@ The Business Chemistry application is designed as a deep psychological assessmen
 
 The application flows through a seamless, interactive sequence:
 
-1. **Onboarding & Session Creation:**
-   * The user arrives at the platform in their preferred language (Hebrew or English), enters their name and email, and either starts a solo assessment or creates a shared "Session Lobby" to invite a co-founder/partner using a generated Session code.
-   * In **Live Mode**, users can create a session and invite partners via a unique 6-character code, with real-time progress synchronization.
+1. **Onboarding 
+   * The user arrives at the platform in their preferred language (Hebrew or English), login using gmail account or email+password , and starts a solo assessment 
 2. **The Assessment Wizard:**
    * The user is guided through an interactive, multi-step questionnaire (typically ~35 questions). 
    * The UI limits distractions and uses a "Live Progress Bar" to keep engagement high until the assessment is finished. In Live Mode, both participants see each other's progress in real-time.
@@ -83,7 +90,6 @@ The application flows through a seamless, interactive sequence:
 
 ### Live Mode Features
 
-* **Session Codes:** 6-character unique codes enable co-founders/partners to join a shared assessment session
 * **Real-Time Sync:** Live progress bars show both participants' assessment completion in real-time
 * **Multiplayer Insights:** AI generates interaction guides tailored to both profiles' dynamics
 * **Data Persistence:** Session data is stored in Firebase Realtime Database for reliability
@@ -94,11 +100,10 @@ The application flows through a seamless, interactive sequence:
 
 By completing the journey, the user walks away with several high-value, personalized artifacts:
 
-* **The Business Chemistry Profile:** A visual assessment of their working style, mapped against the Formal/Dominant spectrum.
+* **The Bond Profile:** A visual assessment of their working style, mapped against the Formal/Dominant spectrum.
 * **AI Coaching Briefs:**
   * **"The Why":** A psychological breakdown of how their specific scores manifest in their day-to-day behavior.
   * **"Working with Others" Profiles:** Specific interaction guides detailing how to talk to other chemistry types without causing friction.
-  * **ADHD Executive Function Hacks:** A specific, tailored tool (like a "Parking Lot" technique) designed to manage impulsivity and leverage neurodivergent strengths.
 * **Strategy Cards:** Specific scripts and actionable steps for handling workplace conflict (e.g., exactly what a Pioneer should say to soothe a Driver).
 * **Compatibility Matrix Document (For Teams):**
   * A definitive combined score (0-100%).
@@ -110,7 +115,7 @@ By completing the journey, the user walks away with several high-value, personal
 
 ## 4. Design System & Brand
 
-The Business Chemistry application implements the **Just AI It Design System** — a unified visual language applied through CSS tokens and Tailwind utility classes. The system is purely visual (no logo appears in navigation); all brand tokens live in `src/index.css` and are applied via Tailwind classes throughout the app.
+Bond implements the **Just AI It Design System** — a unified visual language applied through CSS tokens and Tailwind utility classes. The system is purely visual (no logo appears in navigation); all brand tokens live in `src/index.css` and are applied via Tailwind classes throughout the app.
 
 ### Brand Colors
 | Token | Value | Usage |
