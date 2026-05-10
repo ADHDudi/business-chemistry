@@ -1,11 +1,12 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { defineString } = require("firebase-functions/params");
 const { GoogleGenAI } = require("@google/genai");
 
-const GEMINI_API_KEY = defineString("GEMINI_API_KEY");
-
 exports.generateAIInsights = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new HttpsError('internal', 'Gemini API key not configured');
+    }
+    const genAI = new GoogleGenAI({ apiKey });
     const { persona, results, lang, refinementComment, targetProfile } = request.data;
 
     if (!persona || !results || !lang) {
@@ -107,7 +108,11 @@ exports.generateAIInsights = onCall(async (request) => {
 });
 
 exports.generateCompatibilityAnalysis = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new HttpsError('internal', 'Gemini API key not configured');
+    }
+    const genAI = new GoogleGenAI({ apiKey });
     const { userA, userB, lang } = request.data;
 
     if (!userA || !userB || !lang) {
