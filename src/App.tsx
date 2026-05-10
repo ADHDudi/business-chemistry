@@ -369,6 +369,14 @@ export default function App() {
 
             <div className="text-center space-y-4 mt-8 mb-6">
               <>
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 rounded-[20%] bg-gradient-to-br from-[#a014f0] via-[#5078ff] to-[#3cdcf0] shadow-[0_6px_16px_rgba(140,80,240,0.20)] flex items-center justify-center">
+                    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M 6 13 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.18)" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+                      <path d="M 16 21 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.28)" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
                 <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-[#8c50f0]">
                   Workplace Communication OS
                 </p>
