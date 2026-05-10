@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { GoogleGenAI } = require("@google/genai");
 
-exports.generateAIInsights = onCall(async (request) => {
+exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (request) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         throw new HttpsError('internal', 'Gemini API key not configured');
@@ -107,7 +107,7 @@ exports.generateAIInsights = onCall(async (request) => {
     }
 });
 
-exports.generateCompatibilityAnalysis = onCall(async (request) => {
+exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, async (request) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         throw new HttpsError('internal', 'Gemini API key not configured');
