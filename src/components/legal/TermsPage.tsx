@@ -16,7 +16,7 @@ export default function TermsPage({ language }: LegalPageProps) {
           title: 'מבוא',
           body: (
             <p>
-              פלטפורמת Business Chemistry (להלן: "הפלטפורמה") מופעלת על ידי Just AI It (דוד צור).
+              פלטפורמת Bond (להלן: "הפלטפורמה") מופעלת על ידי Just AI It (דוד צור).
               השימוש בפלטפורמה מהווה הסכמה לתנאי שימוש אלו. אם אינך מסכים לתנאים, אנא הפסק את
               השימוש בפלטפורמה.
             </p>
@@ -27,7 +27,7 @@ export default function TermsPage({ language }: LegalPageProps) {
           title: 'הגדרות',
           body: (
             <ul className="list-disc list-inside space-y-1 text-sm text-slate-600">
-              <li>"פלטפורמה" — אתר Business Chemistry וכל שירותיו.</li>
+              <li>"פלטפורמה" — אתר Bond וכל שירותיו.</li>
               <li>"משתמש" — כל אדם המשתמש בפלטפורמה.</li>
               <li>"הערכה" — שאלון 35 השאלות ותוצאותיו.</li>
               <li>
@@ -141,7 +141,7 @@ export default function TermsPage({ language }: LegalPageProps) {
           title: 'Introduction',
           body: (
             <p>
-              The Business Chemistry platform (the "Platform") is operated by Just AI It (David
+              The Bond platform (the "Platform") is operated by Just AI It (David
               Tsur). Using the Platform constitutes acceptance of these Terms of Use. If you do not
               agree, please stop using the Platform.
             </p>
@@ -152,7 +152,7 @@ export default function TermsPage({ language }: LegalPageProps) {
           title: 'Definitions',
           body: (
             <ul className="list-disc list-inside space-y-1 text-sm text-slate-600">
-              <li>"Platform" — the Business Chemistry website and all its services.</li>
+              <li>"Platform" — the Bond website and all its services.</li>
               <li>"User" — any person using the Platform.</li>
               <li>"Assessment" — the 35-question quiz and its results.</li>
               <li>

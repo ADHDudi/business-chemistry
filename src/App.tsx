@@ -310,11 +310,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col no-select">
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex flex-col items-start">
-          <Logo size="sm" onClick={onLogoClick} />
-          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mt-0.5">by Just AI It</span>
-        </div>
-
         <button
           onClick={() => setLanguage(l => l === 'he' ? 'en' : 'he')}
           className="flex items-center gap-1.5 text-xs font-black px-3 py-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors"
@@ -374,6 +369,17 @@ export default function App() {
 
             <div className="text-center space-y-4 mt-8 mb-6">
               <>
+                <div className="flex justify-center mb-4">
+                  <div className="w-20 h-20 rounded-[20%] bg-gradient-to-br from-[#a014f0] via-[#5078ff] to-[#3cdcf0] shadow-[0_6px_16px_rgba(140,80,240,0.20)] flex items-center justify-center">
+                    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M 6 13 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.18)" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+                      <path d="M 16 21 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.28)" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-[#8c50f0]">
+                  Workplace Communication OS
+                </p>
                 <h1 className="text-5xl font-black leading-[0.9] gradient-text tracking-tight">{t.welcome_title}</h1>
                 <p className="text-xl text-slate-600 font-bold leading-relaxed">{t.welcome_subtitle}</p>
               </>

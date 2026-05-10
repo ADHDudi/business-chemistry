@@ -580,7 +580,7 @@ async function runFullFlowTest(browser) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function runAllTests() {
-    console.log(`\n🚀 Business Chemistry — Acceptance Test Suite`);
+    console.log(`\n🚀 Bond — Acceptance Test Suite`);
     console.log(`   Target: ${BASE_URL}`);
     console.log(`   Started: ${new Date().toLocaleString()}\n`);
 

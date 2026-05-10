@@ -1,0 +1,13 @@
+<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bondGradient" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a014f0"/>
+      <stop offset="28%" stop-color="#8c50f0"/>
+      <stop offset="58%" stop-color="#5078ff"/>
+      <stop offset="100%" stop-color="#3cdcf0"/>
+    </linearGradient>
+  </defs>
+  <rect width="44" height="44" rx="11" fill="url(#bondGradient)"/>
+  <path d="M 6 13 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M 16 21 a5 5 0 0 1 5 -5 h12 a5 5 0 0 1 5 5 v6 a5 5 0 0 1 -5 5 h-9 l-4 4 v-4 a5 5 0 0 1 -4 -5 z" fill="rgba(255,255,255,0.28)" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>
