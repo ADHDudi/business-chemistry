@@ -369,6 +369,9 @@ export default function App() {
 
             <div className="text-center space-y-4 mt-8 mb-6">
               <>
+                <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-[#8c50f0]">
+                  Workplace Communication OS
+                </p>
                 <h1 className="text-5xl font-black leading-[0.9] gradient-text tracking-tight">{t.welcome_title}</h1>
                 <p className="text-xl text-slate-600 font-bold leading-relaxed">{t.welcome_subtitle}</p>
               </>
