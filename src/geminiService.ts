@@ -19,24 +19,13 @@ export const getAIInsights = async (
       targetProfile
     });
 
-    const data = response.data as { text: string };
-    if (!data || !data.text) {
-        throw new Error("No text returned from Cloud Function.");
+    const data = response.data as AICommunicationCoach;
+    if (!data || !data.user_profile) {
+      throw new Error("Invalid response structure from AI.");
     }
-
-    try {
-        const cleanText = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const json = JSON.parse(cleanText);
-        return json as AICommunicationCoach;
-    } catch (parseError) {
-        console.error("Failed to parse AI response JSON:", parseError);
-        console.log("Raw AI Response:", data.text);
-        throw new Error("Invalid response format from AI.");
-    }
+    return data;
   } catch (error: any) {
     console.error("Firebase Cloud Function Error:", error);
-    
-    // Pass the actual error string to the UI so it shows in red
     const errorMessage = error.message || "Failed to generate AI insights";
     throw new Error(`AI Request Failed: ${errorMessage}`);
   }
