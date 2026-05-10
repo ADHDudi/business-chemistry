@@ -1,0 +1,62 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - button "עברית" [active] [ref=e85] [cursor=pointer]:
+      - img [ref=e6]
+      - text: עברית
+    - button "Live Mode" [ref=e86] [cursor=pointer]:
+      - img [ref=e10]
+      - text: Live Mode
+  - main [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - img [ref=e20]
+        - paragraph [ref=e23]: Workplace Communication OS
+        - heading "Bond" [level=1] [ref=e24]
+        - paragraph [ref=e25]: A short assessment to transform how you work and communicate.
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - img [ref=e29]
+          - generic [ref=e31]:
+            - heading "Feel Like You're Speaking a Different Language?" [level=4] [ref=e87]
+            - paragraph [ref=e33]: Communication gaps within the team create tension, misunderstandings, and constant frustration.
+        - generic [ref=e34]:
+          - img [ref=e36]
+          - generic [ref=e39]:
+            - heading "It's Costing You More Than You Think" [level=4] [ref=e88]
+            - paragraph [ref=e41]: Wasted time on needless 'ping-pong', emotional burnout, and missing out on significant business opportunities.
+        - generic [ref=e42]:
+          - img [ref=e44]
+          - generic [ref=e48]:
+            - heading "The Bond Method" [level=4] [ref=e89]
+            - paragraph [ref=e50]: "A research-based model identifying 4 behavioral patterns: Pioneers, Drivers, Guardians, and Integrators."
+        - generic [ref=e51]:
+          - img [ref=e53]
+          - generic [ref=e57]:
+            - heading "Your Motto & Value (WIIFM)" [level=4] [ref=e90]
+            - paragraph [ref=e59]: Discover what truly drives you and get a personalized strategies report tailored for ADHD communication.
+      - generic [ref=e60]:
+        - button "Google Sign in with Google" [ref=e62] [cursor=pointer]:
+          - img "Google" [ref=e63]
+          - text: Sign in with Google
+        - generic [ref=e66]: OR
+        - generic [ref=e67]:
+          - textbox "Email address" [ref=e68]
+          - textbox "Password" [ref=e69]
+        - button "Forgot Password?" [ref=e71] [cursor=pointer]
+        - button "Sign In" [ref=e72] [cursor=pointer]
+        - generic [ref=e73]:
+          - text: Don't have an account?
+          - button "Sign up" [ref=e74] [cursor=pointer]
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - generic [ref=e78]: "Powered by:"
+        - link "Just AI It" [ref=e79] [cursor=pointer]:
+          - /url: https://justaiit.web.app/#app=business-chemistry
+          - img "Just AI It" [ref=e80]
+      - navigation [ref=e81]:
+        - link "Terms of Use" [ref=e91] [cursor=pointer]:
+          - /url: "#terms"
+        - link "Privacy Policy" [ref=e92] [cursor=pointer]:
+          - /url: "#privacy"
+        - link "Accessibility" [ref=e93] [cursor=pointer]:
+          - /url: "#accessibility"

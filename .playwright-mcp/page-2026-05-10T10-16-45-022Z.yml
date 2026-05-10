@@ -1,0 +1,51 @@
+- generic [ref=e4]:
+  - link "← חזרה לאפליקציה" [ref=e5] [cursor=pointer]:
+    - /url: /
+  - generic [ref=e6]:
+    - heading "הצהרת נגישות" [level=1] [ref=e7]
+    - paragraph [ref=e8]: "עודכן לאחרונה: מאי 2025"
+  - generic [ref=e9]:
+    - heading "מחויבות לנגישות" [level=2] [ref=e10]
+    - paragraph [ref=e12]: פלטפורמת Bond מחויבת לספק שירות נגיש לכלל המשתמשים, לרבות אנשים עם מוגבלויות. הפלטפורמה שואפת לעמוד בדרישות תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות) תשע"ג-2013, תקנה 35, ובתקן הישראלי IS 5568 ברמת AA (המקביל ל-WCAG 2.1 AA). הצהרה זו עודכנה בפעם האחרונה במאי 2025.
+  - generic [ref=e13]:
+    - heading "התאמות נגישות שבוצעו" [level=2] [ref=e14]
+    - list [ref=e16]:
+      - listitem [ref=e17]: תמיכה מלאה בכיוון טקסט מימין לשמאל (RTL) לעברית
+      - listitem [ref=e18]: פריסה רספונסיבית המותאמת לכל מסך, כולל נייד
+      - listitem [ref=e19]: גופן Inter — קריא וברור, מתרחב בהתאם להגדרות המשתמש
+      - listitem [ref=e20]: "ניווט באמצעות מקלדת: כפתורים ושדות טופס נגישים ב-Tab"
+      - listitem [ref=e21]: "אלמנטים סמנטיים: header, main, button, form, label, input"
+      - listitem [ref=e22]: שדות טופס עם תוויות (labels) מזוהות
+      - listitem [ref=e23]: "ניגודיות צבעים: טקסט כהה על רקע בהיר בהתאם לדרישות AA"
+      - listitem [ref=e24]: אינדיקטורי פוקוס גלויים על אלמנטים אינטראקטיביים
+      - listitem [ref=e25]: ללא אודיו או וידאו המופעל אוטומטית
+      - listitem [ref=e26]: מתג שפה נגיש (עברית / אנגלית)
+  - generic [ref=e27]:
+    - heading "מגבלות ידועות" [level=2] [ref=e28]
+    - generic [ref=e29]:
+      - paragraph [ref=e30]: "נכון למאי 2025, הפלטפורמה אינה מיישמת באופן מלא את הפריטים הבאים — אנו עובדים על שיפורם:"
+      - list [ref=e31]:
+        - listitem [ref=e32]: אזורי ARIA live לעדכונים דינמיים
+        - listitem [ref=e33]: קישור "דלג לתוכן" בראש הדף
+        - listitem [ref=e34]: תיאורי ARIA מלאים לסקציות תוכן שנוצרות על ידי בינה מלאכותית
+        - listitem [ref=e35]: בדיקות עם טכנולוגיות מסייעות (NVDA, VoiceOver) — בתהליך
+  - generic [ref=e36]:
+    - heading "תקנים וכלי בדיקה" [level=2] [ref=e37]
+    - list [ref=e39]:
+      - listitem [ref=e40]: "יעד הנגישות: תקן ישראלי IS 5568 רמת AA (WCAG 2.1 AA)"
+      - listitem [ref=e41]: הבדיקה בוצעה ידנית על Chrome ו-Safari (מחשב ונייד)
+      - listitem [ref=e42]: "טכנולוגיות מסייעות: בדיקה עם VoiceOver (macOS/iOS) — חלקית"
+      - listitem [ref=e43]: "כלי אוטומטיים: Lighthouse"
+  - generic [ref=e44]:
+    - heading "רכז נגישות ויצירת קשר" [level=2] [ref=e45]
+    - generic [ref=e46]:
+      - paragraph [ref=e47]: "לדיווח על בעיות נגישות, בקשת התאמות, או שאלות — פנו לרכז הנגישות:"
+      - list [ref=e48]:
+        - listitem [ref=e49]: "שם: דוד צור"
+        - listitem [ref=e50]: "תפקיד: רכז נגישות, Just AI It"
+        - listitem [ref=e51]:
+          - text: "אימייל:"
+          - link "tsur.david@gmail.com" [ref=e52] [cursor=pointer]:
+            - /url: mailto:tsur.david@gmail.com
+        - listitem [ref=e53]: "זמן תגובה: נשתדל לאשר קבלת הפנייה תוך 7 ימי עסקים ולטפל בה תוך 60 יום."
+      - paragraph [ref=e54]: פנייה שתועבר לרכז הנגישות תיבדק ויינתן מענה בהקדם האפשרי, לרבות חלופות נגישות זמניות במידת הצורך.

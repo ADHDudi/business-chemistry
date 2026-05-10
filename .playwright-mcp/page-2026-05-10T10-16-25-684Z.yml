@@ -1,0 +1,47 @@
+- generic [ref=e90]:
+  - link "← Back to App" [ref=e91] [cursor=pointer]:
+    - /url: /
+  - generic [ref=e92]:
+    - heading "Terms of Use" [level=1] [ref=e93]
+    - paragraph [ref=e94]: "Last updated: May 2025"
+  - generic [ref=e95]:
+    - heading "Introduction" [level=2] [ref=e96]
+    - paragraph [ref=e98]: The Bond platform (the "Platform") is operated by Just AI It (David Tsur). Using the Platform constitutes acceptance of these Terms of Use. If you do not agree, please stop using the Platform.
+  - generic [ref=e99]:
+    - heading "Definitions" [level=2] [ref=e100]
+    - list [ref=e102]:
+      - listitem [ref=e103]: "\"Platform\" — the Bond website and all its services."
+      - listitem [ref=e104]: "\"User\" — any person using the Platform."
+      - listitem [ref=e105]: "\"Assessment\" — the 35-question quiz and its results."
+      - listitem [ref=e106]: "\"Persona\" — one of 4 business behaviour styles: Pioneer, Driver, Integrator, Guardian."
+  - generic [ref=e107]:
+    - heading "Registration & Use" [level=2] [ref=e108]
+    - paragraph [ref=e110]: "The User confirms that information provided (name, email) is accurate. Use of the Platform is permitted for personal and professional purposes only. Prohibited: unlawful use, distributing Platform content without permission, or scraping data from the Platform."
+  - generic [ref=e111]:
+    - generic [ref=e112]:
+      - img [ref=e113]
+      - heading "Content Disclaimer" [level=2] [ref=e115]
+    - paragraph [ref=e117]:
+      - strong [ref=e118]: "Important:"
+      - text: Assessment results are provided for general information purposes only. They do not constitute a psychological diagnosis, professional advice, a recommendation for business decisions, or a substitute for professional treatment. Just AI It is not responsible for decisions made based on results. Results may change over time and are non-binding.
+  - generic [ref=e119]:
+    - heading "Intellectual Property" [level=2] [ref=e120]
+    - paragraph [ref=e122]: All Platform content — questions, algorithms, text, design, and logos — is the property of Just AI It or licensed to it. Copying, distributing, or making commercial use of the content without explicit written permission is prohibited.
+  - generic [ref=e123]:
+    - heading "Privacy" [level=2] [ref=e124]
+    - paragraph [ref=e126]: The collection and processing of personal data is described in our Privacy Policy. By using the Platform, the User also agrees to the Privacy Policy.
+  - generic [ref=e127]:
+    - heading "Limitation of Liability" [level=2] [ref=e128]
+    - paragraph [ref=e130]: The Platform is provided "as is". Just AI It makes no warranties as to the accuracy, completeness, or fitness for a particular purpose of its content. The company shall not be liable for direct, indirect, or consequential damages arising from use of the Platform. As the service is free, the company's maximum liability is zero.
+  - generic [ref=e131]:
+    - heading "Modifications" [level=2] [ref=e132]
+    - paragraph [ref=e134]: Just AI It reserves the right to modify these terms at any time. Material changes will be published on the Platform. Continued use after publication of changes constitutes acceptance of them.
+  - generic [ref=e135]:
+    - heading "Governing Law" [level=2] [ref=e136]
+    - paragraph [ref=e138]: These terms are governed by the laws of the State of Israel. Exclusive jurisdiction for any dispute shall be vested in the competent courts of Tel Aviv-Jaffa.
+  - generic [ref=e139]:
+    - heading "Contact" [level=2] [ref=e140]
+    - paragraph [ref=e142]:
+      - text: "For questions regarding these Terms of Use, contact us:"
+      - link "tsur.david@gmail.com" [ref=e143] [cursor=pointer]:
+        - /url: mailto:tsur.david@gmail.com

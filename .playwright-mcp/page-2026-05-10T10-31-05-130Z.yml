@@ -1,0 +1,62 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - button "ENGLISH" [ref=e5] [cursor=pointer]:
+      - img [ref=e6]
+      - text: ENGLISH
+    - button "מצב Live" [ref=e9] [cursor=pointer]:
+      - img [ref=e10]
+      - text: מצב Live
+  - main [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - img [ref=e20]
+        - paragraph [ref=e23]: Workplace Communication OS
+        - heading "Bond" [level=1] [ref=e24]
+        - paragraph [ref=e25]: אבחון קצר שישנה את הדרך בה אתם עובדים ומתקשרים.
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - img [ref=e29]
+          - generic [ref=e31]:
+            - heading "מרגישים שאתם מדברים בשפה אחרת?" [level=4] [ref=e32]
+            - paragraph [ref=e33]: קצרים בתקשורת בתוך הצוות יוצרים מתח, אי-הבנות ותחושת תסכול מתמדת.
+        - generic [ref=e34]:
+          - img [ref=e36]
+          - generic [ref=e39]:
+            - heading "זה עולה לכם ביוקר" [level=4] [ref=e40]
+            - paragraph [ref=e41]: איבוד זמן יקר על 'פינג-פונג' מיותר, שחיקה רגשית ופספוס של הזדמנויות עסקיות משמעותיות.
+        - generic [ref=e42]:
+          - img [ref=e44]
+          - generic [ref=e48]:
+            - heading "השיטה של Bond" [level=4] [ref=e49]
+            - paragraph [ref=e50]: "מודל מחקרי המזהה 4 דפוסי התנהגות: מקדמים, משימתיים, מנתחים ותומכים."
+        - generic [ref=e51]:
+          - img [ref=e53]
+          - generic [ref=e57]:
+            - heading "המוטו והערך שלכם" [level=4] [ref=e58]
+            - paragraph [ref=e59]: גלו מה מניע אתכם באמת וקבלו דוח אסטרטגיות מותאם אישית (WIIFM) לניהול תקשורת עם ADHD.
+      - generic [ref=e60]:
+        - button "Google Sign in with Google" [ref=e62] [cursor=pointer]:
+          - img "Google" [ref=e63]
+          - text: Sign in with Google
+        - generic [ref=e66]: OR
+        - generic [ref=e67]:
+          - textbox "Email address" [ref=e68]
+          - textbox "Password" [ref=e69]
+        - button "Forgot Password?" [ref=e71] [cursor=pointer]
+        - button "Sign In" [ref=e72] [cursor=pointer]
+        - generic [ref=e73]:
+          - text: Don't have an account?
+          - button "Sign up" [ref=e74] [cursor=pointer]
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - generic [ref=e78]: "מופעל על ידי:"
+        - link "Just AI It" [ref=e79] [cursor=pointer]:
+          - /url: https://justaiit.web.app/#app=business-chemistry
+          - img "Just AI It" [ref=e80]
+      - navigation [ref=e81]:
+        - link "תנאי שימוש" [ref=e82] [cursor=pointer]:
+          - /url: "#terms"
+        - link "מדיניות פרטיות" [ref=e83] [cursor=pointer]:
+          - /url: "#privacy"
+        - link "הצהרת נגישות" [ref=e84] [cursor=pointer]:
+          - /url: "#accessibility"
