@@ -16,7 +16,7 @@ export default function AccessibilityPage({ language }: LegalPageProps) {
           coordinator: false,
           body: (
             <p>
-              פלטפורמת Business Chemistry מחויבת לספק שירות נגיש לכלל המשתמשים, לרבות אנשים עם
+              פלטפורמת Bond מחויבת לספק שירות נגיש לכלל המשתמשים, לרבות אנשים עם
               מוגבלויות. הפלטפורמה שואפת לעמוד בדרישות תקנות שוויון זכויות לאנשים עם מוגבלות
               (התאמות נגישות לשירות) תשע"ג-2013, תקנה 35, ובתקן הישראלי IS 5568 ברמת AA (המקביל
               ל-WCAG 2.1 AA). הצהרה זו עודכנה בפעם האחרונה במאי 2025.
@@ -116,7 +116,7 @@ export default function AccessibilityPage({ language }: LegalPageProps) {
           coordinator: false,
           body: (
             <p>
-              The Business Chemistry platform is committed to providing an accessible service for all
+              The Bond platform is committed to providing an accessible service for all
               users, including people with disabilities. The Platform strives to comply with the Equal
               Rights for Persons with Disabilities (Accessibility to Service) Regulations 5773-2013,
               Section 35, and Israeli Standard IS 5568 Level AA (equivalent to WCAG 2.1 AA). This
