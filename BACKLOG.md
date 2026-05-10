@@ -21,7 +21,6 @@
 
 | Priority | Task | Added |
 |----------|------|-------|
-| P0 | **DEBUG & FIX:** AI insights generation currently broken — diagnose why geminiService.getAIInsights() failing and restore functionality | 2026-05-10 |
 | P0 | Sanitize user input in AI prompts (refinement comments, profile data) to prevent prompt injection | 2026-05-10 |
 | P0 | Implement Firebase Email/Password Auth validation instead of local bypass | 2026-05-10 |
 | P0 | Create Privacy Policy & implement data scrubbing for PII, "Delete My Data" feature | 2026-05-10 |
@@ -65,5 +64,5 @@
 
 | Priority | Task | Completed |
 |----------|------|-----------|
-| P0 | **DEBUG & FIX:** AI insights generation broken — restored by fixing Cloud Function JSON schema & setting Gemini API key in Secret Manager | 2026-05-10 |
+| P0 | **DEBUG & FIX:** AI insights generation broken — restored by: (1) fixing Cloud Function JSON schema, (2) setting Gemini API key in Secret Manager, (3) using Firebase secrets option in onCall config to properly mount secret as environment variable | 2026-05-10 |
 
