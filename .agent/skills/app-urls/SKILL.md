@@ -7,7 +7,7 @@ description: A reference sheet containing the local and deployed URLs for the us
 
 When working on or testing these projects, refer to the following URLs:
 
-### Business Chemistry (Current Active Project)
+### Bond (Current Active Project)
 * **Local Development:** `http://localhost:3002/` (Ensure `vite.config.ts` uses port 3002)
 * **Firebase Deployed App:** `https://business-chemistry.web.app/`  *(or https://business-chemistry.firebaseapp.com)*
 

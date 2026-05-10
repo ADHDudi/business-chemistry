@@ -1,6 +1,6 @@
 # Product Backlog
 
-This backlog tracks pending feature improvements, risk mitigations, and systemic updates required to stabilize the Business Chemistry platform before scaling to a larger user base.
+This backlog tracks pending feature improvements, risk mitigations, and systemic updates required to stabilize the Bond platform before scaling to a larger user base.
 
 ## 🚨 High Priority (Legal, Compliance, & Safety)
 
