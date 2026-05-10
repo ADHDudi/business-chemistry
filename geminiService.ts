@@ -19,7 +19,7 @@ export const getAIInsights = async (
   const otherTypes = allTypes[lang].filter(t => !t.includes(currentTypeTitle.split(' ')[0]));
 
   const basePrompt = `
-    Task: Provide a high-precision, mobile-optimized psychological breakdown for a Business Chemistry profile with an ADHD focus.
+    Task: Provide a high-precision, mobile-optimized psychological breakdown for a Bond personality profile with an ADHD focus.
     Name: 'Client'
     Type: ${currentTypeTitle}
     Scores: Formal ${results.formal}/6, Dominance ${results.dominant}/6
@@ -65,7 +65,7 @@ export const getCompatibilityAnalysis = async (
 
   const prompt = `
     Role: You are an expert Organizational Psychologist specializing in startup co-founder and team dynamics.
-    Objective: Analyze the compatibility of two people based on their Business Chemistry profiles.
+    Objective: Analyze the compatibility of two people based on their Bond personality profiles.
     
     Person A: ${userA.name} (${userA.persona.title.en})
     - Traits: Formal ${userA.results.formal}/6, Dominant ${userA.results.dominant}/6

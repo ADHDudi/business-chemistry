@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Business Chemistry — Deploy Script
+# Bond — Deploy Script
 # Commits to GitHub and deploys to Firebase Hosting + Functions.
 #
 # Prerequisites:
@@ -13,7 +13,7 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$PROJECT_DIR"
 
-echo "🚀 Starting deployment for Business Chemistry..."
+echo "🚀 Starting deployment for Bond..."
 
 # ── 1. Git: commit & push ──────────────────────────────────────────────────────
 echo ""
