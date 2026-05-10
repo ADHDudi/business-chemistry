@@ -23,6 +23,9 @@ test_module.js
 test_genai.ts
 simulate_session.js
 
+# Superpowers brainstorm runtime artifacts (committed specs live in docs/superpowers/specs/)
+.superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
