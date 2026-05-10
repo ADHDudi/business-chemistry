@@ -18,7 +18,7 @@ export default function PrivacyPage({ language }: LegalPageProps) {
           body: (
             <p>
               מדיניות פרטיות זו מתארת כיצד Just AI It (דוד צור) אוספת, משתמשת ומגנה על המידע
-              האישי שלך בעת שימוש בפלטפורמת Business Chemistry. שימוש בפלטפורמה מהווה הסכמה
+              האישי שלך בעת שימוש בפלטפורמת Bond. שימוש בפלטפורמה מהווה הסכמה
               למדיניות זו.
             </p>
           ),
@@ -235,7 +235,7 @@ export default function PrivacyPage({ language }: LegalPageProps) {
           body: (
             <p>
               This Privacy Policy describes how Just AI It (David Tsur) collects, uses, and protects
-              your personal information when you use the Business Chemistry platform. Using the
+              your personal information when you use the Bond platform. Using the
               Platform constitutes consent to this policy.
             </p>
           ),
