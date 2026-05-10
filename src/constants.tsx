@@ -32,7 +32,7 @@ export const TEXT = {
   he: {
     title: "ADHDudi",
     steps: { details: "פרטים", quiz: "שאלון", report: "דוח" },
-    welcome_title: "גלו את הכימיה העסקית שלכם",
+    welcome_title: "Bond",
     welcome_subtitle: "אבחון קצר שישנה את הדרך בה אתם עובדים ומתקשרים.",
     sections: {
       pain: { 
@@ -45,8 +45,8 @@ export const TEXT = {
         desc: "איבוד זמן יקר על 'פינג-פונג' מיותר, שחיקה רגשית ופספוס של הזדמנויות עסקיות משמעותיות.",
         icon: "TrendingDown"
       },
-      method: { 
-        title: "שיטת ה-Business Chemistry", 
+      method: {
+        title: "השיטה של Bond", 
         desc: "מודל מחקרי המזהה 4 דפוסי התנהגות: מקדמים, משימתיים, מנתחים ותומכים.",
         icon: "Layers"
       },
@@ -121,7 +121,7 @@ export const TEXT = {
   en: {
     title: "ADHDudi",
     steps: { details: "Details", quiz: "Quiz", report: "Report" },
-    welcome_title: "Discover Your Business Chemistry",
+    welcome_title: "Bond",
     welcome_subtitle: "A short assessment to transform how you work and communicate.",
     sections: {
       pain: { 
@@ -134,8 +134,8 @@ export const TEXT = {
         desc: "Wasted time on needless 'ping-pong', emotional burnout, and missing out on significant business opportunities.",
         icon: "TrendingDown"
       },
-      method: { 
-        title: "The Business Chemistry Method", 
+      method: {
+        title: "The Bond Method", 
         desc: "A research-based model identifying 4 behavioral patterns: Pioneers, Drivers, Guardians, and Integrators.",
         icon: "Layers"
       },
