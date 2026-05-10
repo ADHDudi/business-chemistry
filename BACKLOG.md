@@ -10,7 +10,7 @@
 
 | Priority | Task | Added |
 |----------|------|-------|
-| P0 | **DEBUG & FIX:** AI insights generation currently broken — diagnose why geminiService.getAIInsights() failing and restore functionality | 2026-05-10 |
+| — | — | — |
 
 ---
 
@@ -65,5 +65,5 @@
 
 | Priority | Task | Completed |
 |----------|------|-----------|
-| — | — | — |
+| P0 | **DEBUG & FIX:** AI insights generation broken — restored by fixing Cloud Function JSON schema & setting Gemini API key in Secret Manager | 2026-05-10 |
 
