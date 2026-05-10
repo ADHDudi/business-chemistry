@@ -10,7 +10,7 @@
 
 | Priority | Task | Added |
 |----------|------|-------|
-| — | — | — |
+| P0 | **DEBUG & FIX:** AI insights generation currently broken — diagnose why geminiService.getAIInsights() failing and restore functionality | 2026-05-10 |
 
 ---
 
