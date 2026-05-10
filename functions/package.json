@@ -1,6 +1,6 @@
 {
     "name": "functions",
-    "description": "Cloud Functions for Business Chemistry",
+    "description": "Cloud Functions for Bond",
     "scripts": {
         "serve": "firebase emulators:start --only functions",
         "shell": "firebase functions:shell",
