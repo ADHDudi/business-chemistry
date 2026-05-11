@@ -56,6 +56,11 @@ export interface AICommunicationCoach {
     type: string;
     superpower: string;
     kryptonite: string;
+    challenges?: Array<{
+      title: string;
+      description: string;
+      watch_for: string;
+    }>;
   };
   interaction_guide: {
     target_profile: string;

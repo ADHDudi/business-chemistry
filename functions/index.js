@@ -1,12 +1,11 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { defineString } = require("firebase-functions/params");
-const { GoogleGenAI } = require("@google/genai");
 
-const GEMINI_API_KEY = defineString("GEMINI_API_KEY");
-
-exports.generateAIInsights = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
-    const { persona, results, lang, refinementComment } = request.data;
+exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (request) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new HttpsError('internal', 'Gemini API key not configured');
+    }
+    const { persona, results, lang, refinementComment, targetProfile } = request.data;
 
     if (!persona || !results || !lang) {
         throw new HttpsError('invalid-argument', 'Missing required fields: persona, results, or lang');
@@ -18,51 +17,74 @@ exports.generateAIInsights = onCall(async (request) => {
     };
 
     const currentTypeTitle = persona.title[lang];
-    // Safe handling if title format is unexpected
     const currentTypeBase = currentTypeTitle.split(' ')[0] || currentTypeTitle;
     const otherTypes = allTypes[lang].filter(t => !t.includes(currentTypeBase));
+    const focusProfile = targetProfile || otherTypes[0];
 
-    const basePrompt = `
-    Task: Provide a high-precision, mobile-optimized psychological breakdown for a Bond personality profile with an ADHD focus.
-    Name: 'Client'
-    Type: ${currentTypeTitle}
+    const prompt = `
+    You are an expert organizational psychologist specializing in ADHD and workplace communication.
+    Analyze this Bond personality profile and return a structured coaching report.
+
+    Profile: ${currentTypeTitle}
     Scores: Formal ${results.formal}/6, Dominance ${results.dominant}/6
-    
-    CRITICAL INSTRUCTIONS:
-    - Keep it under 220 words total.
-    - Use SHORT, punchy bullet points.
-    - No introductory fluff.
-    - Language: ${lang === 'he' ? 'Hebrew' : 'English'}.
+    Target interaction profile: ${focusProfile}
+    Language: ${lang === 'he' ? 'Hebrew' : 'English'}
 
-    Structure:
-    1. **The Why**: Explain how their specific scores (Formal vs Dominance) manifest in their behavior.
-    2. **Working with Others**: 1 specific, non-generic communication tip for: ${otherTypes.join(', ')}.
-    3. **ADHD Executive Function Hack**: 1 high-impact hack for this ${persona.key} type to manage their professional dialogue, specifically addressing the intersection of their persona and ADHD traits.
+    ${refinementComment ? `User feedback on previous analysis: "${refinementComment}". Incorporate this to improve accuracy.` : ''}
+
+    Return a JSON object with:
+    - user_profile.type: the profile name (short label)
+    - user_profile.superpower: their single greatest professional strength (punchy, 8-12 words)
+    - user_profile.kryptonite: their biggest professional blind spot (punchy, 8-12 words)
+    - user_profile.challenges: array of exactly 3 specific blind spots/challenges this persona faces. Each item must have:
+        - title: a short, named label for the challenge (3-5 words, e.g. "Detail Blindness", "Premature Closure")
+        - description: 1-2 sentences explaining the underlying pattern and why it happens (not what they should do)
+        - watch_for: one concrete workplace scenario where this challenge typically shows up (a short phrase, e.g. "Compliance reviews", "Performance feedback conversations")
+    - interaction_guide.target_profile: the name of the profile they are interacting with
+    - interaction_guide.friction_point: the #1 source of tension between these two types (1 sentence)
+    - interaction_guide.strategy_card.title: short name for the strategy (3-5 words)
+    - interaction_guide.strategy_card.action: concrete action to take (1 sentence, imperative)
+    - interaction_guide.strategy_card.script: an example phrase or script to use (quoted, natural language)
+    - executive_function_tool.tool_name: name of an ADHD exec-function technique for this profile
+    - executive_function_tool.instruction: how to apply it in a professional dialogue (1-2 sentences)
+    - executive_function_tool.template_ready: true if a ready-made template or script exists for this tool
   `;
 
-    const refinementInstruction = refinementComment ? `
-    USER FEEDBACK ALERT: The user felt the previous analysis was inaccurate. 
-    THEIR SPECIFIC FEEDBACK: "${refinementComment}"
-    INSTRUCTION: Please incorporate this feedback to provide a significantly more accurate and personalized analysis. 
-    Do not mention the feedback explicitly, just improve the content.
-  ` : "";
-
-    const finalPrompt = basePrompt + refinementInstruction;
-
     try {
-        const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: finalPrompt,
-        });
-        return { text: response.text || "No insights available." };
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new HttpsError('internal', 'Empty response from AI');
+
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```\s*$/, '').trim();
+        const json = JSON.parse(cleaned);
+        return json;
     } catch (error) {
         console.error("AI Insights Error Details:", error);
         throw new HttpsError('internal', 'Failed to generate AI insights', error);
     }
 });
 
-exports.generateCompatibilityAnalysis = onCall(async (request) => {
-    const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
+exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, async (request) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new HttpsError('internal', 'Gemini API key not configured');
+    }
     const { userA, userB, lang } = request.data;
 
     if (!userA || !userB || !lang) {
@@ -97,25 +119,28 @@ exports.generateCompatibilityAnalysis = onCall(async (request) => {
   `;
 
     try {
-        const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        score: { type: "INTEGER" },
-                        friction_points: { type: "ARRAY", items: { type: "STRING" } },
-                        synergies: { type: "ARRAY", items: { type: "STRING" } },
-                        verdict: { type: "STRING" }
-                    },
-                    required: ["score", "friction_points", "synergies", "verdict"]
-                }
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
             }
-        });
+        );
 
-        const json = JSON.parse(response.text || "{}");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('Empty response from AI');
+
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```\s*$/, '').trim();
+        const json = JSON.parse(cleaned);
         return json;
     } catch (error) {
         console.error("Compatibility AI Error:", error);
