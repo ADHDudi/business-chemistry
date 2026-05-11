@@ -406,28 +406,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             </div>
           )}
 
-          {/* Target Profile Selector */}
-          <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
-              {language === 'he' ? 'עם מי הפגישה?' : 'Who are you meeting?'}
-            </h4>
-            <div className="flex gap-2 min-w-max px-2">
-              {['Guardian', 'Driver', 'Integrator', 'Pioneer'].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setTargetProfile(p)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
-                    ? 'btn-gradient text-white shadow-md transform scale-105'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                    }`}
-                >
-                  <span>{p === 'Guardian' ? '🛡️' : p === 'Driver' ? '🎯' : p === 'Integrator' ? '🤝' : '🚀'}</span>
-                  <span>{p}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {isLoadingAI ? (
             <div className={`bg-white p-12 rounded-[2.5rem] shadow-sm border-2 ${colors.border} flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]`}>
               <div className="relative">
@@ -543,6 +521,28 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 
       {activeTab === 'prepare' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+          {/* Target Profile Selector */}
+          <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
+              {language === 'he' ? 'עם מי הפגישה?' : 'Who are you meeting?'}
+            </h4>
+            <div className="flex gap-2 min-w-max px-2">
+              {['Guardian', 'Driver', 'Integrator', 'Pioneer'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setTargetProfile(p)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
+                    ? 'btn-gradient text-white shadow-md transform scale-105'
+                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    }`}
+                >
+                  <span>{p === 'Guardian' ? '🛡️' : p === 'Driver' ? '🎯' : p === 'Integrator' ? '🤝' : '🚀'}</span>
+                  <span>{p}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {aiInsight && targetProfile ? (
             <>
               {/* Meeting Context */}
