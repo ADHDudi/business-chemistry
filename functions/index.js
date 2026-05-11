@@ -51,51 +51,7 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (requ
     try {
         const response = await genAI.models.generateContent({
             model: 'gemini-1.5-pro',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        user_profile: {
-                            type: "OBJECT",
-                            properties: {
-                                type: { type: "STRING" },
-                                superpower: { type: "STRING" },
-                                kryptonite: { type: "STRING" }
-                            },
-                            required: ["type", "superpower", "kryptonite"]
-                        },
-                        interaction_guide: {
-                            type: "OBJECT",
-                            properties: {
-                                target_profile: { type: "STRING" },
-                                friction_point: { type: "STRING" },
-                                strategy_card: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        title: { type: "STRING" },
-                                        action: { type: "STRING" },
-                                        script: { type: "STRING" }
-                                    },
-                                    required: ["title", "action", "script"]
-                                }
-                            },
-                            required: ["target_profile", "friction_point", "strategy_card"]
-                        },
-                        executive_function_tool: {
-                            type: "OBJECT",
-                            properties: {
-                                tool_name: { type: "STRING" },
-                                instruction: { type: "STRING" },
-                                template_ready: { type: "BOOLEAN" }
-                            },
-                            required: ["tool_name", "instruction", "template_ready"]
-                        }
-                    },
-                    required: ["user_profile", "interaction_guide", "executive_function_tool"]
-                }
-            }
+            contents: prompt
         });
 
         const json = JSON.parse(response.text || "null");
@@ -149,20 +105,7 @@ exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, 
     try {
         const response = await genAI.models.generateContent({
             model: 'gemini-1.5-pro',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        score: { type: "INTEGER" },
-                        friction_points: { type: "ARRAY", items: { type: "STRING" } },
-                        synergies: { type: "ARRAY", items: { type: "STRING" } },
-                        verdict: { type: "STRING" }
-                    },
-                    required: ["score", "friction_points", "synergies", "verdict"]
-                }
-            }
+            contents: prompt
         });
 
         const json = JSON.parse(response.text || "{}");
