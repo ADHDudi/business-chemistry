@@ -67,7 +67,8 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (requ
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new HttpsError('internal', 'Empty response from AI');
 
-        const json = JSON.parse(text);
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```\s*$/, '').trim();
+        const json = JSON.parse(cleaned);
         return json;
     } catch (error) {
         console.error("AI Insights Error Details:", error);
@@ -134,7 +135,8 @@ exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, 
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new Error('Empty response from AI');
 
-        const json = JSON.parse(text);
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```\s*$/, '').trim();
+        const json = JSON.parse(cleaned);
         return json;
     } catch (error) {
         console.error("Compatibility AI Error:", error);
