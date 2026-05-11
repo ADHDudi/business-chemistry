@@ -50,7 +50,7 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (requ
 
     try {
         const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-1.5-pro',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -148,7 +148,7 @@ exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, 
 
     try {
         const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-1.5-pro',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
