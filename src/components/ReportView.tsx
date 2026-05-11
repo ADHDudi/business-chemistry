@@ -28,7 +28,7 @@ interface ReportViewProps {
 }
 
 const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, calculateResults, getPersona, forceDebug }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'ai'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'ai' | 'prepare'>('overview');
   // Auto-send replaces manual sending state
   const [aiInsight, setAiInsight] = useState<AICommunicationCoach | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -280,7 +280,8 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const tabLabels = {
     overview: language === 'he' ? 'סקירה' : 'Overview',
     ai: language === 'he' ? 'ניתוח AI' : 'AI Analysis',
-    matrix: t.report.tabs.matrix
+    matrix: t.report.tabs.matrix,
+    prepare: language === 'he' ? 'התכן לפגישה' : 'Prepare for Meeting'
   };
 
   return (
@@ -330,13 +331,14 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       </div>
 
       <div className="flex bg-slate-100 p-1 rounded-2xl no-select">
-        {(['overview', 'ai', 'matrix'] as const).map(tab => (
+        {(['overview', 'ai', 'prepare', 'matrix'] as const).map(tab => (
           <button
             key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-[#8c50f0] text-white shadow-md` : 'text-slate-500'}`}
           >
             {tab === 'overview' && <Info size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
             {tab === 'ai' && <BrainCircuit size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
+            {tab === 'prepare' && <Target size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
             {tab === 'matrix' && <Grid size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
             <span>{tabLabels[tab]}</span>
           </button>
@@ -534,6 +536,129 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
               >
                 Retry Analysis
               </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'prepare' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+          {aiInsight && targetProfile ? (
+            <>
+              {/* Meeting Context */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
+                <div className="flex items-center justify-center gap-3 mb-6">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full text-sm font-bold text-slate-600">
+                    <span>{targetProfile === 'Guardian' ? '🛡️' : targetProfile === 'Driver' ? '🎯' : targetProfile === 'Integrator' ? '🤝' : '🚀'}</span>
+                    <span>{targetProfile}</span>
+                  </div>
+                  <div className="text-slate-300">→</div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{language === 'he' ? 'אתה' : 'You'}</p>
+                    <p className="text-sm font-black text-slate-900">{currentPersona.title[language]}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* The Challenge */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                <div className="p-4 bg-red-50/50 border-b border-red-100 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
+                    <Zap size={18} />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                    {language === 'he' ? 'נקודת החיכוך' : 'Where You Might Clash'}
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <p className="text-lg font-black text-slate-900 leading-relaxed mb-3">{aiInsight.interaction_guide.friction_point}</p>
+                  <p className="text-sm text-slate-600">
+                    {language === 'he'
+                      ? 'זו הנקודה שלרוב מביאה לחיכוך בתקשורת בין פרופילים אלה. הכר אותה מראש.'
+                      : 'This is the core tension that typically emerges. Expect it, and you\'ll navigate it better.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* The Strategy */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
+                  <Target size={18} className="text-green-400" />
+                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? 'אסטרטגיית הנהלה' : 'Your Game Plan'}</h3>
+                </div>
+                <div className="p-6 space-y-5">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
+                      <span className="text-lg">🎯</span>
+                      {aiInsight.interaction_guide.strategy_card.action}
+                    </h4>
+                  </div>
+
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative">
+                    <span className="absolute -top-2 left-4 bg-slate-900 text-white text-[9px] font-bold px-3 py-1 rounded text-slate-100 uppercase">💬 Script</span>
+                    <p className="text-lg text-slate-800 italic font-bold leading-relaxed mt-2">"{aiInsight.interaction_guide.strategy_card.script}"</p>
+                  </div>
+
+                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2">{language === 'he' ? 'טיפ' : 'Tip'}</p>
+                    <p className="text-sm text-blue-900">
+                      {language === 'he'
+                        ? 'השתמש בדברים אלה בהתחלת הפגישה כדי להגדיר טון משותף ולהימנע מחיכוך.'
+                        : 'Use this opener early in the meeting to set a collaborative tone and avoid friction.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ADHD Hack for This Scenario */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
+                <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                    <Lightbulb size={18} />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                    {language === 'he' ? 'טריק לרגע הפגישה' : 'ADHD Hack for This Meeting'}
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
+                  <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
+                  {aiInsight.executive_function_tool.template_ready && (
+                    <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
+                      <span>📝</span>
+                      {language === 'he' ? 'הכן דף טיוטה לפגישה' : 'Create Meeting Notes Template'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Pre-Meeting Checklist */}
+              <div className="bg-gradient-to-br from-[#f3ecff] to-slate-50 p-6 rounded-[2.5rem] shadow-xl border border-[#e4d7ff]">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckCircle size={20} className="text-[#8c50f0]" />
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
+                    {language === 'he' ? 'רשימה לפני הפגישה' : 'Before the Meeting'}
+                  </h3>
+                </div>
+                <ul className="space-y-2 text-sm text-slate-700">
+                  <li className="flex gap-2">
+                    <span className="text-[#8c50f0] font-black">✓</span>
+                    <span>{language === 'he' ? 'כן לדברים שעלולים להעלות טר - הם צפויים' : 'Expect the friction point - it\'s normal'}</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[#8c50f0] font-black">✓</span>
+                    <span>{language === 'he' ? 'תרגל את התסריט - זה יעזור בדיבור ספונטני' : 'Practice your script - it\'ll feel natural'}</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[#8c50f0] font-black">✓</span>
+                    <span>{language === 'he' ? 'השתמש בטריק של ADHD כדי להישאר ממוקד' : 'Use the ADHD hack to stay grounded'}</span>
+                  </li>
+                </ul>
+              </div>
+            </>
+          ) : (
+            <div className="bg-slate-50 p-12 rounded-[2.5rem] text-center space-y-4 border border-slate-200">
+              <p className="text-slate-500 font-medium">{language === 'he' ? 'בחר פרופיל לפגישה מהכרטיס ״ניתוח AI״ כדי להתחיל.' : 'Select a profile to meet with in the AI Analysis tab to get started.'}</p>
             </div>
           )}
         </div>
