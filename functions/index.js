@@ -1,12 +1,10 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { GoogleGenAI } = require("@google/genai");
 
 exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (request) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         throw new HttpsError('internal', 'Gemini API key not configured');
     }
-    const genAI = new GoogleGenAI({ apiKey });
     const { persona, results, lang, refinementComment, targetProfile } = request.data;
 
     if (!persona || !results || !lang) {
@@ -49,13 +47,27 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (requ
   `;
 
     try {
-        const response = await genAI.models.generateContent({
-            model: 'models/gemini-pro',
-            contents: prompt
-        });
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            }
+        );
 
-        const json = JSON.parse(response.text || "null");
-        if (!json) throw new HttpsError('internal', 'Empty response from AI');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new HttpsError('internal', 'Empty response from AI');
+
+        const json = JSON.parse(text);
         return json;
     } catch (error) {
         console.error("AI Insights Error Details:", error);
@@ -68,7 +80,6 @@ exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, 
     if (!apiKey) {
         throw new HttpsError('internal', 'Gemini API key not configured');
     }
-    const genAI = new GoogleGenAI({ apiKey });
     const { userA, userB, lang } = request.data;
 
     if (!userA || !userB || !lang) {
@@ -103,12 +114,27 @@ exports.generateCompatibilityAnalysis = onCall({ secrets: ["GEMINI_API_KEY"] }, 
   `;
 
     try {
-        const response = await genAI.models.generateContent({
-            model: 'models/gemini-pro',
-            contents: prompt
-        });
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            }
+        );
 
-        const json = JSON.parse(response.text || "{}");
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('Empty response from AI');
+
+        const json = JSON.parse(text);
         return json;
     } catch (error) {
         console.error("Compatibility AI Error:", error);
