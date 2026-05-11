@@ -36,6 +36,10 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"] }, async (requ
     - user_profile.type: the profile name (short label)
     - user_profile.superpower: their single greatest professional strength (punchy, 8-12 words)
     - user_profile.kryptonite: their biggest professional blind spot (punchy, 8-12 words)
+    - user_profile.challenges: array of exactly 3 specific blind spots/challenges this persona faces. Each item must have:
+        - title: a short, named label for the challenge (3-5 words, e.g. "Detail Blindness", "Premature Closure")
+        - description: 1-2 sentences explaining the underlying pattern and why it happens (not what they should do)
+        - watch_for: one concrete workplace scenario where this challenge typically shows up (a short phrase, e.g. "Compliance reviews", "Performance feedback conversations")
     - interaction_guide.target_profile: the name of the profile they are interacting with
     - interaction_guide.friction_point: the #1 source of tension between these two types (1 sentence)
     - interaction_guide.strategy_card.title: short name for the strategy (3-5 words)

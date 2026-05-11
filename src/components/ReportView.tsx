@@ -382,6 +382,25 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                   VS Kryptonite: {aiInsight.user_profile.kryptonite}
                 </div>
               </div>
+              {aiInsight.user_profile.challenges && aiInsight.user_profile.challenges.length > 0 && (
+                <div className="px-6 pb-6 pt-2 space-y-3 border-t border-slate-100">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 pt-4">
+                    {language === 'he' ? 'אתגרים מרכזיים' : 'Key Challenges'}
+                  </h4>
+                  <ul className="space-y-3">
+                    {aiInsight.user_profile.challenges.map((c, i) => (
+                      <li key={i} className="bg-slate-50/60 rounded-2xl p-4 border border-slate-100">
+                        <div className={`text-sm font-black ${colors.text} mb-1`}>{c.title}</div>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-2">{c.description}</p>
+                        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                          <span className="text-slate-400">{language === 'he' ? 'צץ ב:' : 'Watch for:'}</span>
+                          <span>{c.watch_for}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
