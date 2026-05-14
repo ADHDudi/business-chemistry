@@ -211,10 +211,10 @@ export default function App() {
 
       switch (error.code) {
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email';
+          errorMessage = 'No account found with this email. Please sign up first.';
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+          errorMessage = 'Incorrect password. Please try again.';
           break;
         case 'auth/invalid-email':
           errorMessage = 'Invalid email format';
