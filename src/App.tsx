@@ -18,8 +18,9 @@ import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import AccessibilityPage from './components/legal/AccessibilityPage';
 import SignUpForm from './components/SignUpForm';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { useSession } from './hooks/useSession';
-import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
@@ -122,6 +123,9 @@ export default function App() {
   const [showSignUpForm, setShowSignUpForm] = useState(false);
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -284,6 +288,38 @@ export default function App() {
       console.error('Sign up error:', error.code, error.message);
     } finally {
       setIsSigningUp(false);
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    setForgotPasswordError(null);
+    setIsSendingReset(true);
+
+    try {
+      // Send password reset email via Firebase
+      await sendPasswordResetEmail(auth, email);
+      // On success, the form component will show the success state
+    } catch (error: any) {
+      let errorMessage = 'Failed to send reset email';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many requests. Please try again later.';
+          break;
+        default:
+          errorMessage = error.message || 'Failed to send reset email';
+      }
+
+      setForgotPasswordError(errorMessage);
+      console.error('Forgot password error:', error.code, error.message);
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
@@ -559,7 +595,11 @@ export default function App() {
                   </div>
 
                   <div className="flex justify-end relative z-10 w-full -mt-2 mb-2">
-                    <button type="button" className="text-[13px] font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPasswordForm(true)}
+                      className="text-[13px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                    >
                       Forgot Password?
                     </button>
                   </div>
@@ -755,6 +795,18 @@ export default function App() {
             onClose={() => setShowSignUpForm(false)}
             isLoading={isSigningUp}
             error={signUpError}
+          />
+        )}
+
+        {showForgotPasswordForm && (
+          <ForgotPasswordForm
+            onSubmit={handleForgotPassword}
+            onClose={() => {
+              setShowForgotPasswordForm(false);
+              setForgotPasswordError(null);
+            }}
+            isLoading={isSendingReset}
+            error={forgotPasswordError}
           />
         )}
 
