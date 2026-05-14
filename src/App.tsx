@@ -17,8 +17,9 @@ import Footer from './components/Footer';
 import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import AccessibilityPage from './components/legal/AccessibilityPage';
+import SignUpForm from './components/SignUpForm';
 import { useSession } from './hooks/useSession';
-import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
@@ -118,6 +119,9 @@ export default function App() {
   const [authUser, setAuthUser] = useState<any>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
+  const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -235,6 +239,54 @@ export default function App() {
       setIsAuthLoading(false);
     }
   };
+
+  const handleSignUp = async (email: string, password: string) => {
+    setSignUpError(null);
+    setIsSigningUp(true);
+
+    try {
+      // Create user account with Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update user state with new account info
+      setUser({
+        name: userCredential.user.displayName || 'User',
+        email: userCredential.user.email || email
+      });
+
+      // Clear form and close modal
+      setShowSignUpForm(false);
+      setPassword('');
+
+      // Advance to step 2 (questionnaire)
+      setStep(2);
+    } catch (error: any) {
+      let errorMessage = 'Account creation failed';
+
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email is already registered. Please sign in instead.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak. Use at least 6 characters.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Account creation is not enabled. Please contact support.';
+          break;
+        default:
+          errorMessage = error.message || 'Account creation failed';
+      }
+
+      setSignUpError(errorMessage);
+      console.error('Sign up error:', error.code, error.message);
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
 
   const handleDemoClick = (personaKey: string) => {
     const isActuallyDudi = user.name.trim().toLowerCase() === 'dudi';
@@ -529,7 +581,7 @@ export default function App() {
 
                   <div className="text-center pt-2 relative z-10 w-full">
                     <span className="text-slate-400 font-medium text-[13px]">Don't have an account? </span>
-                    <button type="button" className="text-[#8b5cf6] font-bold text-[13px] hover:text-purple-600 transition-colors">Sign up</button>
+                    <button type="button" onClick={() => setShowSignUpForm(true)} className="text-[#8b5cf6] font-bold text-[13px] hover:text-purple-600 transition-colors">Sign up</button>
                   </div>
                 </form>
 
@@ -696,6 +748,15 @@ export default function App() {
           )
         }
 
+
+        {showSignUpForm && (
+          <SignUpForm
+            onSubmit={handleSignUp}
+            onClose={() => setShowSignUpForm(false)}
+            isLoading={isSigningUp}
+            error={signUpError}
+          />
+        )}
 
         <Footer language={language} />
       </main>
