@@ -18,7 +18,7 @@ import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import AccessibilityPage from './components/legal/AccessibilityPage';
 import { useSession } from './hooks/useSession';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
@@ -116,6 +116,8 @@ export default function App() {
   } = useSession();
   const [isSessionMode, setIsSessionMode] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -187,11 +189,50 @@ export default function App() {
 
   const t = TEXT[language];
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user.email) {
-      if (!user.name) setUser({ ...user, name: 'Guest' });
+    setAuthError(null);
+    setIsAuthLoading(true);
+
+    try {
+      // Call Firebase signInWithEmailAndPassword to authenticate
+      const userCredential = await signInWithEmailAndPassword(auth, user.email, password);
+
+      // On success, update user with auth response
+      setUser({
+        name: userCredential.user.displayName || 'Guest',
+        email: userCredential.user.email || user.email
+      });
+      setPassword(''); // Clear password from state
       setStep(2);
+    } catch (error: any) {
+      // Handle Firebase auth errors
+      let errorMessage = 'Authentication failed';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed login attempts. Please try again later.';
+          break;
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid email or password';
+          break;
+        default:
+          errorMessage = error.message || 'Authentication failed';
+      }
+
+      setAuthError(errorMessage);
+      console.error('Auth error:', error.code, error.message);
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
@@ -457,6 +498,12 @@ export default function App() {
                       placeholder="Password"
                       className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#8c50f0] focus:ring-1 focus:ring-purple-300 transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
                     />
+                    {authError && (
+                      <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium text-red-700">{authError}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end relative z-10 w-full -mt-2 mb-2">
@@ -465,8 +512,19 @@ export default function App() {
                     </button>
                   </div>
 
-                  <button type="submit" className="relative z-10 w-full py-3.5 btn-gradient text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform">
-                    Sign In
+                  <button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="relative z-10 w-full py-3.5 btn-gradient text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isAuthLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
                   </button>
 
                   <div className="text-center pt-2 relative z-10 w-full">
