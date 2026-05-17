@@ -466,9 +466,9 @@ async function runFullFlowTest(browser) {
         const MAX_Q = 50;
 
         while (!isComplete && questionCount < MAX_Q) {
-            // Report view is reached when the "Them" tab (data-testid="tab-them") appears
+            // Report view is reached when the "Them" tab (data-testid="tab-ai") appears
             const onReport = await page.evaluate(() =>
-                !!document.querySelector('[data-testid="tab-them"]')
+                !!document.querySelector('[data-testid="tab-ai"]')
             );
             if (onReport) {
                 logStep('Questionnaire Complete', 'PASS', `${questionCount} questions answered — report view detected`);
@@ -506,14 +506,14 @@ async function runFullFlowTest(browser) {
 
         // Report View — wait for the "Them" tab (report view indicator)
         await page.waitForFunction(
-            () => !!document.querySelector('[data-testid="tab-them"]'),
+            () => !!document.querySelector('[data-testid="tab-ai"]'),
             { timeout: 10000 }
         );
         logStep('Report Loaded', 'PASS', 'Report view rendered (You/Them/Together tabs visible)', await captureScreenshot(page));
 
         // Click "Them" tab — where AI coaching now lives
         const clickedAI = await page.evaluate(() => {
-            const btn = document.querySelector('[data-testid="tab-them"]');
+            const btn = document.querySelector('[data-testid="tab-ai"]');
             if (btn) { btn.click(); return true; }
             return false;
         });
