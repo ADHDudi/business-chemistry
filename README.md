@@ -12,6 +12,10 @@ Welcome to **Bond** — a workplace communication tool that helps coworkers and 
 ## What's New
 
 ### May 2026
+- **Report Redesign — You / Them / Together tabs** — The report view's three tabs were renamed and reorganized around a clearer mental model: **You** (your profile, strengths, tips, with optional collapsible Communication Challenge + ADHD Angle), **Them** (target persona picker → friction point → strategy script → optional ADHD Hack), **Together** (the 2D position matrix). Default tab is **You**.
+- **ADHD Lens Toggle** — A single chip above the tabs (`עדשת ADHD` / `ADHD lens`) globally expands or collapses every ADHD-tagged section across the report. Off by default — users who don't want ADHD framing get a clean report; one click reveals the full ADHD lens.
+- **Collapsible Sections** — New reusable `CollapsibleSection` component (`src/components/CollapsibleSection.tsx`) used for ADHD content and other deep-dive blocks. Closed by default; opens individually or globally via the ADHD lens.
+- **Email/Password Authentication** — Implemented full sign-in/sign-up/forgot-password flow using Firebase Auth (`signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`). Fixed a prior auth bypass where any valid-format email + any password would log in without verification.
 - **Rebranded to Bond** — the app is now "Bond" with the tagline "Workplace Communication OS". The methodology (4 personas on the Formal/Dominant axes) is unchanged; only the product surface and brand identity have evolved. New speech-bubbles icon + violet→cyan gradient.
 - **Just AI It Design System** — Full visual overhaul: violet→cyan brand gradient, Space Grotesk display font, Inter body font, JetBrains Mono for codes, icon-in-tile card headers, and brand shadow tokens applied throughout all components
 - **Legal Compliance Pages** — Three bilingual (Hebrew/English) legal pages added: Terms of Use, Privacy Policy, and Accessibility Statement — all accessible via footer links and hash-based routing (`#terms`, `#privacy`, `#accessibility`)
@@ -48,6 +52,25 @@ The app supports Firebase Hosting dynamic config injection. When deployed on Fir
 Required environment variables (in `.env.local`):
 - `VITE_GEMINI_API_KEY` — Google Gemini AI API key for generating coaching insights
 
+### Testing
+
+Acceptance tests are written with Puppeteer in `test.js`. They cover auth structure, sign-in happy/fail paths, Google sign-in button, and the full sign-in → questionnaire → report flow.
+
+```bash
+# Run tests against production (default: https://business-chemistry.web.app/)
+npm test
+
+# Run tests against your local dev server
+npm run dev               # in one terminal
+node test.js http://localhost:3002/   # in another
+```
+
+**Notes:**
+- The test runner uses `protocolTimeout: 300000` (5 minutes) to accommodate slow Firebase initialization in browser-driven tests.
+- Tab assertions target `data-testid` attributes (`tab-you`, `tab-them`, `tab-together`) rather than tab copy, so they remain stable when labels change or are translated.
+- The full-flow test will fail with a timeout against environments that still ship the old "Overview / AI Analysis / Matrix" tabs. Deploy first, or point `BASE_URL` at a local dev server.
+- A bilingual HTML report is written to `acceptance_report.html` after each run.
+
 ---
 
 ## 1. Business Value Perspective
@@ -77,12 +100,12 @@ The application flows through a seamless, interactive sequence:
    * The user is guided through an interactive, multi-step questionnaire (typically ~35 questions). 
    * The UI limits distractions and uses a "Live Progress Bar" to keep engagement high until the assessment is finished. In Live Mode, both participants see each other's progress in real-time.
 3. **Instant Profile Reveal (Report View):**
-   * Upon completion, the user immediately enters the dashboard to see their distinct persona (e.g., Pioneer, Driver, Guardian, or Integrator).
-   * They get a breakdown of their "Superpowers" and "Kryptonite."
+   * Upon completion, the user enters the report dashboard organized as three tabs around a clear mental model: **You / Them / Together**. The **You** tab is the default.
+   * **You:** Profile summary, strengths, tips. The Communication Challenge, Superpower, and ADHD Angle live in collapsibles that stay closed until the user opens them — or until the **ADHD lens** chip above the tabs is flipped on, which expands every ADHD-tagged section across the report at once.
+   * **Together:** The 2D Formal × Dominant matrix showing the user's position relative to the other three personas.
    * The report view is fully responsive, with mobile-optimized layouts and accessible navigation.
-4. **AI-Powered Deep Dive:**
-   * The user navigates to the **AI Analysis** tab, triggering a backend cloud function. The AI analyzes their literal scores and generates personalized coaching on how to manage their traits and work better with other specific types.
-   * Users can select a target profile (Guardian, Driver, Integrator, Pioneer) to customize AI coaching for specific interaction scenarios.
+4. **AI-Powered Deep Dive (Them tab):**
+   * On the **Them** tab, the user picks the persona they're meeting with (Guardian, Driver, Integrator, Pioneer) and a backend cloud function generates tailored coaching: a **Friction Point** callout, a **Strategy** card with an action + script, and an optional collapsible **ADHD Hack** (executive-function tool) for the same interaction.
    * **Feedback Loop:** If the AI's advice doesn't resonate, the user can click a "Thumbs Down" and provide text feedback. The AI instantly refines its psychological analysis in real-time.
 5. **Multiplayer Comparison View (If Applicable):**
    * If two users linked their session, the application displays a side-by-side "Comparison View," utilizing AI to read both datasets and spit out a structured compatibility analysis.
@@ -210,22 +233,27 @@ The application fully supports Hebrew and English:
 
 ```
 src/
-├── App.tsx                          # Main app component with routing and language management
+├── App.tsx                          # Main app component with routing, auth, and language management
 ├── components/
 │   ├── LiveProgressBar.tsx          # Real-time progress display for sessions
 │   ├── SessionLobby.tsx             # Session creation and join interface
 │   ├── SessionWizard.tsx            # Guided session setup flow
-│   ├── ReportView.tsx               # Dashboard with tabs (Overview, AI, Matrix)
+│   ├── ReportView.tsx               # Report dashboard — You / Them / Together tabs + ADHD lens
+│   ├── CollapsibleSection.tsx       # Reusable accordion (ADHD lens-aware)
+│   ├── SignUpForm.tsx               # Sign-up modal — createUserWithEmailAndPassword
+│   ├── ForgotPasswordForm.tsx       # Password reset modal — sendPasswordResetEmail
 │   ├── ComparisonView.tsx           # Multiplayer comparison interface
 │   ├── Footer.tsx                   # Footer with legal page links
 │   └── legal/
 │       ├── TermsPage.tsx            # Terms of Use page
 │       ├── PrivacyPage.tsx          # Privacy Policy page
 │       └── AccessibilityPage.tsx    # Accessibility Statement page
-├── constants.ts                     # Text content and persona definitions
+├── constants.tsx                    # Bilingual text content and persona definitions
 ├── types.ts                         # TypeScript type definitions
 ├── firebaseConfig.ts                # Firebase configuration
 ├── geminiService.ts                 # Google Gemini AI integration
 ├── index.css                        # Design system tokens and utility classes
 └── index.tsx                        # React entry point
+
+test.js                              # Puppeteer acceptance test suite (run with `npm test`)
 ```

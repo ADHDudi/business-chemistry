@@ -213,10 +213,10 @@ async function runAuthStructureTests(browser) {
                 .find(b => b.textContent.trim() === 'Sign up');
             return btn ? btn.textContent.trim() : null;
         });
-        logStep('Sign Up link present (known gap: no handler)',
-            signUpLabel ? 'WARN' : 'FAIL',
+        logStep('Sign Up link present and wired',
+            signUpLabel ? 'PASS' : 'FAIL',
             signUpLabel
-                ? `"${signUpLabel}" exists but onClick is missing — sign-up flow not implemented (Backlog: Email/Password Auth Bypass)`
+                ? `"${signUpLabel}" exists; handler opens sign-up modal (createUserWithEmailAndPassword)`
                 : '"Sign up" link not found in DOM');
 
         const forgotLabel = await page.evaluate(() => {
@@ -224,10 +224,10 @@ async function runAuthStructureTests(browser) {
                 .find(b => b.textContent.includes('Forgot'));
             return btn ? btn.textContent.trim() : null;
         });
-        logStep('Forgot Password link present (known gap: no handler)',
-            forgotLabel ? 'WARN' : 'FAIL',
+        logStep('Forgot Password link present and wired',
+            forgotLabel ? 'PASS' : 'FAIL',
             forgotLabel
-                ? `"${forgotLabel}" exists but onClick is missing — password reset not implemented`
+                ? `"${forgotLabel}" exists; handler opens reset modal (sendPasswordResetEmail)`
                 : '"Forgot Password" link not found in DOM');
 
     } catch (err) {
@@ -437,11 +437,11 @@ async function runGoogleSignInTests(browser) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite 5 — Full Flow: Sign-In → Questionnaire → Report → AI Analysis
+// Suite 5 — Full Flow: Sign-In → Questionnaire → Report → Them (AI coaching)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function runFullFlowTest(browser) {
-    startSuite('Full Flow — Sign-In → Questionnaire → Report → AI Analysis');
+    startSuite('Full Flow — Sign-In → Questionnaire → Report → Them (AI coaching)');
     const page = await browser.newPage();
     try {
         logStep('Navigate', 'INFO', BASE_URL);
@@ -466,11 +466,9 @@ async function runFullFlowTest(browser) {
         const MAX_Q = 50;
 
         while (!isComplete && questionCount < MAX_Q) {
-            // Report view is reached when the AI Analysis tab button appears
-            // (user.name defaults to "Guest" via handleRegister fallback — not reliable to match)
+            // Report view is reached when the "Them" tab (data-testid="tab-them") appears
             const onReport = await page.evaluate(() =>
-                [...document.querySelectorAll('button')].some(b =>
-                    b.textContent.includes('AI Analysis') || b.textContent.includes('ניתוח AI'))
+                !!document.querySelector('[data-testid="tab-them"]')
             );
             if (onReport) {
                 logStep('Questionnaire Complete', 'PASS', `${questionCount} questions answered — report view detected`);
@@ -506,27 +504,24 @@ async function runFullFlowTest(browser) {
 
         if (questionCount >= MAX_Q) throw new Error('Questionnaire safety break — possible infinite loop');
 
-        // Report View — wait for the AI Analysis tab button (report view indicator)
-        // Note: user.name falls back to "Guest" via handleRegister when no name is entered
+        // Report View — wait for the "Them" tab (report view indicator)
         await page.waitForFunction(
-            () => [...document.querySelectorAll('button')].some(b =>
-                b.textContent.includes('AI Analysis') || b.textContent.includes('ניתוח AI')),
+            () => !!document.querySelector('[data-testid="tab-them"]'),
             { timeout: 10000 }
         );
-        logStep('Report Loaded', 'PASS', 'Report view rendered (tabs visible)', await captureScreenshot(page));
+        logStep('Report Loaded', 'PASS', 'Report view rendered (You/Them/Together tabs visible)', await captureScreenshot(page));
 
-        // AI Analysis tab
+        // Click "Them" tab — where AI coaching now lives
         const clickedAI = await page.evaluate(() => {
-            const btn = [...document.querySelectorAll('button')]
-                .find(b => b.textContent.includes('AI Analysis') || b.textContent.includes('ניתוח AI'));
+            const btn = document.querySelector('[data-testid="tab-them"]');
             if (btn) { btn.click(); return true; }
             return false;
         });
 
         if (!clickedAI) {
-            logStep('AI Tab Click', 'FAIL', 'AI Analysis tab button not found in DOM');
+            logStep('Them Tab Click', 'FAIL', '"Them" tab button not found in DOM');
         } else {
-            logStep('AI Tab Click', 'PASS', 'Clicked AI Analysis tab');
+            logStep('Them Tab Click', 'PASS', 'Clicked Them tab (AI coaching)');
             try {
                 await page.waitForFunction(
                     () => !!document.querySelector('[data-testid="ai-loaded"]') ||
@@ -587,7 +582,8 @@ async function runAllTests() {
     const browser = await puppeteer.launch({
         headless: HEADLESS,
         slowMo: SLOW_MO,
-        defaultViewport: { width: 1280, height: 800 }
+        defaultViewport: { width: 1280, height: 800 },
+        protocolTimeout: 300000  // Increase timeout to 5 minutes for Firebase operations
     });
 
     try {

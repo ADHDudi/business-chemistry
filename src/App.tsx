@@ -17,8 +17,10 @@ import Footer from './components/Footer';
 import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import AccessibilityPage from './components/legal/AccessibilityPage';
+import SignUpForm from './components/SignUpForm';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { useSession } from './hooks/useSession';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider, analytics } from './firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
@@ -116,6 +118,14 @@ export default function App() {
   } = useSession();
   const [isSessionMode, setIsSessionMode] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
+  const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -187,13 +197,132 @@ export default function App() {
 
   const t = TEXT[language];
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user.email) {
-      if (!user.name) setUser({ ...user, name: 'Guest' });
+    setAuthError(null);
+    setIsAuthLoading(true);
+
+    try {
+      // Call Firebase signInWithEmailAndPassword to authenticate
+      const userCredential = await signInWithEmailAndPassword(auth, user.email, password);
+
+      // On success, update user with auth response
+      setUser({
+        name: userCredential.user.displayName || 'Guest',
+        email: userCredential.user.email || user.email
+      });
+      setPassword(''); // Clear password from state
       setStep(2);
+    } catch (error: any) {
+      // Handle Firebase auth errors
+      let errorMessage = 'Authentication failed';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email. Please sign up first.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed login attempts. Please try again later.';
+          break;
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid email or password';
+          break;
+        default:
+          errorMessage = error.message || 'Authentication failed';
+      }
+
+      setAuthError(errorMessage);
+      console.error('Auth error:', error.code, error.message);
+    } finally {
+      setIsAuthLoading(false);
     }
   };
+
+  const handleSignUp = async (email: string, password: string) => {
+    setSignUpError(null);
+    setIsSigningUp(true);
+
+    try {
+      // Create user account with Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update user state with new account info
+      setUser({
+        name: userCredential.user.displayName || 'User',
+        email: userCredential.user.email || email
+      });
+
+      // Clear form and close modal
+      setShowSignUpForm(false);
+      setPassword('');
+
+      // Advance to step 2 (questionnaire)
+      setStep(2);
+    } catch (error: any) {
+      let errorMessage = 'Account creation failed';
+
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email is already registered. Please sign in instead.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak. Use at least 6 characters.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Account creation is not enabled. Please contact support.';
+          break;
+        default:
+          errorMessage = error.message || 'Account creation failed';
+      }
+
+      setSignUpError(errorMessage);
+      console.error('Sign up error:', error.code, error.message);
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    setForgotPasswordError(null);
+    setIsSendingReset(true);
+
+    try {
+      // Send password reset email via Firebase
+      await sendPasswordResetEmail(auth, email);
+      // On success, the form component will show the success state
+    } catch (error: any) {
+      let errorMessage = 'Failed to send reset email';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many requests. Please try again later.';
+          break;
+        default:
+          errorMessage = error.message || 'Failed to send reset email';
+      }
+
+      setForgotPasswordError(errorMessage);
+      console.error('Forgot password error:', error.code, error.message);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
 
   const handleDemoClick = (personaKey: string) => {
     const isActuallyDudi = user.name.trim().toLowerCase() === 'dudi';
@@ -457,21 +586,42 @@ export default function App() {
                       placeholder="Password"
                       className="w-full px-5 py-3.5 bg-white rounded-xl border border-slate-200 focus:border-[#8c50f0] focus:ring-1 focus:ring-purple-300 transition-all outline-none text-[15px] font-medium text-slate-800 placeholder:text-slate-400"
                     />
+                    {authError && (
+                      <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium text-red-700">{authError}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end relative z-10 w-full -mt-2 mb-2">
-                    <button type="button" className="text-[13px] font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPasswordForm(true)}
+                      className="text-[13px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                    >
                       Forgot Password?
                     </button>
                   </div>
 
-                  <button type="submit" className="relative z-10 w-full py-3.5 btn-gradient text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform">
-                    Sign In
+                  <button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="relative z-10 w-full py-3.5 btn-gradient text-white rounded-xl font-bold text-[15px] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isAuthLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
                   </button>
 
                   <div className="text-center pt-2 relative z-10 w-full">
                     <span className="text-slate-400 font-medium text-[13px]">Don't have an account? </span>
-                    <button type="button" className="text-[#8b5cf6] font-bold text-[13px] hover:text-purple-600 transition-colors">Sign up</button>
+                    <button type="button" onClick={() => setShowSignUpForm(true)} className="text-[#8b5cf6] font-bold text-[13px] hover:text-purple-600 transition-colors">Sign up</button>
                   </div>
                 </form>
 
@@ -638,6 +788,27 @@ export default function App() {
           )
         }
 
+
+        {showSignUpForm && (
+          <SignUpForm
+            onSubmit={handleSignUp}
+            onClose={() => setShowSignUpForm(false)}
+            isLoading={isSigningUp}
+            error={signUpError}
+          />
+        )}
+
+        {showForgotPasswordForm && (
+          <ForgotPasswordForm
+            onSubmit={handleForgotPassword}
+            onClose={() => {
+              setShowForgotPasswordForm(false);
+              setForgotPasswordError(null);
+            }}
+            isLoading={isSendingReset}
+            error={forgotPasswordError}
+          />
+        )}
 
         <Footer language={language} />
       </main>
