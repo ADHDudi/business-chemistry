@@ -430,7 +430,7 @@ export default function App() {
   };
 
   const currentTrait = traitsList[currentQuestionIndex];
-  const isDudiMode = user.name.trim().toLowerCase().includes('dudi');
+  const isDudiMode = user.email.trim().toLowerCase() === 'tsur.david@gmail.com';
 
   if (currentHash === '#terms') return <TermsPage language={language} />;
   if (currentHash === '#privacy') return <PrivacyPage language={language} />;

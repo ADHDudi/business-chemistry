@@ -49,7 +49,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const { profileData, formal: avgFormal, dominant: avgDominant } = results;
   const currentPersona = useMemo(() => getPersona(avgFormal, avgDominant), [avgFormal, avgDominant]);
 
-  const isDudiMode = user.name.trim().toLowerCase().includes('dudi') || forceDebug;
+  const isDudiMode = user.email.trim().toLowerCase() === 'tsur.david@gmail.com' || forceDebug;
 
   const colors = {
     red: { bg: 'bg-red-50', text: 'text-red-700', accent: 'text-red-400', from: 'from-red-500', to: 'to-red-700', shadow: 'shadow-red-500/20', border: 'border-red-200', glow: 'shadow-[0_0_20px_rgba(239,68,68,0.15)]' },
