@@ -334,6 +334,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         {(['overview', 'ai', 'prepare', 'matrix'] as const).map(tab => (
           <button
             key={tab} onClick={() => setActiveTab(tab)}
+            data-testid={`tab-${tab}`}
             className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-[#8c50f0] text-white shadow-md` : 'text-slate-500'}`}
           >
             {tab === 'overview' && <Info size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
@@ -346,7 +347,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       </div>
 
       {activeTab === 'overview' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-overview">
           <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
             <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
@@ -367,7 +368,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       )}
 
       {activeTab === 'ai' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-ai">
           {/* Card 1: The Vibe Check (Profile) */}
           {aiInsight && (
             <div className={`bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden`}>
@@ -520,7 +521,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       )}
 
       {activeTab === 'prepare' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-prepare">
           {/* Target Profile Selector */}
           <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
@@ -531,6 +532,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                 <button
                   key={p}
                   onClick={() => setTargetProfile(p)}
+                  data-testid={`persona-btn-${p.toLowerCase()}`}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
                     ? 'btn-gradient text-white shadow-md transform scale-105'
                     : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
@@ -665,7 +667,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
       )}
 
       {activeTab === 'matrix' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-matrix">
           <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
             <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">

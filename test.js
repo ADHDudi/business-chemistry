@@ -466,9 +466,9 @@ async function runFullFlowTest(browser) {
         const MAX_Q = 50;
 
         while (!isComplete && questionCount < MAX_Q) {
-            // Report view is reached when the "Them" tab (data-testid="tab-them") appears
+            // Report view is reached when the "Them" tab (data-testid="tab-ai") appears
             const onReport = await page.evaluate(() =>
-                !!document.querySelector('[data-testid="tab-them"]')
+                !!document.querySelector('[data-testid="tab-ai"]')
             );
             if (onReport) {
                 logStep('Questionnaire Complete', 'PASS', `${questionCount} questions answered — report view detected`);
@@ -506,14 +506,14 @@ async function runFullFlowTest(browser) {
 
         // Report View — wait for the "Them" tab (report view indicator)
         await page.waitForFunction(
-            () => !!document.querySelector('[data-testid="tab-them"]'),
+            () => !!document.querySelector('[data-testid="tab-ai"]'),
             { timeout: 10000 }
         );
         logStep('Report Loaded', 'PASS', 'Report view rendered (You/Them/Together tabs visible)', await captureScreenshot(page));
 
         // Click "Them" tab — where AI coaching now lives
         const clickedAI = await page.evaluate(() => {
-            const btn = document.querySelector('[data-testid="tab-them"]');
+            const btn = document.querySelector('[data-testid="tab-ai"]');
             if (btn) { btn.click(); return true; }
             return false;
         });
@@ -571,6 +571,251 @@ async function runFullFlowTest(browser) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Shared: navigate to report view (sign-in + complete questionnaire)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function navigateToReport(browser) {
+    const page = await browser.newPage();
+    await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 });
+    await fillLoginForm(page, 'testflow@example.com', 'TestPassword123');
+    page.click('button[type="submit"]').catch(() => {});
+    await page.waitForFunction(() => !!document.querySelector('button.aspect-square'), { timeout: 12000 });
+
+    let questionCount = 0;
+    while (questionCount < 50) {
+        const onReport = await page.evaluate(() => !!document.querySelector('[data-testid="tab-ai"]'));
+        if (onReport) break;
+        const hasBtn = await page.$('button.aspect-square');
+        if (hasBtn) {
+            await page.click('button.aspect-square');
+            questionCount++;
+            await new Promise(r => setTimeout(r, 80));
+            const canFinish = await page.evaluate(() => {
+                const fin = [...document.querySelectorAll('button')]
+                    .find(b => (b.textContent.includes('Finish') || b.textContent.includes('סיימתי')) && !b.disabled);
+                return !!fin;
+            });
+            if (canFinish) {
+                await page.evaluate(() => {
+                    const fin = [...document.querySelectorAll('button')]
+                        .find(b => (b.textContent.includes('Finish') || b.textContent.includes('סיימתי')) && !b.disabled);
+                    if (fin) fin.click();
+                });
+                await new Promise(r => setTimeout(r, 3000));
+                break;
+            }
+        } else {
+            await new Promise(r => setTimeout(r, 300));
+        }
+    }
+    await page.waitForFunction(() => !!document.querySelector('[data-testid="tab-ai"]'), { timeout: 10000 });
+    return page;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Suite 6 — Report: Tab Structure
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runReportTabStructureTests(browser) {
+    startSuite('Report — Tab Structure');
+    let page;
+    try {
+        page = await navigateToReport(browser);
+
+        // All 4 tab buttons present
+        const tabs = ['overview', 'ai', 'prepare', 'matrix'];
+        for (const tab of tabs) {
+            const exists = !!(await page.$(`[data-testid="tab-${tab}"]`));
+            logStep(`Tab "${tab}" button present`, exists ? 'PASS' : 'FAIL',
+                `[data-testid="tab-${tab}"] ${exists ? 'found' : 'missing'}`);
+        }
+
+        // Default tab: overview content visible
+        const overviewVisible = !!(await page.$('[data-testid="tab-content-overview"]'));
+        logStep('Default tab is Overview', overviewVisible ? 'PASS' : 'FAIL',
+            overviewVisible ? 'tab-content-overview rendered on load' : 'Overview content not visible on load',
+            await captureScreenshot(page));
+
+        // Each tab renders its content when clicked
+        for (const tab of ['ai', 'prepare', 'matrix']) {
+            await page.evaluate((t) => {
+                document.querySelector(`[data-testid="tab-${t}"]`)?.click();
+            }, tab);
+            await new Promise(r => setTimeout(r, 600));
+            const contentVisible = !!(await page.$(`[data-testid="tab-content-${tab}"]`));
+            logStep(`Tab "${tab}" renders content on click`, contentVisible ? 'PASS' : 'FAIL',
+                `tab-content-${tab} ${contentVisible ? 'visible' : 'missing after click'}`,
+                await captureScreenshot(page));
+            // Return to overview
+            await page.evaluate(() => document.querySelector('[data-testid="tab-overview"]')?.click());
+            await new Promise(r => setTimeout(r, 300));
+        }
+
+    } catch (err) {
+        logStep('Suite error', 'FAIL', err.message, page ? await captureScreenshot(page) : null);
+    } finally {
+        if (page) await page.close();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Suite 7 — Report: AI Analysis (AI tab)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runAIAnalysisTests(browser) {
+    startSuite('Report — AI Analysis Tab');
+    let page;
+    try {
+        page = await navigateToReport(browser);
+
+        // Click the AI tab
+        await page.evaluate(() => document.querySelector('[data-testid="tab-ai"]')?.click());
+        await new Promise(r => setTimeout(r, 500));
+        const aiTabActive = !!(await page.$('[data-testid="tab-content-ai"]'));
+        logStep('AI tab activates', aiTabActive ? 'PASS' : 'FAIL',
+            `tab-content-ai ${aiTabActive ? 'rendered' : 'not found'}`);
+
+        // AI content loads within 30s (initial load — no persona selected yet)
+        logStep('Waiting for AI insights to load', 'INFO', 'Expecting ai-loaded or ai-error within 30s');
+        try {
+            await page.waitForFunction(
+                () => !!document.querySelector('[data-testid="ai-loaded"]') ||
+                      !!document.querySelector('[data-testid="ai-error"]'),
+                { timeout: 30000 }
+            );
+            const hasError = !!(await page.$('[data-testid="ai-error"]'));
+            const errorText = hasError ? await page.evaluate(() =>
+                document.querySelector('[data-testid="ai-error"]')?.textContent?.trim()
+            ) : null;
+            logStep('AI insights loaded', hasError ? 'FAIL' : 'PASS',
+                hasError ? `Error state shown: ${errorText}` : 'AI coaching content rendered',
+                await captureScreenshot(page));
+        } catch {
+            logStep('AI insights timeout', 'FAIL',
+                'ai-loaded/ai-error did not appear within 30s — possible cold start or API failure',
+                await captureScreenshot(page));
+        }
+
+        // Persona picker buttons present
+        for (const persona of ['guardian', 'driver', 'integrator', 'pioneer']) {
+            const btn = !!(await page.$(`[data-testid="persona-btn-${persona}"]`));
+            logStep(`Persona button: ${persona}`, btn ? 'PASS' : 'FAIL',
+                `persona-btn-${persona} ${btn ? 'found' : 'missing'}`);
+        }
+
+        // Select each persona and verify AI reloads
+        for (const persona of ['guardian', 'driver', 'integrator', 'pioneer']) {
+            logStep(`Select persona: ${persona}`, 'INFO', 'Clicking persona button → waiting for AI reload');
+            await page.evaluate((p) => {
+                document.querySelector(`[data-testid="persona-btn-${p}"]`)?.click();
+            }, persona);
+            try {
+                await page.waitForFunction(
+                    () => !!document.querySelector('[data-testid="ai-loaded"]') ||
+                          !!document.querySelector('[data-testid="ai-error"]'),
+                    { timeout: 35000 }
+                );
+                const hasError = !!(await page.$('[data-testid="ai-error"]'));
+                logStep(`AI loads for persona: ${persona}`, hasError ? 'FAIL' : 'PASS',
+                    hasError ? 'AI error shown after persona selection' : 'AI coaching rendered for selected persona',
+                    await captureScreenshot(page));
+            } catch {
+                logStep(`AI timeout for persona: ${persona}`, 'FAIL',
+                    'AI did not load within 35s after persona selection',
+                    await captureScreenshot(page));
+            }
+        }
+
+    } catch (err) {
+        logStep('Suite error', 'FAIL', err.message, page ? await captureScreenshot(page) : null);
+    } finally {
+        if (page) await page.close();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Suite 8 — Auth Modals: Sign-Up & Forgot Password
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runAuthModalTests(browser) {
+    startSuite('Auth Modals — Sign-Up & Forgot Password');
+    const page = await browser.newPage();
+    try {
+        // Sign-Up modal
+        await navigateToLoginPage(page);
+        const signUpClicked = await page.evaluate(() => {
+            const btn = [...document.querySelectorAll('button[type="button"]')]
+                .find(b => b.textContent.trim() === 'Sign up');
+            if (btn) { btn.click(); return true; }
+            return false;
+        });
+        await new Promise(r => setTimeout(r, 800));
+        const signUpInputs = await page.evaluate(() => document.querySelectorAll('input').length);
+        logStep('Sign-Up modal opens', signUpClicked && signUpInputs > 2 ? 'PASS' : 'FAIL',
+            signUpClicked
+                ? `${signUpInputs} inputs visible (need >2 for sign-up form)`
+                : '"Sign up" button not found',
+            await captureScreenshot(page));
+
+        // Sign-Up modal has name, email, password fields
+        if (signUpInputs > 2) {
+            const hasName = !!(await page.$('input[placeholder*="name"], input[name="name"], input[autocomplete="name"]'));
+            const hasEmail = (await page.$$('input[type="email"]')).length > 0;
+            const hasPwd = (await page.$$('input[type="password"]')).length > 0;
+            logStep('Sign-Up form has name field', hasName ? 'PASS' : 'WARN',
+                hasName ? 'Name input found' : 'Name input not found (may use placeholder or different attr)');
+            logStep('Sign-Up form has email field', hasEmail ? 'PASS' : 'FAIL',
+                hasEmail ? 'Email input found' : 'Email input missing');
+            logStep('Sign-Up form has password field', hasPwd ? 'PASS' : 'FAIL',
+                hasPwd ? 'Password input found' : 'Password input missing');
+
+            // Close modal (Escape or close button)
+            await page.keyboard.press('Escape');
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        // Forgot Password modal
+        await navigateToLoginPage(page);
+        const forgotClicked = await page.evaluate(() => {
+            const btn = [...document.querySelectorAll('button[type="button"]')]
+                .find(b => b.textContent.includes('Forgot'));
+            if (btn) { btn.click(); return true; }
+            return false;
+        });
+        await new Promise(r => setTimeout(r, 800));
+        const forgotInputs = await page.evaluate(() => document.querySelectorAll('input[type="email"]').length);
+        logStep('Forgot Password modal opens', forgotClicked && forgotInputs > 0 ? 'PASS' : 'FAIL',
+            forgotClicked
+                ? `${forgotInputs} email input(s) visible`
+                : '"Forgot Password" button not found',
+            await captureScreenshot(page));
+
+        if (forgotClicked && forgotInputs > 0) {
+            // Fill email and submit reset
+            const emailInputs = await page.$$('input[type="email"]');
+            await emailInputs[emailInputs.length - 1].click({ clickCount: 3 });
+            await page.keyboard.type('testuser@example.com');
+            const sendBtn = await page.evaluate(() => {
+                const btn = [...document.querySelectorAll('button[type="submit"]')]
+                    .find(b => b.textContent.toLowerCase().includes('send') || b.textContent.includes('שלח'));
+                if (btn) { btn.click(); return true; }
+                return false;
+            });
+            await new Promise(r => setTimeout(r, 2000));
+            logStep('Forgot Password — send reset email', sendBtn ? 'PASS' : 'WARN',
+                sendBtn ? 'Send button clicked (Firebase sendPasswordResetEmail called)' : 'Send button not found',
+                await captureScreenshot(page));
+        }
+
+    } catch (err) {
+        logStep('Suite error', 'FAIL', err.message, await captureScreenshot(page));
+    } finally {
+        await page.close();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Runner
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -591,6 +836,9 @@ async function runAllTests() {
         await runSignInHappyPathTests(browser);
         await runSignInFailPathTests(browser);
         await runGoogleSignInTests(browser);
+        await runAuthModalTests(browser);
+        await runReportTabStructureTests(browser);
+        await runAIAnalysisTests(browser);
         await runFullFlowTest(browser);
     } finally {
         generateReport();
