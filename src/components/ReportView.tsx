@@ -546,7 +546,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           </div>
 
           {aiInsight && targetProfile ? (
-            <>
+            <div data-testid="prepare-ai-loaded">
               {/* Meeting Context */}
               <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
                 <div className="flex items-center justify-center gap-3 mb-6">
@@ -657,7 +657,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                   </li>
                 </ul>
               </div>
-            </>
+            </div>
           ) : (
             <div className="bg-slate-50 p-12 rounded-[2.5rem] text-center space-y-4 border border-slate-200">
               <p className="text-slate-500 font-medium">{language === 'he' ? 'בחר פרופיל לפגישה מהכרטיס ״ניתוח AI״ כדי להתחיל.' : 'Select a profile to meet with in the AI Analysis tab to get started.'}</p>
