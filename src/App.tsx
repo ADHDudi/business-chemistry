@@ -422,10 +422,9 @@ export default function App() {
 
 
   const handleReset = () => {
-    setStep(1);
+    setStep(authUser ? 2 : 1);
     setAnswers({});
     setCurrentQuestionIndex(0);
-    setLogoClicks(0);
     setLogoClicks(0);
   };
 
