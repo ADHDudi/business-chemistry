@@ -415,7 +415,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             title={t.report.your_challenge_title}
             icon={<Brain size={16} className="text-slate-500" />}
             isAdhd
-            forceOpen={adhdLens || undefined}
+            forceOpen={adhdLens}
           >
             <p className="text-slate-600 font-medium text-sm leading-relaxed pt-2">
               {currentPersona.communication_challenge[language]}
@@ -427,7 +427,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             title={t.report.adhd_title}
             icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
             isAdhd
-            forceOpen={adhdLens || undefined}
+            forceOpen={adhdLens}
           >
             <p className="text-white font-bold text-sm leading-relaxed italic pt-2 bg-slate-800 p-4 rounded-xl">
               {currentPersona.adhd_challenge[language]}
@@ -508,7 +508,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                 title={t.report.adhd_hack_title}
                 icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
                 isAdhd
-                forceOpen={adhdLens || undefined}
+                forceOpen={adhdLens}
               >
                 <div className="space-y-4 pt-2">
                   <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
