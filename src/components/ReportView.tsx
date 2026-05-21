@@ -6,8 +6,10 @@ import {
   ExternalLink, Copy, Star, Target, Hash,
   Sparkles, Linkedin, Globe, Brain, Loader2,
   ThumbsUp, ThumbsDown, Info, Send, RefreshCw,
-  Terminal, X, Share2, Users
+  Terminal, X, Share2, Users,
+  User as UserIcon
 } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
 import { Language, User, Results, Persona, AxisType, Trait, AICommunicationCoach } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS, GOOGLE_SCRIPT_URL, PERSONA_DATA, APP_ID } from '../constants';
 import { getAIInsights } from '../geminiService';
@@ -28,7 +30,8 @@ interface ReportViewProps {
 }
 
 const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, calculateResults, getPersona, forceDebug }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'ai' | 'prepare'>('overview');
+  const [activeTab, setActiveTab] = useState<'you' | 'them' | 'together'>('you');
+  const [adhdLens, setAdhdLens] = useState(false);
   // Auto-send replaces manual sending state
   const [aiInsight, setAiInsight] = useState<AICommunicationCoach | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -277,13 +280,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const positionX = 15 + ((parseFloat(avgDominant) - 1) / 5) * 70;
   const positionY = 15 + ((6 - parseFloat(avgFormal)) / 5) * 70;
 
-  const tabLabels = {
-    overview: language === 'he' ? 'סקירה' : 'Overview',
-    ai: language === 'he' ? 'ניתוח AI' : 'AI Analysis',
-    matrix: t.report.tabs.matrix,
-    prepare: language === 'he' ? 'התכן לפגישה' : 'Prepare for Meeting'
-  };
-
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 relative">
       {/* Debug Trigger (Floating High-Contrast Icon for Dudi) */}
@@ -330,26 +326,50 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         <p className={`text-lg font-black ${colors.text}`}>{currentPersona.title[language]}</p>
       </div>
 
+      {/* ADHD Lens chip */}
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={() => setAdhdLens(v => !v)}
+          aria-pressed={adhdLens}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-black tracking-widest uppercase transition-all border ${
+            adhdLens
+              ? 'bg-[#8c50f0] text-white border-transparent shadow-md'
+              : 'bg-white text-slate-500 border-slate-200 hover:border-[#8c50f0]/40'
+          }`}
+        >
+          <BrainCircuit size={14} />
+          {t.report.adhd_lens_label}
+          <span className={`text-[9px] px-2 py-0.5 rounded-full ${adhdLens ? 'bg-white/20' : 'bg-slate-100'}`}>
+            {adhdLens ? t.report.adhd_lens_on : t.report.adhd_lens_off}
+          </span>
+        </button>
+      </div>
+
+      {/* Tab strip */}
       <div className="flex bg-slate-100 p-1 rounded-2xl no-select">
-        {(['overview', 'ai', 'prepare', 'matrix'] as const).map(tab => (
+        {(['you', 'them', 'together'] as const).map(tab => (
           <button
-            key={tab} onClick={() => setActiveTab(tab)}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
             data-testid={`tab-${tab}`}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-[#8c50f0] text-white shadow-md` : 'text-slate-500'}`}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${
+              activeTab === tab ? 'bg-[#8c50f0] text-white shadow-md' : 'text-slate-500'
+            }`}
           >
-            {tab === 'overview' && <Info size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            {tab === 'ai' && <BrainCircuit size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            {tab === 'prepare' && <Target size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            {tab === 'matrix' && <Grid size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            <span>{tabLabels[tab]}</span>
+            {tab === 'you' && <UserIcon size={14} />}
+            {tab === 'them' && <Target size={14} />}
+            {tab === 'together' && <Grid size={14} />}
+            <span>{t.report.tabs[tab]}</span>
           </button>
         ))}
       </div>
 
-      {activeTab === 'overview' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-overview">
-          <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
-            <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
+      {activeTab === 'you' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4" data-testid="tab-content-you">
+          {/* Profile Summary */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
                 <Info size={18} />
               </div>
@@ -357,40 +377,23 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                 {language === 'he' ? 'סיכום הפרופיל' : 'Profile Summary'}
               </h3>
             </div>
-
             <div className="p-6 space-y-6">
               <p className="text-slate-600 font-medium leading-relaxed text-lg">{currentPersona.description[language]}</p>
               <PersonaList title={t.report.strengths_title} items={currentPersona.strengths[language]} icon={<Zap size={18} className="text-yellow-500" />} />
               <PersonaList title={t.report.tips_title} items={currentPersona.tips[language]} icon={<Lightbulb size={18} className={colors.text} />} />
             </div>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'ai' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-ai">
-          {/* Card 1: The Vibe Check (Profile) */}
+          {/* Superpower collapsible */}
           {aiInsight && (
-            <div className={`bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden`}>
-              <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
-                <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
-                  <Zap size={18} />
-                </div>
-                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
-              </div>
-              <div className="p-6 text-center space-y-4">
-                <h2 className={`text-2xl font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</h2>
-                <p className="text-slate-600 font-medium leading-relaxed">{language === 'he' ? 'המוח שלך הוא מנוע חדשנות.' : 'Your brain is an innovation engine.'}</p>
+            <CollapsibleSection title={t.report.superpower_title} icon={<Zap size={16} className="text-yellow-500" />}>
+              <div className="space-y-3 pt-2">
+                <p className={`text-lg font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</p>
                 <div className="inline-block px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-400">
                   VS Kryptonite: {aiInsight.user_profile.kryptonite}
                 </div>
-              </div>
-              {aiInsight.user_profile.challenges && aiInsight.user_profile.challenges.length > 0 && (
-                <div className="px-6 pb-6 pt-2 space-y-3 border-t border-slate-100">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 pt-4">
-                    {language === 'he' ? 'אתגרים מרכזיים' : 'Key Challenges'}
-                  </h4>
-                  <ul className="space-y-3">
+                {aiInsight.user_profile.challenges && aiInsight.user_profile.challenges.length > 0 && (
+                  <ul className="space-y-3 pt-2">
                     {aiInsight.user_profile.challenges.map((c, i) => (
                       <li key={i} className="bg-slate-50/60 rounded-2xl p-4 border border-slate-100">
                         <div className={`text-sm font-black ${colors.text} mb-1`}>{c.title}</div>
@@ -402,63 +405,114 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </CollapsibleSection>
           )}
+
+          {/* Communication Challenge collapsible (ADHD) */}
+          <CollapsibleSection
+            title={t.report.your_challenge_title}
+            icon={<Brain size={16} className="text-slate-500" />}
+            isAdhd
+            forceOpen={adhdLens || undefined}
+          >
+            <p className="text-slate-600 font-medium text-sm leading-relaxed pt-2">
+              {currentPersona.communication_challenge[language]}
+            </p>
+          </CollapsibleSection>
+
+          {/* ADHD Angle collapsible */}
+          <CollapsibleSection
+            title={t.report.adhd_title}
+            icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+            isAdhd
+            forceOpen={adhdLens || undefined}
+          >
+            <p className="text-white font-bold text-sm leading-relaxed italic pt-2 bg-slate-800 p-4 rounded-xl">
+              {currentPersona.adhd_challenge[language]}
+            </p>
+          </CollapsibleSection>
+        </div>
+      )}
+
+      {activeTab === 'them' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4" data-testid="tab-content-them">
+          {/* Target Profile Selector */}
+          <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
+              {language === 'he' ? 'עם מי הפגישה?' : 'Who are you meeting?'}
+            </h4>
+            <div className="flex gap-2 min-w-max px-2">
+              {['Guardian', 'Driver', 'Integrator', 'Pioneer'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setTargetProfile(p)}
+                  data-testid={`persona-btn-${p.toLowerCase()}`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                    targetProfile === p
+                      ? 'btn-gradient text-white shadow-md transform scale-105'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  <span>{p === 'Guardian' ? '🛡️' : p === 'Driver' ? '🎯' : p === 'Integrator' ? '🤝' : '🚀'}</span>
+                  <span>{p}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {isLoadingAI ? (
             <div className={`bg-white p-12 rounded-[2.5rem] shadow-sm border-2 ${colors.border} flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]`}>
               <div className="relative">
-                <Brain size={48} className={`${colors.text} animate-bounce transition-colors duration-500`} />
-                <div className={`absolute -inset-2 rounded-full ${colors.bg} opacity-20 animate-ping`} />
+                <Brain size={48} className={`${colors.text} animate-bounce`} />
                 <Loader2 size={24} className={`${colors.accent} animate-spin absolute -top-1 -right-1`} />
               </div>
-              <div className="space-y-2">
-                <h4 className={`text-lg font-black ${colors.text}`}>{language === 'he' ? 'בונה את תוכנת האימון...' : 'Building your coaching brief...'}</h4>
-                <p className="text-slate-400 text-sm font-medium">{language === 'he' ? 'מתאים את האסטרטגיה לפרופיל הנבחר' : 'Tailoring strategy to the selected profile'}</p>
-              </div>
+              <h4 className={`text-lg font-black ${colors.text}`}>{language === 'he' ? 'בונה את תוכנת האימון...' : 'Building your coaching brief...'}</h4>
             </div>
-          ) : aiInsight ? (
-            <div className="space-y-6" data-testid="ai-loaded">
-              {/* Card 2: The Game Plan (Interaction) */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden relative">
-                <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
+          ) : aiInsight && targetProfile ? (
+            <div className="space-y-4" data-testid="ai-loaded">
+              {/* Friction Point */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                <div className="p-4 bg-red-50/50 border-b border-red-100 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
+                    <Zap size={18} />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.friction_title}</h3>
+                </div>
+                <div className="p-6">
+                  <p className="text-lg font-black text-slate-900 leading-relaxed mb-3">{aiInsight.interaction_guide.friction_point}</p>
+                </div>
+              </div>
+
+              {/* Strategy Card */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
                   <Target size={18} className="text-green-400" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '2. תוכנית משחק' : '2. Game Plan'}</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest">{t.report.strategy_title}</h3>
                 </div>
-                <div className="p-6 space-y-4">
-                  <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                    <h4 className="text-[10px] font-black uppercase text-red-400 mb-1">{language === 'he' ? 'נקודת חיכוך' : 'Friction Point'}</h4>
-                    <p className="text-red-900 font-bold text-sm">{aiInsight.interaction_guide.friction_point}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-black text-slate-900 flex items-center gap-2">
-                      <ContextIcon profile={targetProfile} />
-                      {aiInsight.interaction_guide.strategy_card.action}
-                    </h4>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative">
-                      <span className="absolute -top-2 left-4 bg-slate-200 text-[9px] font-bold px-2 py-0.5 rounded text-slate-500 uppercase">Script</span>
-                      <p className="text-slate-600 italic font-medium">"{aiInsight.interaction_guide.strategy_card.script}"</p>
-                    </div>
+                <div className="p-6 space-y-5">
+                  <h4 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
+                    <ContextIcon profile={targetProfile} />
+                    {aiInsight.interaction_guide.strategy_card.action}
+                  </h4>
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative">
+                    <span className="absolute -top-2 left-4 bg-slate-900 text-white text-[9px] font-bold px-3 py-1 rounded uppercase">💬 Script</span>
+                    <p className="text-lg text-slate-800 italic font-bold leading-relaxed mt-2">"{aiInsight.interaction_guide.strategy_card.script}"</p>
                   </div>
                 </div>
               </div>
 
-              {/* Card 3: Executive Function Tool */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden relative">
-                <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
-                    <BrainCircuit size={18} />
-                  </div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '3. כלי לניהול אימפולסיביות' : '3. ADHD Hack'}</h3>
-                </div>
-                <div className="p-6 space-y-4">
+              {/* ADHD Hack — collapsed by default, opens with ADHD lens */}
+              <CollapsibleSection
+                title={t.report.adhd_hack_title}
+                icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+                isAdhd
+                forceOpen={adhdLens || undefined}
+              >
+                <div className="space-y-4 pt-2">
                   <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
                   <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
-
                   {aiInsight.executive_function_tool.template_ready && (
                     <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
                       <span>📝</span>
@@ -466,9 +520,9 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                     </button>
                   )}
                 </div>
-              </div>
+              </CollapsibleSection>
 
-              {/* Feedback Section */}
+              {/* Feedback row */}
               <div className="px-6 pb-6 pt-2 flex flex-col items-center gap-4">
                 {aiFeedback === 'positive' || aiFeedback === 'refined' ? (
                   <div className="flex items-center gap-2 text-green-600 bg-green-50 px-6 py-2 rounded-full border border-green-100">
@@ -487,187 +541,58 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                     </button>
                   </div>
                 )}
-                {/* Share Button */}
+                {aiFeedback === 'negative' && (
+                  <div className="w-full space-y-2">
+                    <textarea
+                      value={refinementText}
+                      onChange={e => setRefinementText(e.target.value)}
+                      placeholder={language === 'he' ? 'מה לשפר?' : 'What should be improved?'}
+                      className="w-full p-3 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#8c50f0]/30"
+                      rows={2}
+                    />
+                    <button
+                      onClick={regenerateWithFeedback}
+                      disabled={!refinementText.trim()}
+                      className="w-full py-2 bg-[#8c50f0] text-white font-black rounded-xl text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw size={14} /> {language === 'he' ? 'שפר ניתוח' : 'Refine Analysis'}
+                    </button>
+                  </div>
+                )}
                 <button onClick={handleShare} className="text-slate-400 text-sm font-bold flex items-center gap-2 hover:text-slate-600">
                   <Share2 size={14} /> Share Brief
                 </button>
               </div>
-
             </div>
           ) : (
-            // Fallback / Error State
             <div className="bg-slate-50 p-8 rounded-[2.5rem] text-center space-y-4 border border-slate-200" data-testid="ai-error">
               {aiError ? (
                 <>
-                  <p className="text-red-500 font-bold">{aiError}</p>
-                  <p className="text-slate-400 text-sm">Please check the console or ensure your API key is correctly configured and has available quota.</p>
+                  <p className="text-red-500 font-bold">AI Request Failed: {aiError}</p>
+                  <p className="text-slate-400 text-sm">Please check the console or ensure your API key is correctly configured.</p>
                 </>
               ) : (
-                <p className="text-slate-400 font-medium">System is thinking...</p>
+                <p className="text-slate-400 font-medium">{language === 'he' ? 'בחר פרופיל כדי להתחיל' : 'Select a profile above to get your coaching brief'}</p>
               )}
-              <button
-                onClick={() => {
-                  lastFetchRef.current = { personaKey: null, targetProfile: undefined };
-                  setAiInsight(null);
-                  setAiError(null);
-                }}
-                className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100"
-              >
-                Retry Analysis
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'prepare' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-prepare">
-          {/* Target Profile Selector */}
-          <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
-              {language === 'he' ? 'עם מי הפגישה?' : 'Who are you meeting?'}
-            </h4>
-            <div className="flex gap-2 min-w-max px-2">
-              {['Guardian', 'Driver', 'Integrator', 'Pioneer'].map((p) => (
+              {aiError && (
                 <button
-                  key={p}
-                  onClick={() => setTargetProfile(p)}
-                  data-testid={`persona-btn-${p.toLowerCase()}`}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
-                    ? 'btn-gradient text-white shadow-md transform scale-105'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                    }`}
+                  onClick={() => {
+                    lastFetchRef.current = { personaKey: null, targetProfile: undefined };
+                    setAiInsight(null);
+                    setAiError(null);
+                  }}
+                  className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100"
                 >
-                  <span>{p === 'Guardian' ? '🛡️' : p === 'Driver' ? '🎯' : p === 'Integrator' ? '🤝' : '🚀'}</span>
-                  <span>{p}</span>
+                  Retry Analysis
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {aiInsight && targetProfile ? (
-            <div data-testid="prepare-ai-loaded">
-              {/* Meeting Context */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
-                <div className="flex items-center justify-center gap-3 mb-6">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full text-sm font-bold text-slate-600">
-                    <span>{targetProfile === 'Guardian' ? '🛡️' : targetProfile === 'Driver' ? '🎯' : targetProfile === 'Integrator' ? '🤝' : '🚀'}</span>
-                    <span>{targetProfile}</span>
-                  </div>
-                  <div className="text-slate-300">→</div>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{language === 'he' ? 'אתה' : 'You'}</p>
-                    <p className="text-sm font-black text-slate-900">{currentPersona.title[language]}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* The Challenge */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
-                <div className="p-4 bg-red-50/50 border-b border-red-100 flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
-                    <Zap size={18} />
-                  </div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                    {language === 'he' ? 'נקודת החיכוך' : 'Where You Might Clash'}
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <p className="text-lg font-black text-slate-900 leading-relaxed mb-3">{aiInsight.interaction_guide.friction_point}</p>
-                  <p className="text-sm text-slate-600">
-                    {language === 'he'
-                      ? 'זו הנקודה שלרוב מביאה לחיכוך בתקשורת בין פרופילים אלה. הכר אותה מראש.'
-                      : 'This is the core tension that typically emerges. Expect it, and you\'ll navigate it better.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* The Strategy */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
-                <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
-                  <Target size={18} className="text-green-400" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? 'אסטרטגיית הנהלה' : 'Your Game Plan'}</h3>
-                </div>
-                <div className="p-6 space-y-5">
-                  <div>
-                    <h4 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
-                      <span className="text-lg">🎯</span>
-                      {aiInsight.interaction_guide.strategy_card.action}
-                    </h4>
-                  </div>
-
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative">
-                    <span className="absolute -top-2 left-4 bg-slate-900 text-white text-[9px] font-bold px-3 py-1 rounded text-slate-100 uppercase">💬 Script</span>
-                    <p className="text-lg text-slate-800 italic font-bold leading-relaxed mt-2">"{aiInsight.interaction_guide.strategy_card.script}"</p>
-                  </div>
-
-                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                    <p className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2">{language === 'he' ? 'טיפ' : 'Tip'}</p>
-                    <p className="text-sm text-blue-900">
-                      {language === 'he'
-                        ? 'השתמש בדברים אלה בהתחלת הפגישה כדי להגדיר טון משותף ולהימנע מחיכוך.'
-                        : 'Use this opener early in the meeting to set a collaborative tone and avoid friction.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* ADHD Hack for This Scenario */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
-                <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
-                    <Lightbulb size={18} />
-                  </div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                    {language === 'he' ? 'טריק לרגע הפגישה' : 'ADHD Hack for This Meeting'}
-                  </h3>
-                </div>
-                <div className="p-6 space-y-4">
-                  <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
-                  <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
-                  {aiInsight.executive_function_tool.template_ready && (
-                    <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
-                      <span>📝</span>
-                      {language === 'he' ? 'הכן דף טיוטה לפגישה' : 'Create Meeting Notes Template'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Pre-Meeting Checklist */}
-              <div className="bg-gradient-to-br from-[#f3ecff] to-slate-50 p-6 rounded-[2.5rem] shadow-xl border border-[#e4d7ff]">
-                <div className="flex items-center gap-2 mb-4">
-                  <CheckCircle size={20} className="text-[#8c50f0]" />
-                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
-                    {language === 'he' ? 'רשימה לפני הפגישה' : 'Before the Meeting'}
-                  </h3>
-                </div>
-                <ul className="space-y-2 text-sm text-slate-700">
-                  <li className="flex gap-2">
-                    <span className="text-[#8c50f0] font-black">✓</span>
-                    <span>{language === 'he' ? 'כן לדברים שעלולים להעלות טר - הם צפויים' : 'Expect the friction point - it\'s normal'}</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-[#8c50f0] font-black">✓</span>
-                    <span>{language === 'he' ? 'תרגל את התסריט - זה יעזור בדיבור ספונטני' : 'Practice your script - it\'ll feel natural'}</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-[#8c50f0] font-black">✓</span>
-                    <span>{language === 'he' ? 'השתמש בטריק של ADHD כדי להישאר ממוקד' : 'Use the ADHD hack to stay grounded'}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-50 p-12 rounded-[2.5rem] text-center space-y-4 border border-slate-200">
-              <p className="text-slate-500 font-medium">{language === 'he' ? 'בחר פרופיל לפגישה מהכרטיס ״ניתוח AI״ כדי להתחיל.' : 'Select a profile to meet with in the AI Analysis tab to get started.'}</p>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {activeTab === 'matrix' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-matrix">
+      {activeTab === 'together' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-together">
           <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
             <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">

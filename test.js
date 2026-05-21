@@ -262,7 +262,7 @@ async function runSignInHappyPathTests(browser) {
         });
         try {
             await page.waitForFunction(
-                () => !!document.querySelector('[data-testid="tab-ai"]'),
+                () => !!document.querySelector('[data-testid="tab-them"]'),
                 { timeout: 10000 }
             );
             logStep('TC-SIGNIN-01: Demo mode → report', 'PASS',
@@ -470,7 +470,7 @@ async function runFullFlowTest(browser) {
         });
         if (!demoClicked) throw new Error('Demo Pioneer button not found');
         await page.waitForFunction(
-            () => !!document.querySelector('[data-testid="tab-ai"]'),
+            () => !!document.querySelector('[data-testid="tab-them"]'),
             { timeout: 10000 }
         );
         logStep('Demo mode → Report', 'PASS',
@@ -484,7 +484,7 @@ async function runFullFlowTest(browser) {
         while (!isComplete && questionCount < MAX_Q) {
             // Report view is reached when the "Them" tab (data-testid="tab-ai") appears
             const onReport = await page.evaluate(() =>
-                !!document.querySelector('[data-testid="tab-ai"]')
+                !!document.querySelector('[data-testid="tab-them"]')
             );
             if (onReport) {
                 logStep('Questionnaire Complete', 'PASS', `${questionCount} questions answered — report view detected`);
@@ -522,14 +522,14 @@ async function runFullFlowTest(browser) {
 
         // Report View — wait for the "Them" tab (report view indicator)
         await page.waitForFunction(
-            () => !!document.querySelector('[data-testid="tab-ai"]'),
+            () => !!document.querySelector('[data-testid="tab-them"]'),
             { timeout: 10000 }
         );
         logStep('Report Loaded', 'PASS', 'Report view rendered (You/Them/Together tabs visible)', await captureScreenshot(page));
 
         // Click "Them" tab — where AI coaching now lives
         const clickedAI = await page.evaluate(() => {
-            const btn = document.querySelector('[data-testid="tab-ai"]');
+            const btn = document.querySelector('[data-testid="tab-them"]');
             if (btn) { btn.click(); return true; }
             return false;
         });
@@ -614,7 +614,7 @@ async function navigateToReport(browser) {
     });
     if (!clicked) throw new Error('Demo Pioneer button not found — isDudiMode may not be active');
 
-    await page.waitForFunction(() => !!document.querySelector('[data-testid="tab-ai"]'), { timeout: 10000 });
+    await page.waitForFunction(() => !!document.querySelector('[data-testid="tab-them"]'), { timeout: 10000 });
     return page;
 }
 
@@ -628,22 +628,22 @@ async function runReportTabStructureTests(browser) {
     try {
         page = await navigateToReport(browser);
 
-        // All 4 tab buttons present
-        const tabs = ['overview', 'ai', 'prepare', 'matrix'];
+        // All 3 tab buttons present
+        const tabs = ['you', 'them', 'together'];
         for (const tab of tabs) {
             const exists = !!(await page.$(`[data-testid="tab-${tab}"]`));
             logStep(`Tab "${tab}" button present`, exists ? 'PASS' : 'FAIL',
                 `[data-testid="tab-${tab}"] ${exists ? 'found' : 'missing'}`);
         }
 
-        // Default tab: overview content visible
-        const overviewVisible = !!(await page.$('[data-testid="tab-content-overview"]'));
-        logStep('Default tab is Overview', overviewVisible ? 'PASS' : 'FAIL',
-            overviewVisible ? 'tab-content-overview rendered on load' : 'Overview content not visible on load',
+        // Default tab: you content visible
+        const overviewVisible = !!(await page.$('[data-testid="tab-content-you"]'));
+        logStep('Default tab is You', overviewVisible ? 'PASS' : 'FAIL',
+            overviewVisible ? 'tab-content-you rendered on load' : 'You content not visible on load',
             await captureScreenshot(page));
 
         // Each tab renders its content when clicked
-        for (const tab of ['ai', 'prepare', 'matrix']) {
+        for (const tab of ['them', 'together']) {
             await page.evaluate((t) => {
                 document.querySelector(`[data-testid="tab-${t}"]`)?.click();
             }, tab);
@@ -652,8 +652,8 @@ async function runReportTabStructureTests(browser) {
             logStep(`Tab "${tab}" renders content on click`, contentVisible ? 'PASS' : 'FAIL',
                 `tab-content-${tab} ${contentVisible ? 'visible' : 'missing after click'}`,
                 await captureScreenshot(page));
-            // Return to overview
-            await page.evaluate(() => document.querySelector('[data-testid="tab-overview"]')?.click());
+            // Return to you (default) tab
+            await page.evaluate(() => document.querySelector('[data-testid="tab-you"]')?.click());
             await new Promise(r => setTimeout(r, 300));
         }
 
@@ -675,11 +675,11 @@ async function runAIAnalysisTabTests(browser) {
         page = await navigateToReport(browser);
 
         // Activate the AI tab
-        await page.evaluate(() => document.querySelector('[data-testid="tab-ai"]')?.click());
+        await page.evaluate(() => document.querySelector('[data-testid="tab-them"]')?.click());
         await new Promise(r => setTimeout(r, 500));
-        const aiTabActive = !!(await page.$('[data-testid="tab-content-ai"]'));
-        logStep('AI tab activates', aiTabActive ? 'PASS' : 'FAIL',
-            `tab-content-ai ${aiTabActive ? 'rendered' : 'not found'}`);
+        const aiTabActive = !!(await page.$('[data-testid="tab-content-them"]'));
+        logStep('Them tab activates', aiTabActive ? 'PASS' : 'FAIL',
+            `tab-content-them ${aiTabActive ? 'rendered' : 'not found'}`);
 
         // Wait for AI to auto-load (no persona selection needed)
         logStep('AI auto-load', 'INFO', 'Waiting up to 45s for ai-loaded or ai-error');
@@ -730,11 +730,11 @@ async function runPrepareTabTests(browser) {
         page = await navigateToReport(browser);
 
         // Activate the Prepare tab
-        await page.evaluate(() => document.querySelector('[data-testid="tab-prepare"]')?.click());
+        await page.evaluate(() => document.querySelector('[data-testid="tab-them"]')?.click());
         await new Promise(r => setTimeout(r, 500));
-        const prepareTabActive = !!(await page.$('[data-testid="tab-content-prepare"]'));
-        logStep('Prepare tab activates', prepareTabActive ? 'PASS' : 'FAIL',
-            `tab-content-prepare ${prepareTabActive ? 'rendered' : 'not found'}`);
+        const prepareTabActive = !!(await page.$('[data-testid="tab-content-them"]'));
+        logStep('Them tab activates', prepareTabActive ? 'PASS' : 'FAIL',
+            `tab-content-them ${prepareTabActive ? 'rendered' : 'not found'}`);
 
         // All 4 persona picker buttons present
         for (const persona of ['guardian', 'driver', 'integrator', 'pioneer']) {
@@ -746,18 +746,18 @@ async function runPrepareTabTests(browser) {
         // Select each persona — verify AI coaching section renders for each
         for (const persona of ['guardian', 'driver', 'integrator', 'pioneer']) {
             logStep(`Select persona: ${persona}`, 'INFO',
-                `Clicking persona-btn-${persona} → waiting for prepare-ai-loaded`);
+                `Clicking persona-btn-${persona} → waiting for ai-loaded`);
             await page.evaluate((p) => {
                 document.querySelector(`[data-testid="persona-btn-${p}"]`)?.click();
             }, persona);
             try {
                 await page.waitForFunction(
-                    () => !!document.querySelector('[data-testid="prepare-ai-loaded"]'),
+                    () => !!document.querySelector('[data-testid="ai-loaded"]'),
                     { timeout: 45000 }
                 );
                 // Verify friction point, strategy script, ADHD hack present
                 const sections = await page.evaluate(() => {
-                    const block = document.querySelector('[data-testid="prepare-ai-loaded"]');
+                    const block = document.querySelector('[data-testid="ai-loaded"]');
                     if (!block) return null;
                     return {
                         hasFriction: block.textContent.includes('Clash') || block.textContent.includes('חיכוך'),
@@ -768,11 +768,11 @@ async function runPrepareTabTests(browser) {
                 logStep(`AI coaching for ${persona}`, sections ? 'PASS' : 'FAIL',
                     sections
                         ? `Friction: ${sections.hasFriction}, Strategy: ${sections.hasStrategy}, ADHD hack: ${sections.hasAdhd}`
-                        : 'prepare-ai-loaded block not found',
+                        : 'ai-loaded block not found',
                     await captureScreenshot(page));
             } catch {
                 logStep(`AI coaching timeout for ${persona}`, 'FAIL',
-                    `prepare-ai-loaded did not appear within 45s after selecting ${persona}`,
+                    `ai-loaded did not appear within 45s after selecting ${persona}`,
                     await captureScreenshot(page));
             }
         }
