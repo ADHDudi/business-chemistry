@@ -538,11 +538,13 @@ async function runFullFlowTest(browser) {
             logStep('Them Tab Click', 'FAIL', '"Them" tab button not found in DOM');
         } else {
             logStep('Them Tab Click', 'PASS', 'Clicked Them tab (AI coaching)');
+            // Select a persona to trigger AI loading
+            await page.evaluate(() => document.querySelector('[data-testid="persona-btn-guardian"]')?.click());
             try {
                 await page.waitForFunction(
                     () => !!document.querySelector('[data-testid="ai-loaded"]') ||
                           !!document.querySelector('[data-testid="ai-error"]'),
-                    { timeout: 30000 }
+                    { timeout: 45000 }
                 );
                 const hasError = !!(await page.$('[data-testid="ai-error"]'));
                 logStep('AI Content Rendered', hasError ? 'FAIL' : 'PASS',
@@ -681,8 +683,9 @@ async function runAIAnalysisTabTests(browser) {
         logStep('Them tab activates', aiTabActive ? 'PASS' : 'FAIL',
             `tab-content-them ${aiTabActive ? 'rendered' : 'not found'}`);
 
-        // Wait for AI to auto-load (no persona selection needed)
-        logStep('AI auto-load', 'INFO', 'Waiting up to 45s for ai-loaded or ai-error');
+        // Select a target persona then wait for AI to load
+        await page.evaluate(() => document.querySelector('[data-testid="persona-btn-guardian"]')?.click());
+        logStep('AI auto-load', 'INFO', 'Selected Guardian — waiting up to 45s for ai-loaded or ai-error');
         try {
             await page.waitForFunction(
                 () => !!document.querySelector('[data-testid="ai-loaded"]') ||
@@ -699,12 +702,12 @@ async function runAIAnalysisTabTests(browser) {
 
             // Verify key content fields are non-empty
             if (!hasError) {
-                const superpower = await page.evaluate(() => {
+                const hasContent = await page.evaluate(() => {
                     const el = document.querySelector('[data-testid="ai-loaded"]');
                     return el?.textContent?.trim().length > 10;
                 });
-                logStep('AI content non-empty', superpower ? 'PASS' : 'FAIL',
-                    superpower ? 'ai-loaded block has content' : 'ai-loaded block appears empty');
+                logStep('AI content non-empty', hasContent ? 'PASS' : 'FAIL',
+                    hasContent ? 'ai-loaded block has content' : 'ai-loaded block appears empty');
             }
         } catch {
             logStep('AI Analysis timeout', 'FAIL',
