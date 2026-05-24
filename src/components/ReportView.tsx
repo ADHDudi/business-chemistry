@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Grid, List, Zap, Lightbulb, CheckCircle,
-  BrainCircuit, Youtube, Facebook,
+  BrainCircuit,
   ExternalLink, Copy, Star, Target, Hash,
-  Sparkles, Linkedin, Globe, Brain, Loader2,
+  Sparkles, Globe, Brain, Loader2,
   ThumbsUp, ThumbsDown, Info, Send, RefreshCw,
   Terminal, X, Share2, Users,
   User as UserIcon
@@ -757,31 +757,14 @@ function ConsultationMobile({ persona, colors, language, t, onTrack, showAdhd }:
         </a>
       </div>
 
-      <div className="pt-6 border-t border-white/5 relative z-10 space-y-4 text-center">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{cta.follow}</p>
-        <div className="flex justify-center gap-6">
-          <SocialIcon href={SOCIAL_LINKS.linkedin} icon={<Linkedin size={22} />} label="LinkedIn" onTrack={() => onTrack('linkedin')} />
-          <SocialIcon href={SOCIAL_LINKS.facebook} icon={<Facebook size={22} />} label="Facebook" onTrack={() => onTrack('facebook')} />
-          <SocialIcon href={SOCIAL_LINKS.youtube} icon={<Youtube size={22} />} label="YouTube" onTrack={() => onTrack('youtube')} />
-        </div>
-      </div>
 
       <div className={`absolute top-0 right-0 w-32 h-32 ${colors.from}/10 rounded-full blur-3xl -mr-10 -mt-10`} />
     </div>
   );
 }
 
-function SocialIcon({ href, icon, label, onTrack }: { href: string, icon: React.ReactNode, label: string, onTrack: () => void }) {
-  return (
-    <a
-      href={href} target="_blank" rel="noopener noreferrer"
-      onClick={onTrack}
-      className="text-slate-400 hover:text-white transition-all active:scale-90"
-      aria-label={label}
-    >
-      {icon}
-    </a>
-  );
+function SocialIcon(_props: any) {
+  return null;
 }
 
 
