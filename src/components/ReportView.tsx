@@ -410,29 +410,33 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             </CollapsibleSection>
           )}
 
-          {/* Communication Challenge collapsible (ADHD) */}
-          <CollapsibleSection
-            title={t.report.your_challenge_title}
-            icon={<Brain size={16} className="text-slate-500" />}
-            isAdhd
-            forceOpen={adhdLens}
-          >
-            <p className="text-slate-600 font-medium text-sm leading-relaxed pt-2">
-              {currentPersona.communication_challenge[language]}
-            </p>
-          </CollapsibleSection>
+          {/* Communication Challenge collapsible (ADHD) — only when lens is ON */}
+          {adhdLens && (
+            <CollapsibleSection
+              title={t.report.your_challenge_title}
+              icon={<Brain size={16} className="text-slate-500" />}
+              isAdhd
+              defaultOpen
+            >
+              <p className="text-slate-600 font-medium text-sm leading-relaxed pt-2">
+                {currentPersona.communication_challenge[language]}
+              </p>
+            </CollapsibleSection>
+          )}
 
-          {/* ADHD Angle collapsible */}
-          <CollapsibleSection
-            title={t.report.adhd_title}
-            icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
-            isAdhd
-            forceOpen={adhdLens}
-          >
-            <p className="text-white font-bold text-sm leading-relaxed italic pt-2 bg-slate-800 p-4 rounded-xl">
-              {currentPersona.adhd_challenge[language]}
-            </p>
-          </CollapsibleSection>
+          {/* ADHD Angle collapsible — only when lens is ON */}
+          {adhdLens && (
+            <CollapsibleSection
+              title={t.report.adhd_title}
+              icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+              isAdhd
+              defaultOpen
+            >
+              <p className="text-white font-bold text-sm leading-relaxed italic pt-2 bg-slate-800 p-4 rounded-xl">
+                {currentPersona.adhd_challenge[language]}
+              </p>
+            </CollapsibleSection>
+          )}
         </div>
       )}
 
@@ -503,24 +507,26 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                 </div>
               </div>
 
-              {/* ADHD Hack — collapsed by default, opens with ADHD lens */}
-              <CollapsibleSection
-                title={t.report.adhd_hack_title}
-                icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
-                isAdhd
-                forceOpen={adhdLens}
-              >
-                <div className="space-y-4 pt-2">
-                  <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
-                  <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
-                  {aiInsight.executive_function_tool.template_ready && (
-                    <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
-                      <span>📝</span>
-                      {language === 'he' ? 'פתח דף טיוטה (Parking Lot)' : 'Open Parking Lot Widget'}
-                    </button>
-                  )}
-                </div>
-              </CollapsibleSection>
+              {/* ADHD Hack — only shown when ADHD lens is ON */}
+              {adhdLens && (
+                <CollapsibleSection
+                  title={t.report.adhd_hack_title}
+                  icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+                  isAdhd
+                  defaultOpen
+                >
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
+                    <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
+                    {aiInsight.executive_function_tool.template_ready && (
+                      <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
+                        <span>📝</span>
+                        {language === 'he' ? 'פתח דף טיוטה (Parking Lot)' : 'Open Parking Lot Widget'}
+                      </button>
+                    )}
+                  </div>
+                </CollapsibleSection>
+              )}
 
               {/* Feedback row */}
               <div className="px-6 pb-6 pt-2 flex flex-col items-center gap-4">
@@ -661,7 +667,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         </div>
       )}
 
-      <ConsultationMobile persona={currentPersona} colors={colors} language={language} t={t} onTrack={trackClick} />
+      <ConsultationMobile persona={currentPersona} colors={colors} language={language} t={t} onTrack={trackClick} showAdhd={adhdLens} />
 
       <div className="flex flex-col gap-2 no-select">
         <div className="flex gap-2">
@@ -692,31 +698,37 @@ function PersonaList({ title, items, icon }: { title: string, items: string[], i
   );
 }
 
-function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona: Persona, colors: any, language: Language, t: any, onTrack: (type: string) => void }) {
+function ConsultationMobile({ persona, colors, language, t, onTrack, showAdhd }: { persona: Persona, colors: any, language: Language, t: any, onTrack: (type: string) => void, showAdhd?: boolean }) {
   const cta = t.report.cta;
   return (
     <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-8 shadow-2xl overflow-hidden relative border border-white/5">
       <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
       <div className="space-y-4 relative z-10">
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 text-purple-300`}>
-            <BrainCircuit size={12} /> ADHD Insight
-          </span>
-        </div>
+        {showAdhd && (
+          <div className="flex items-center justify-between">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 text-purple-300`}>
+              <BrainCircuit size={12} /> ADHD Insight
+            </span>
+          </div>
+        )}
 
         <div className="space-y-3">
           <h3 className={`text-2xl font-black leading-tight text-purple-300`}>{cta.title}</h3>
 
-          <p className="text-slate-300 text-sm font-medium leading-relaxed">
-            {persona.communication_challenge[language]}
-          </p>
-
-          <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-2">
-            <h4 className={`text-[10px] font-black uppercase tracking-widest ${colors.accent}`}>{t.report.adhd_title}</h4>
-            <p className="text-white font-bold text-sm leading-relaxed italic">
-              {persona.adhd_challenge[language]}
+          {showAdhd && (
+            <p className="text-slate-300 text-sm font-medium leading-relaxed">
+              {persona.communication_challenge[language]}
             </p>
-          </div>
+          )}
+
+          {showAdhd && (
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-2">
+              <h4 className={`text-[10px] font-black uppercase tracking-widest ${colors.accent}`}>{t.report.adhd_title}</h4>
+              <p className="text-white font-bold text-sm leading-relaxed italic">
+                {persona.adhd_challenge[language]}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
