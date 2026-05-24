@@ -16,6 +16,23 @@ import { getAIInsights } from '../geminiService';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../firebaseConfig';
 
+const PERSONA_CENTROIDS: Record<string, { dominant: number; formal: number }> = {
+  PIONEER:    { dominant: 5, formal: 2 },
+  DRIVER:     { dominant: 5, formal: 5 },
+  GUARDIAN:   { dominant: 2, formal: 5 },
+  INTEGRATOR: { dominant: 2, formal: 2 },
+};
+
+function computePersonaAffinities(formal: number, dominant: number) {
+  const MAX_D = Math.sqrt(18);
+  return (['PIONEER', 'DRIVER', 'GUARDIAN', 'INTEGRATOR'] as const).map(key => {
+    const c = PERSONA_CENTROIDS[key];
+    const dist = Math.hypot(dominant - c.dominant, formal - c.formal);
+    const affinity = Math.max(0, Math.round((1 - dist / MAX_D) * 100));
+    return { key, affinity };
+  }).sort((a, b) => b.affinity - a.affinity);
+}
+
 interface ReportViewProps {
   user: User;
   answers: Record<number, number>;
@@ -51,6 +68,10 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const results = useMemo(() => calculateResults(answers), [answers]);
   const { profileData, formal: avgFormal, dominant: avgDominant } = results;
   const currentPersona = useMemo(() => getPersona(avgFormal, avgDominant), [avgFormal, avgDominant]);
+  const affinities = useMemo(
+    () => computePersonaAffinities(parseFloat(avgFormal), parseFloat(avgDominant)),
+    [avgFormal, avgDominant]
+  );
 
   const isDudiMode = user.email.trim().toLowerCase() === 'tsur.david@gmail.com' || forceDebug;
 
@@ -367,33 +388,48 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 
       {activeTab === 'you' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4" data-testid="tab-content-you">
-          {/* Profile Summary */}
+          {/* 1. Basics */}
           <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
             <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
                 <Info size={18} />
               </div>
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                {language === 'he' ? 'סיכום הפרופיל' : 'Profile Summary'}
-              </h3>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_basics}</h3>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-6">
               <p className="text-slate-600 font-medium leading-relaxed text-lg">{currentPersona.description[language]}</p>
-              <PersonaList title={t.report.strengths_title} items={currentPersona.strengths[language]} icon={<Zap size={18} className="text-yellow-500" />} />
-              <PersonaList title={t.report.tips_title} items={currentPersona.tips[language]} icon={<Lightbulb size={18} className={colors.text} />} />
             </div>
           </div>
 
-          {/* Superpower collapsible */}
+          {/* 2. Your Strengths (Pros) */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-green-50/50 border-b border-green-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-green-100 bg-white shadow-sm text-green-600">
+                <Zap size={18} fill="currentColor" />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_strengths_title}</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {aiInsight && (
+                <p className={`text-lg font-black ${colors.text} leading-snug`}>{aiInsight.user_profile.superpower}</p>
+              )}
+              <PersonaList title="" items={currentPersona.strengths[language]} icon={null} />
+            </div>
+          </div>
+
+          {/* 3. Your Blind Spots (Cons) */}
           {aiInsight && (
-            <CollapsibleSection title={t.report.superpower_title} icon={<Zap size={16} className="text-yellow-500" />}>
-              <div className="space-y-3 pt-2">
-                <p className={`text-lg font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</p>
-                <div className="inline-block px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-400">
-                  VS Kryptonite: {aiInsight.user_profile.kryptonite}
+            <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-red-50/40 border-b border-red-100 flex items-center gap-3">
+                <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
+                  <Target size={18} />
                 </div>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_blind_spots_title}</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-base font-black text-slate-800 leading-snug">{aiInsight.user_profile.kryptonite}</p>
                 {aiInsight.user_profile.challenges && aiInsight.user_profile.challenges.length > 0 && (
-                  <ul className="space-y-3 pt-2">
+                  <ul className="space-y-3">
                     {aiInsight.user_profile.challenges.map((c, i) => (
                       <li key={i} className="bg-slate-50/60 rounded-2xl p-4 border border-slate-100">
                         <div className={`text-sm font-black ${colors.text} mb-1`}>{c.title}</div>
@@ -407,8 +443,21 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                   </ul>
                 )}
               </div>
-            </CollapsibleSection>
+            </div>
           )}
+
+          {/* 4. Tips for Action */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm ${colors.text}`}>
+                <Lightbulb size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_tips_title}</h3>
+            </div>
+            <div className="p-6">
+              <PersonaList title="" items={currentPersona.tips[language]} icon={null} />
+            </div>
+          </div>
 
           {/* Communication Challenge collapsible (ADHD) — only when lens is ON */}
           {adhdLens && (
@@ -476,6 +525,51 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
             </div>
           ) : aiInsight && targetProfile ? (
             <div className="space-y-4" data-testid="ai-loaded">
+              {/* Common Ground */}
+              {aiInsight.interaction_guide.common_ground && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-green-50/50 border-b border-green-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-green-100 bg-white shadow-sm text-green-600">
+                      <CheckCircle size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_common_ground_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.common_ground}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Their Drivers */}
+              {aiInsight.interaction_guide.their_motivation && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-blue-100 bg-white shadow-sm text-blue-500">
+                      <Sparkles size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_their_motivation_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.their_motivation}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Motivation Gap */}
+              {aiInsight.interaction_guide.motivation_gap && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-yellow-50/50 border-b border-yellow-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-yellow-200 bg-white shadow-sm text-yellow-600">
+                      <Hash size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_motivation_gap_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.motivation_gap}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Friction Point */}
               <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                 <div className="p-4 bg-red-50/50 border-b border-red-100 flex items-center gap-3">
@@ -599,6 +693,59 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 
       {activeTab === 'together' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-together">
+          {/* Persona Resonance — quantified closeness to each persona */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Hash size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.together_resonance_title}</h3>
+            </div>
+            <div className="p-6 space-y-4" data-testid="resonance-bars">
+              {affinities.map(({ key, affinity }) => {
+                const persona = PERSONA_DATA[key];
+                const isTop = key === currentPersona.key;
+                return (
+                  <div key={key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-black ${isTop ? 'text-[#8c50f0]' : 'text-slate-600'}`}>
+                        {persona.title[language]}
+                      </span>
+                      <span className={`text-sm font-black tabular-nums ${isTop ? 'text-[#8c50f0]' : 'text-slate-500'}`}>
+                        {affinity}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${isTop ? 'brand-gradient' : 'bg-slate-300'}`}
+                        style={{ width: `${affinity}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Position Narrative */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Sparkles size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.together_narrative_title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-base text-slate-700 font-medium leading-relaxed">
+                {aiInsight?.position_narrative
+                  ?? (language === 'he'
+                    ? `הכי קרוב ל-${PERSONA_DATA[affinities[0].key].title.he} (${affinities[0].affinity}%).`
+                    : `Closest to ${PERSONA_DATA[affinities[0].key].title.en} (${affinities[0].affinity}%).`)}
+              </p>
+            </div>
+          </div>
+
+          {/* Matrix Visualization */}
           <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
             <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
@@ -685,7 +832,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 function PersonaList({ title, items, icon }: { title: string, items: string[], icon: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <h4 className="flex items-center gap-2 font-black text-slate-800 text-lg tracking-tight">{icon} {title}</h4>
+      {title && <h4 className="flex items-center gap-2 font-black text-slate-800 text-lg tracking-tight">{icon} {title}</h4>}
       <ul className="space-y-3">
         {items.map((it, i) => (
           <li key={i} className="flex gap-3 text-base text-slate-600 font-medium leading-relaxed">

@@ -65,6 +65,9 @@ export interface AICommunicationCoach {
   interaction_guide: {
     target_profile: string;
     friction_point: string;
+    common_ground?: string;
+    their_motivation?: string;
+    motivation_gap?: string;
     strategy_card: {
       title: string;
       action: string;
@@ -76,4 +79,5 @@ export interface AICommunicationCoach {
     instruction: string;
     template_ready: boolean;
   };
+  position_narrative?: string;
 }

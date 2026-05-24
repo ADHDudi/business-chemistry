@@ -49,6 +49,9 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"], timeoutSecond
         - description: 1-2 sentences explaining the underlying pattern and why it happens — in ${langName}
         - watch_for: one concrete workplace scenario where this challenge typically shows up (a short phrase) — in ${langName}
     - interaction_guide.target_profile: the name of the profile they are interacting with — in ${langName}
+    - interaction_guide.common_ground: 1-2 sentences naming the shared values, work-style overlaps, or strengths that you and the target persona genuinely share. — in ${langName}
+    - interaction_guide.their_motivation: 1-2 sentences on what fundamentally drives the target persona (what they care about, what makes them tick). — in ${langName}
+    - interaction_guide.motivation_gap: 1 sentence describing where your motivations diverge most sharply from theirs. — in ${langName}
     - interaction_guide.friction_point: the #1 source of tension between these two types (1 sentence) — in ${langName}
     - interaction_guide.strategy_card.title: short name for the strategy (3-5 words) — in ${langName}
     - interaction_guide.strategy_card.action: concrete action to take (1 sentence, imperative) — in ${langName}
@@ -56,6 +59,7 @@ exports.generateAIInsights = onCall({ secrets: ["GEMINI_API_KEY"], timeoutSecond
     - executive_function_tool.tool_name: name of an ADHD exec-function technique — in ${langName}
     - executive_function_tool.instruction: how to apply it in a professional dialogue (1-2 sentences) — in ${langName}
     - executive_function_tool.template_ready: true if a ready-made template or script exists for this tool
+    - position_narrative: 3-4 sentences explaining how this user's score profile resonates with the four personas — which they're closest to, which they're farthest from, and what this tells them about their adaptability across types. — in ${langName}
   `;
 
     try {
