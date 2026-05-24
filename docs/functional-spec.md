@@ -80,42 +80,37 @@
 
 ## 3. Report View (`src/components/ReportView.tsx`)
 
-Entry point: `step === 3`. Default tab on load: **Overview**.
+Entry point: `step === 3`. Default tab on load: **You**.
 
-### 3.1 Overview Tab (`data-testid="tab-overview"` / `tab-content-overview`)
+The report has an **ADHD Lens** toggle chip above the tab strip. When enabled (`adhdLens === true`), all `CollapsibleSection` components with `isAdhd` prop will be forced open.
+
+### 3.1 You Tab (`data-testid="tab-you"` / `tab-content-you`)
 
 Always visible on report load. Contains:
 - **Greeting card** — persona icon, user name, persona title.
 - **Profile Summary** — `currentPersona.description[language]`.
-- **Your Superpower** — `aiInsight.user_profile.superpower` (shown when AI has loaded).
 - **Strengths** (`PersonaList`) — `currentPersona.strengths[language]`.
 - **Tips** (`PersonaList`) — `currentPersona.tips[language]`.
+- **Superpower** (collapsible, shown when AI has loaded) — `aiInsight.user_profile.superpower` + kryptonite + challenges.
+- **Your Communication Challenge** (collapsible, `isAdhd`) — `currentPersona.communication_challenge[language]`. Force-opens when ADHD lens is on.
+- **ADHD Angle** (collapsible, `isAdhd`) — `currentPersona.adhd_challenge[language]`. Force-opens when ADHD lens is on.
 
-AI insights load automatically on report entry. The superpower block appears once `aiInsight` is non-null.
+AI insights load automatically on report entry.
 
-### 3.2 AI Analysis Tab (`data-testid="tab-ai"` / `tab-content-ai`)
+### 3.2 Them Tab (`data-testid="tab-them"` / `tab-content-them`)
 
-Contains the full AI coaching output for the user's own profile:
-- **Superpower card** — `aiInsight.user_profile.superpower` + kryptonite.
-- **Challenges** (optional) — if `aiInsight.user_profile.challenges` is present, renders up to 3 named behavioral challenges, each with `title`, `description`, and `watch_for`.
-- **Loading state** — spinner shown while `isLoadingAI === true`.
-- **Error state** (`data-testid="ai-error"`) — shown when AI call fails; includes a "Try Again" button that resets `lastFetchRef` and re-triggers the effect.
-- **Success state** (`data-testid="ai-loaded"`) — shown when `aiInsight` is non-null.
-
-AI auto-loads on first render if `aiInsight` is null. Subsequent tab switches do not re-fetch if persona + language haven't changed.
-
-### 3.3 Prepare for Meeting Tab (`data-testid="tab-prepare"` / `tab-content-prepare`)
-
-Requires user to select a target persona first.
+Merges AI Analysis + Prepare for Meeting. Contains:
 
 **Persona picker** — 4 buttons, `data-testid="persona-btn-{guardian|driver|integrator|pioneer}"`:
 - Guardian 🛡️, Driver 🎯, Integrator 🤝, Pioneer 🚀.
 - Clicking a button sets `targetProfile` state and triggers a new `getAIInsights` call with `targetProfile` passed.
 
-**AI output sections** (rendered when `aiInsight && targetProfile`):
-- **Friction Point** — `aiInsight.interaction_guide.friction_point`. Red-toned callout card.
-- **Strategy Card** — `aiInsight.interaction_guide.strategy_card.action` + `.script`. Violet-toned card.
-- **Executive Function Tool** — `aiInsight.executive_function_tool.tool_name` + `.instruction`. Collapsed inside a card; shows "template ready" badge if `template_ready === true`.
+**Loading state** — spinner shown while `isLoadingAI === true`.
+
+**AI output** (`data-testid="ai-loaded"`, rendered when `aiInsight && targetProfile`):
+- **Friction Point** — `aiInsight.interaction_guide.friction_point`. Red-toned card with `t.report.friction_title`.
+- **Strategy Card** — `aiInsight.interaction_guide.strategy_card.action` + `.script`. Dark-header card with `t.report.strategy_title`.
+- **ADHD Hack** (collapsible, `isAdhd`) — executive function tool. Force-opens when ADHD lens is on.
 
 **Feedback loop:**
 - Thumbs Up / Thumbs Down buttons below the coaching output.
@@ -124,7 +119,9 @@ Requires user to select a target persona first.
 
 **Share button** — copies a summary of the coaching output to clipboard.
 
-### 3.4 Matrix Tab (`data-testid="tab-matrix"` / `tab-content-matrix`)
+**Error state** (`data-testid="ai-error"`) — shown when AI call fails; includes a "Retry Analysis" button.
+
+### 3.3 Together Tab (`data-testid="tab-together"` / `tab-content-together`)
 
 2D grid visualization:
 - X-axis: Dominant (low → high).
@@ -256,14 +253,12 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 
 | Selector | Element |
 |----------|---------|
-| `[data-testid="tab-overview"]` | Overview tab button |
-| `[data-testid="tab-ai"]` | AI Analysis tab button |
-| `[data-testid="tab-prepare"]` | Prepare for Meeting tab button |
-| `[data-testid="tab-matrix"]` | Matrix tab button |
-| `[data-testid="tab-content-overview"]` | Overview tab content div |
-| `[data-testid="tab-content-ai"]` | AI Analysis tab content div |
-| `[data-testid="tab-content-prepare"]` | Prepare tab content div |
-| `[data-testid="tab-content-matrix"]` | Matrix tab content div |
+| `[data-testid="tab-you"]` | You tab button |
+| `[data-testid="tab-them"]` | Them tab button |
+| `[data-testid="tab-together"]` | Together tab button |
+| `[data-testid="tab-content-you"]` | You tab content div |
+| `[data-testid="tab-content-them"]` | Them tab content div |
+| `[data-testid="tab-content-together"]` | Together tab content div |
 | `[data-testid="ai-loaded"]` | AI coaching content (success state) |
 | `[data-testid="ai-error"]` | AI error state |
 | `[data-testid="persona-btn-guardian"]` | Guardian persona picker button |
@@ -280,6 +275,6 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 | 3 | Auth — Sign-In Fail Paths | empty email/password blocked; invalid format blocked; wrong credentials rejected; Sign-up modal appears |
 | 4 | Auth — Google Sign-In | button visible and labeled; Google logo loads; `signInWithPopup` wired |
 | 5 | Auth Modals | Sign-up modal has name + email + password fields; Forgot Password modal has email field + send button |
-| 6 | Report — Tab Structure | all 4 tab buttons present; each tab renders its content panel |
-| 7 | Report — AI Analysis | AI loads within 30s; all 4 persona buttons present; AI reloads for each persona within 35s |
+| 6 | Report — Tab Structure | all 3 tab buttons present (You/Them/Together); each tab renders its content panel |
+| 7 | Report — AI Analysis | AI loads within 30s on Them tab; all 4 persona buttons present; AI reloads for each persona within 45s |
 | 8 | Full Flow | sign-in → complete questionnaire → report view → AI tab → AI coaching rendered |

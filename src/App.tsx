@@ -422,15 +422,14 @@ export default function App() {
 
 
   const handleReset = () => {
-    setStep(1);
+    setStep(authUser ? 2 : 1);
     setAnswers({});
     setCurrentQuestionIndex(0);
-    setLogoClicks(0);
     setLogoClicks(0);
   };
 
   const currentTrait = traitsList[currentQuestionIndex];
-  const isDudiMode = user.name.trim().toLowerCase().includes('dudi');
+  const isDudiMode = user.email.trim().toLowerCase() === 'tsur.david@gmail.com';
 
   if (currentHash === '#terms') return <TermsPage language={language} />;
   if (currentHash === '#privacy') return <PrivacyPage language={language} />;
@@ -728,6 +727,21 @@ export default function App() {
                     <ChevronLeft size={24} className={language === 'en' ? 'rotate-180' : ''} />
                   </button>
                 </div>
+
+                {isDudiMode && !sessionId && (
+                  <div className="flex justify-center mb-3">
+                    <button
+                      onClick={() => {
+                        const mockAnswers = generateMockAnswers('PIONEER');
+                        setAnswers(mockAnswers);
+                        setStep(3);
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-[#f3ecff] text-[#8c50f0] border border-[#e4d7ff] hover:bg-[#e4d7ff] transition-colors"
+                    >
+                      🎲 {language === 'he' ? 'נתוני דמו' : 'Demo data'}
+                    </button>
+                  </div>
+                )}
 
                 {!sessionId && (
                   <div className="bg-white border border-slate-200 p-4 rounded-[2.5rem] shadow-xl space-y-3">
