@@ -12,12 +12,21 @@ Welcome to **Bond** — a workplace communication tool that helps coworkers and 
 ## What's New
 
 ### May 2026
-- **AI Coaching Fix** — `generateAIInsights` now returns a structured `AICommunicationCoach` JSON object (superpower, kryptonite, optional challenges, interaction guide, executive function tool). Switched to `gemini-1.5-flash` via REST with `responseMimeType: application/json`; added 120s timeout. Previously the function returned raw markdown text that the client failed to parse.
+- **Restructured Report Journey** — Report completely reorganized into 3 tabs with a clearer narrative arc: **You** (self-understanding: Basics → Strengths → Blind Spots → Tips for Action), **Them** (understanding others: Common Ground → Their Drivers → Motivation Gap → Friction Point → Strategy Card), and **Together** (positioning: Persona Resonance Bars + AI Position Narrative + 2D Matrix).
+- **Persona Resonance Bars** — The Together tab now shows four affinity percentage bars (one per persona), computed client-side using Euclidean distance from the user's `(formal, dominant)` scores to each persona's centroid. No extra API call required.
+- **AI Schema Extension** — `generateAIInsights` now returns four new optional fields: `interaction_guide.common_ground`, `interaction_guide.their_motivation`, `interaction_guide.motivation_gap`, and `position_narrative`. All are backward-compatible (`?` in TypeScript).
+- **ADHD Lens** — A toggle chip above the tab strip completely shows/hides all ADHD-specific sections (Communication Challenge, ADHD Angle, ADHD Hack) using conditional rendering — sections are removed from the DOM entirely when the lens is off.
+- **AI Language Enforcement** — Fixed language mixing in AI responses. Prompts now include a `CRITICAL` language instruction block at the top and per-field `— in ${langName}` annotations on every text field, ensuring Gemini respects the chosen language throughout.
+- **Demo Data Button** — Users signed in as the owner email (`tsur.david@gmail.com`) see a "Demo Data" button on the questionnaire that auto-fills all answers and jumps directly to the report.
+- **Social Links Removed** — All social media icons (LinkedIn, Facebook, YouTube) removed from `ConsultationMobile`. Only the website link is retained.
+- **Gemini 2.5 Flash** — Cloud Functions updated to `gemini-2.5-flash` (previous `gemini-1.5-flash` model was no longer available to new users).
+- **Start-Over Fix** — "Start Over" now resets questionnaire state without logging the user out; auth state is preserved across resets.
+- **AI Coaching Fix** — `generateAIInsights` now returns a structured `AICommunicationCoach` JSON object (superpower, kryptonite, optional challenges, interaction guide, executive function tool). Uses `responseMimeType: application/json`; added 120s timeout. Previously the function returned raw markdown text that the client failed to parse.
 - **Firebase Functions Secret Fix** — Resolved a deployment failure caused by `GEMINI_API_KEY` being registered as both a Cloud Secret Manager secret and a plain environment variable. Functions now use `secrets: ["GEMINI_API_KEY"]` and read via `process.env`.
 - **Email/Password Authentication** — Implemented full sign-in/sign-up/forgot-password flow using Firebase Auth (`signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`). Fixed a prior auth bypass where any valid-format email + any password would log in without Firebase verification.
 - **Sign-Up Modal** — New `SignUpForm` component allows new users to register with name, email, and password directly in the app.
 - **Forgot Password Modal** — New `ForgotPasswordForm` component sends a Firebase password reset email.
-- **Expanded Test Suite** — 8 Puppeteer acceptance suites covering auth structure, sign-in happy/fail paths, Google sign-in, auth modals (sign-up + forgot password), report tab structure, AI analysis (all 4 personas), and the full end-to-end flow. Stable `data-testid` selectors added throughout the report view.
+- **Expanded Test Suite** — 9 Puppeteer acceptance suites covering auth structure, sign-in happy/fail paths, Google sign-in, auth modals (sign-up + forgot password), report tab structure, AI analysis (all 4 personas across 2 suites), and the full end-to-end flow. Stable `data-testid` selectors added throughout the report view.
 - **CollapsibleSection Component** — New reusable accordion component (`src/components/CollapsibleSection.tsx`) available for collapsible content blocks.
 - **Rebranded to Bond** — the app is now "Bond" with the tagline "Workplace Communication OS". The methodology (4 personas on the Formal/Dominant axes) is unchanged; only the product surface and brand identity have evolved. New speech-bubbles icon + violet→cyan gradient.
 - **Just AI It Design System** — Full visual overhaul: violet→cyan brand gradient, Space Grotesk display font, Inter body font, JetBrains Mono for codes, icon-in-tile card headers, and brand shadow tokens applied throughout all components.
@@ -59,7 +68,7 @@ Cloud Functions require `GEMINI_API_KEY` stored in Firebase Secret Manager (set 
 
 ### Testing
 
-Acceptance tests are written with Puppeteer in `test.js`. They cover 8 suites:
+Acceptance tests are written with Puppeteer in `test.js`. They cover 9 suites:
 
 | Suite | What it covers |
 |-------|---------------|
@@ -68,8 +77,9 @@ Acceptance tests are written with Puppeteer in `test.js`. They cover 8 suites:
 | 3 — Auth: Sign-In Fail Paths | Empty fields, bad email format, wrong credentials, Sign-up modal |
 | 4 — Auth: Google Sign-In | Button visible, logo loads, real `signInWithPopup` wired |
 | 5 — Auth Modals | Sign-up modal fields; Forgot Password modal + send button |
-| 6 — Report: Tab Structure | All 4 tab buttons present, each renders its content panel |
-| 7 — Report: AI Analysis | AI loads within 30s; persona picker buttons present; AI reloads for each of 4 personas |
+| 6 — Report: Tab Structure | All 3 tab buttons (You/Them/Together) present; You tab is default content panel |
+| 7a — Report: AI Load | Guardian persona selected; AI loads within 30s on Them tab (`ai-loaded` visible) |
+| 7b — Report: All Personas | All 4 persona buttons iterated; friction + strategy + ADHD hack verified for each |
 | 8 — Full Flow | Sign-in → questionnaire → report → AI coaching end-to-end |
 
 ```bash
@@ -83,8 +93,8 @@ node test.js http://localhost:3002/   # in another
 
 **Notes:**
 - The test runner uses `protocolTimeout: 300000` (5 minutes) to accommodate slow Firebase initialization in browser-driven tests.
-- Tab assertions use `data-testid` attributes (`tab-overview`, `tab-ai`, `tab-prepare`, `tab-matrix`) so they stay stable when labels change or are translated.
-- The AI suite (Suite 7) selects all 4 personas and waits up to 35s each — expect this suite to take 2–3 minutes.
+- Tab assertions use `data-testid` attributes (`tab-you`, `tab-them`, `tab-together`) so they stay stable when labels change or are translated.
+- Suites 7a and 7b together cover the AI Them tab: 7a confirms AI loads after selecting a persona; 7b iterates all 4 personas and verifies full output — expect these to take 2–3 minutes combined.
 - A bilingual HTML report is written to `acceptance_report.html` after each run.
 
 ---
@@ -115,13 +125,12 @@ The application flows through a seamless, interactive sequence:
    * The user is guided through an interactive, multi-step questionnaire (typically ~35 questions).
    * The UI limits distractions and uses a live progress bar to keep engagement high until the assessment is finished. In Live Mode, both participants see each other's progress in real-time.
 3. **Instant Profile Reveal (Report View)**
-   * Upon completion, the user enters the report dashboard with four tabs:
-   * **Overview** (default): Profile summary, Your Superpower, Strengths, and Tips for this persona type.
-   * **AI Analysis**: Automatically generates a personalized coaching brief — superpower, kryptonite, and optional behavioral challenges — powered by Gemini.
-   * **Prepare for Meeting**: Select a target persona (Guardian, Driver, Integrator, or Pioneer). The AI returns a Friction Point callout, a Strategy Card with a concrete action and script, and an Executive Function Tool (ADHD-friendly technique).
-   * **Matrix**: The 2D Formal × Dominant grid showing the user's position relative to all four persona quadrants.
+   * Upon completion, the user enters the report dashboard with three tabs forming a deliberate journey:
+   * **You** (default): Basics (persona description) → Your Strengths (AI superpower headline + static strength list) → Your Blind Spots (AI kryptonite + up to 3 named behavioral challenges) → Tips for Action. An **ADHD Lens** toggle above the tabs reveals ADHD-specific sections.
+   * **Them**: Select a target persona (Guardian, Driver, Integrator, or Pioneer). AI generates: Common Ground (shared values), Their Drivers (what motivates them), Motivation Gap (where you diverge), Friction Point (key tension), and a Strategy Card (concrete action + script). Feedback loop lets the user refine AI output.
+   * **Together**: Persona Resonance Bars — four affinity percentages showing how closely the user's scores align with each persona, plus an AI-generated Position Narrative, plus the 2D Formal × Dominant grid.
    * The report view is fully responsive, with mobile-optimized layouts and accessible navigation.
-4. **AI-Powered Coaching (Prepare for Meeting tab)**
+4. **AI-Powered Coaching (Them tab)**
    * The user picks the persona they're meeting with and a backend Cloud Function generates tailored coaching in real-time.
    * **Feedback Loop:** If the AI's advice doesn't resonate, the user can click "Thumbs Down" and provide text feedback. The AI instantly refines its analysis.
 5. **Multiplayer Comparison View (If Applicable)**
@@ -144,7 +153,9 @@ By completing the journey, the user walks away with several high-value, personal
 * **AI Coaching Briefs:**
   * **Superpower & Kryptonite:** A concise psychological snapshot of their greatest strength and biggest blind spot.
   * **Behavioral Challenges:** Up to 3 named challenges with descriptions and "watch for" workplace scenarios.
-  * **Meeting Prep Guides:** Persona-specific interaction guides with friction points, strategy scripts, and executive function tools.
+  * **Persona Resonance:** Four affinity percentages showing how closely scores align with each of the four personas.
+  * **Position Narrative:** AI-generated 3-4 sentence explanation of the user's unique positioning across the persona spectrum.
+  * **Interaction Guides:** Per-target-persona coaching covering Common Ground, Their Drivers, Motivation Gap, Friction Point, and a concrete Strategy Card (action + script).
 * **Strategy Cards:** Specific scripts and actionable steps for handling workplace conflict (e.g., exactly what a Pioneer should say to a Driver).
 * **Compatibility Analysis (For Teams):**
   * A combined compatibility score (0–100%).
@@ -229,7 +240,7 @@ All legal pages are accessible via footer links on every page of the application
 * **Styling:** Tailwind CSS (loaded via CDN)
 * **Authentication:** Firebase Authentication (Google OAuth + Email/Password)
 * **Database:** Firebase Realtime Database for session management
-* **AI Integration:** Google Gemini 1.5 Flash via REST API (Cloud Functions)
+* **AI Integration:** Google Gemini 2.5 Flash via REST API (Cloud Functions)
 * **Cloud Functions:** Firebase Functions v2, Node.js 22, us-central1
 * **Deployment:** Firebase Hosting with dynamic configuration injection
 * **Analytics:** Firebase Analytics event tracking
@@ -254,7 +265,7 @@ The application fully supports Hebrew and English:
 src/
 ├── App.tsx                          # Main app component — routing, auth, language management
 ├── components/
-│   ├── ReportView.tsx               # Report dashboard — Overview / AI Analysis / Prepare / Matrix tabs
+│   ├── ReportView.tsx               # Report dashboard — You / Them / Together tabs with ADHD lens
 │   ├── CollapsibleSection.tsx       # Reusable accordion component
 │   ├── SignUpForm.tsx               # Sign-up modal (createUserWithEmailAndPassword)
 │   ├── ForgotPasswordForm.tsx       # Password reset modal (sendPasswordResetEmail)
@@ -277,7 +288,7 @@ src/
 functions/
 └── index.js                         # Cloud Functions — generateAIInsights, generateCompatibilityAnalysis
 
-test.js                              # Puppeteer acceptance test suite (8 suites, run with `npm test`)
+test.js                              # Puppeteer acceptance test suite (9 suites, run with `npm test`)
 docs/
 └── functional-spec.md               # Ground-truth functional specification
 ```

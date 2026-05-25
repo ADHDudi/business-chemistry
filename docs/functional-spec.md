@@ -74,6 +74,10 @@
 - A "Finish" button (`button` containing "Finish" / "סיימתי") becomes enabled when all questions are answered.
 - On finish: `calculateResults(answers)` computes `formal` and `dominant` scores (averages), `getPersona(formal, dominant)` maps scores to one of four personas. App advances to `step 3` (report).
 
+**Demo Data button** — visible only when `user.email.trim().toLowerCase() === 'tsur.david@gmail.com'` (`isDudiMode`). Clicking it auto-fills all question answers with preset values and immediately transitions to `step 3`, bypassing the questionnaire.
+
+**Start Over** — resets questionnaire answers and advances back to `step 2` without logging the user out. Auth state (`user.name`, `user.email`) is preserved.
+
 **In Live Mode:** Both participants' progress synced via Firebase Realtime Database; both see each other's progress bar in real-time.
 
 ---
@@ -82,53 +86,83 @@
 
 Entry point: `step === 3`. Default tab on load: **You**.
 
-The report has an **ADHD Lens** toggle chip above the tab strip. When enabled (`adhdLens === true`), all `CollapsibleSection` components with `isAdhd` prop will be forced open.
+### ADHD Lens
+
+A toggle chip rendered above the tab strip. When `adhdLens === true`, all ADHD-specific sections are shown; when `false` they are **completely removed from the DOM** via conditional rendering (`{adhdLens && <CollapsibleSection ...>}`). This is not a collapse — sections are not rendered at all when the lens is off.
 
 ### 3.1 You Tab (`data-testid="tab-you"` / `tab-content-you`)
 
-Always visible on report load. Contains:
-- **Greeting card** — persona icon, user name, persona title.
-- **Profile Summary** — `currentPersona.description[language]`.
-- **Strengths** (`PersonaList`) — `currentPersona.strengths[language]`.
-- **Tips** (`PersonaList`) — `currentPersona.tips[language]`.
-- **Superpower** (collapsible, shown when AI has loaded) — `aiInsight.user_profile.superpower` + kryptonite + challenges.
-- **Your Communication Challenge** (collapsible, `isAdhd`) — `currentPersona.communication_challenge[language]`. Force-opens when ADHD lens is on.
-- **ADHD Angle** (collapsible, `isAdhd`) — `currentPersona.adhd_challenge[language]`. Force-opens when ADHD lens is on.
+Always the default tab on report load. Sections rendered in order:
 
-AI insights load automatically on report entry.
+1. **Greeting card** — persona icon, user name, persona title.
+2. **Basics** — card showing `currentPersona.description[language]`.
+3. **Your Strengths** — card with:
+   - AI headline: `aiInsight?.user_profile.superpower` (only when AI loaded; omitted otherwise).
+   - Bullet list: `currentPersona.strengths[language]` via `PersonaList`.
+4. **Your Blind Spots** — card rendered only when `aiInsight` is present, showing:
+   - AI headline: `aiInsight.user_profile.kryptonite`.
+   - Challenge list: `aiInsight.user_profile.challenges[]`, each with `title`, `description`, and `watch_for`.
+5. **Tips for Action** — `currentPersona.tips[language]` via `PersonaList`.
+6. *(ADHD lens only)* **Your Communication Challenge** — `currentPersona.communication_challenge[language]`.
+7. *(ADHD lens only)* **ADHD Angle** — `currentPersona.adhd_challenge[language]`.
+
+AI insights load automatically on report entry (no target profile required for the You tab).
 
 ### 3.2 Them Tab (`data-testid="tab-them"` / `tab-content-them`)
-
-Merges AI Analysis + Prepare for Meeting. Contains:
 
 **Persona picker** — 4 buttons, `data-testid="persona-btn-{guardian|driver|integrator|pioneer}"`:
 - Guardian 🛡️, Driver 🎯, Integrator 🤝, Pioneer 🚀.
 - Clicking a button sets `targetProfile` state and triggers a new `getAIInsights` call with `targetProfile` passed.
+- When no persona is selected, an empty-state prompt is shown and `ai-loaded` is not rendered.
 
 **Loading state** — spinner shown while `isLoadingAI === true`.
 
-**AI output** (`data-testid="ai-loaded"`, rendered when `aiInsight && targetProfile`):
-- **Friction Point** — `aiInsight.interaction_guide.friction_point`. Red-toned card with `t.report.friction_title`.
-- **Strategy Card** — `aiInsight.interaction_guide.strategy_card.action` + `.script`. Dark-header card with `t.report.strategy_title`.
-- **ADHD Hack** (collapsible, `isAdhd`) — executive function tool. Force-opens when ADHD lens is on.
+**AI output** (`data-testid="ai-loaded"`, rendered when `aiInsight && targetProfile`), sections in order:
+
+| Section | Field | Card style |
+|---------|-------|------------|
+| **Common Ground** | `aiInsight.interaction_guide.common_ground` | Green, `CheckCircle` icon |
+| **Their Drivers** | `aiInsight.interaction_guide.their_motivation` | Blue, `Sparkles` icon |
+| **Motivation Gap** | `aiInsight.interaction_guide.motivation_gap` | Yellow, `Hash` icon |
+| **Friction Point** | `aiInsight.interaction_guide.friction_point` | Red, `Zap` icon |
+| **Strategy Card** | `.strategy_card.action` + `.script` | Dark header, `Target` icon |
+
+Each new section (`common_ground`, `their_motivation`, `motivation_gap`) is rendered only when the field is present, so older cached AI responses degrade gracefully.
+
+*(ADHD lens only)* **ADHD Hack** — `aiInsight.executive_function_tool` (tool name + instruction).
 
 **Feedback loop:**
 - Thumbs Up / Thumbs Down buttons below the coaching output.
 - On thumbs-down: text input appears for refinement comment.
 - On submit: `regenerateWithFeedback()` re-calls `getAIInsights` with `refinementComment`, updates `aiInsight`.
 
-**Share button** — copies a summary of the coaching output to clipboard.
-
 **Error state** (`data-testid="ai-error"`) — shown when AI call fails; includes a "Retry Analysis" button.
 
 ### 3.3 Together Tab (`data-testid="tab-together"` / `tab-content-together`)
 
-2D grid visualization:
+Three sections rendered in order:
+
+**Persona Resonance** (`data-testid="resonance-bars"`) — four horizontal bars, one per persona, sorted by affinity descending. Each bar shows persona icon + name + affinity percentage + animated progress bar. The top-ranked persona bar uses the brand gradient; others use a neutral style.
+
+Affinity is computed client-side by `computePersonaAffinities(formal, dominant)`:
+```ts
+const PERSONA_CENTROIDS = {
+  PIONEER:    { dominant: 5, formal: 2 },
+  DRIVER:     { dominant: 5, formal: 5 },
+  GUARDIAN:   { dominant: 2, formal: 5 },
+  INTEGRATOR: { dominant: 2, formal: 2 },
+};
+// affinity = max(0, round((1 - euclidean_dist / sqrt(18)) * 100))
+```
+The result is memoized via `useMemo` on `[avgFormal, avgDominant]`.
+
+**Position Narrative** — renders `aiInsight?.position_narrative` when present. Falls back to a static string ("`You're closest to {top persona} ({top affinity}%)`") while AI is loading.
+
+**Matrix Grid** — 2D Formal × Dominant visualization:
 - X-axis: Dominant (low → high).
 - Y-axis: Formal (high → low).
-- User's position computed from `avgFormal` and `avgDominant` scores.
-- All four persona quadrants labeled (Pioneer, Driver, Guardian, Integrator).
 - User's dot positioned at `(positionX, positionY)` as a percentage of the grid.
+- All four persona quadrants labeled.
 
 ---
 
@@ -138,20 +172,21 @@ Merges AI Analysis + Prepare for Meeting. Contains:
 
 **Trigger:** Firebase Callable (`onCall`), v2, us-central1.
 **Config:** `secrets: ["GEMINI_API_KEY"]`, `timeoutSeconds: 120`.
-**Model:** `gemini-1.5-flash` via REST (`v1beta` endpoint).
+**Model:** `gemini-2.5-flash` via REST (`v1beta` endpoint).
 **Input:**
 ```json
 { "persona": Persona, "results": Results, "lang": "en"|"he",
   "refinementComment": string|undefined, "targetProfile": string|undefined }
 ```
 **Output:** `AICommunicationCoach` JSON object (see §4.3).
-**Notes:** Uses `responseMimeType: "application/json"`. Filters out `thought` parts from response before parsing to handle any thinking-model variants.
+**Language enforcement:** Prompt contains a `CRITICAL` language instruction block at the top (`langInstruction`) and every text field in the schema description is annotated with `— in ${langName}`. This ensures Gemini does not mix languages in the response.
+**Notes:** Uses `responseMimeType: "application/json"`. Filters out `thought` parts from response before parsing to handle thinking-model variants.
 
 ### 4.2 `generateCompatibilityAnalysis`
 
 **Trigger:** Firebase Callable (`onCall`), v2, us-central1.
 **Config:** `secrets: ["GEMINI_API_KEY"]`.
-**Model:** `gemini-1.5-flash` via REST.
+**Model:** `gemini-2.5-flash` via REST.
 **Input:**
 ```json
 { "userA": { name, persona, results }, "userB": { name, persona, results }, "lang": "en"|"he" }
@@ -178,6 +213,9 @@ interface AICommunicationCoach {
   interaction_guide: {
     target_profile: string;        // name of the persona being met
     friction_point: string;        // 1-sentence tension description
+    common_ground?: string;        // shared values/overlaps (new, optional)
+    their_motivation?: string;     // what drives the target persona (new, optional)
+    motivation_gap?: string;       // where motivations diverge (new, optional)
     strategy_card: {
       title: string;               // 3–5 word strategy name
       action: string;              // 1-sentence imperative action
@@ -189,8 +227,11 @@ interface AICommunicationCoach {
     instruction: string;           // 1–2 sentence application guide
     template_ready: boolean;       // true if a ready script exists
   };
+  position_narrative?: string;     // 3-4 sentence persona resonance explanation (new, optional)
 }
 ```
+
+All fields marked `?` are optional for backward compatibility with cached responses generated before these fields were added to the prompt.
 
 ---
 
@@ -237,7 +278,7 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 | Firebase Realtime Database | Live session state, progress sync |
 | Firebase Hosting | Static frontend hosting with dynamic config injection |
 | Firebase Cloud Functions v2 | `generateAIInsights`, `generateCompatibilityAnalysis` |
-| Google Gemini 1.5 Flash | AI coaching generation via REST |
+| Google Gemini 2.5 Flash | AI coaching generation via REST |
 | Firebase Analytics | Event tracking (`logEvent`) throughout the app |
 | Google Apps Script + Sheets | Report data export via `GOOGLE_SCRIPT_URL` in `constants.tsx` |
 
@@ -275,6 +316,7 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 | 3 | Auth — Sign-In Fail Paths | empty email/password blocked; invalid format blocked; wrong credentials rejected; Sign-up modal appears |
 | 4 | Auth — Google Sign-In | button visible and labeled; Google logo loads; `signInWithPopup` wired |
 | 5 | Auth Modals | Sign-up modal has name + email + password fields; Forgot Password modal has email field + send button |
-| 6 | Report — Tab Structure | all 3 tab buttons present (You/Them/Together); each tab renders its content panel |
-| 7 | Report — AI Analysis | AI loads within 30s on Them tab; all 4 persona buttons present; AI reloads for each persona within 45s |
-| 8 | Full Flow | sign-in → complete questionnaire → report view → AI tab → AI coaching rendered |
+| 6 | Report — Tab Structure | all 3 tab buttons (You/Them/Together) present; default content panel is `tab-content-you` |
+| 7a | Report — AI Load | `persona-btn-guardian` clicked; `ai-loaded` appears within 30s on Them tab |
+| 7b | Report — All Personas | guardian / driver / integrator / pioneer each selected; friction point, strategy card, ADHD hack verified per persona |
+| 8 | Full Flow | sign-in → complete questionnaire → report → Them tab → AI coaching rendered end-to-end |
