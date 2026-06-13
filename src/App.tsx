@@ -7,7 +7,8 @@ import {
 import {
   TEXT, PERSONA_DATA, traitsList, GOOGLE_SCRIPT_URL, APP_ID, getIconComponent
 } from './constants';
-import { Language, User as UserType, Results, Persona, AxisType, Trait } from './types';
+import { Language, User as UserType, Results, Persona, Trait } from './types';
+import { calculateResults, getPersona, generateMockAnswers } from './scoring';
 import ReportView from './components/ReportView';
 import SessionWizard from './components/SessionWizard';
 import SessionLobby from './components/SessionLobby';
@@ -47,56 +48,6 @@ const Logo = ({ size = "sm", onClick }: { size?: "sm" | "lg", onClick?: () => vo
   );
 };
 
-const calculateResults = (answers: Record<number, number>): Results => {
-  const profileData = traitsList.map((trait, index) => {
-    const rawScore = answers[index] || 3.5;
-    let normalizedScore = rawScore;
-    if (trait.reverse) {
-      normalizedScore = 7 - rawScore;
-    }
-    return { ...trait, rawScore, normalizedScore };
-  });
-
-  const formalTraits = profileData.filter(t => t.axis === AxisType.FORMAL);
-  const dominantTraits = profileData.filter(t => t.axis === AxisType.DOMINANT);
-
-  const avgFormal = formalTraits.reduce((acc, curr) => acc + curr.normalizedScore, 0) / (formalTraits.length || 1);
-  const avgDominant = dominantTraits.reduce((acc, curr) => acc + curr.normalizedScore, 0) / (dominantTraits.length || 1);
-
-  return {
-    formal: avgFormal.toFixed(2),
-    dominant: avgDominant.toFixed(2),
-    profileData
-  };
-};
-
-const getPersona = (formal: string, dominant: string): Persona => {
-  const f = parseFloat(formal);
-  const d = parseFloat(dominant);
-
-  if (d > 3.5) {
-    if (f > 3.5) return PERSONA_DATA.DRIVER;
-    return PERSONA_DATA.PIONEER;
-  } else {
-    if (f > 3.5) return PERSONA_DATA.GUARDIAN;
-    return PERSONA_DATA.INTEGRATOR;
-  }
-};
-
-const generateMockAnswers = (targetPersonaKey: string) => {
-  const answers: Record<number, number> = {};
-  traitsList.forEach((trait, index) => {
-    let targetNormalized = 3.5;
-    if (trait.axis === AxisType.DOMINANT) {
-      targetNormalized = (targetPersonaKey === 'PIONEER' || targetPersonaKey === 'DRIVER') ? 5 + Math.random() : 1 + Math.random();
-    } else if (trait.axis === AxisType.FORMAL) {
-      targetNormalized = (targetPersonaKey === 'DRIVER' || targetPersonaKey === 'GUARDIAN') ? 5 + Math.random() : 1 + Math.random();
-    }
-    let rawScore = Math.round(trait.reverse ? 7 - targetNormalized : targetNormalized);
-    answers[index] = Math.max(1, Math.min(6, rawScore));
-  });
-  return answers;
-};
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('he');
@@ -793,8 +744,9 @@ export default function App() {
                   user={user}
                   answers={answers}
                   onReset={handleReset}
-                  submitError={submitError} language={language} t={t}
-                  calculateResults={calculateResults} getPersona={getPersona}
+                  submitError={submitError}
+                  language={language}
+                  t={t}
                   forceDebug={logoClicks >= 5}
                 />
               )}

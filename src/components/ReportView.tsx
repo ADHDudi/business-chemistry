@@ -10,43 +10,25 @@ import {
   User as UserIcon
 } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
-import { Language, User, Results, Persona, AxisType, Trait, AICommunicationCoach } from '../types';
+import { Language, User, Persona, AICommunicationCoach } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS, GOOGLE_SCRIPT_URL, PERSONA_DATA, APP_ID } from '../constants';
 import { getAIInsights } from '../geminiService';
+import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../firebaseConfig';
 
-const PERSONA_CENTROIDS: Record<string, { dominant: number; formal: number }> = {
-  PIONEER:    { dominant: 5, formal: 2 },
-  DRIVER:     { dominant: 5, formal: 5 },
-  GUARDIAN:   { dominant: 2, formal: 5 },
-  INTEGRATOR: { dominant: 2, formal: 2 },
-};
-
-function computePersonaAffinities(formal: number, dominant: number) {
-  const MAX_D = Math.sqrt(18);
-  return (['PIONEER', 'DRIVER', 'GUARDIAN', 'INTEGRATOR'] as const).map(key => {
-    const c = PERSONA_CENTROIDS[key];
-    const dist = Math.hypot(dominant - c.dominant, formal - c.formal);
-    const affinity = Math.max(0, Math.round((1 - dist / MAX_D) * 100));
-    return { key, affinity };
-  }).sort((a, b) => b.affinity - a.affinity);
-}
 
 interface ReportViewProps {
   user: User;
   answers: Record<number, number>;
   onReset: () => void;
-
   submitError: string | null;
   language: Language;
   t: any;
-  calculateResults: (a: Record<number, number>) => Results;
-  getPersona: (f: string, d: string) => Persona;
   forceDebug?: boolean;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, calculateResults, getPersona, forceDebug }) => {
+const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, forceDebug }) => {
   const [activeTab, setActiveTab] = useState<'you' | 'them' | 'together'>('you');
   const [adhdLens, setAdhdLens] = useState(false);
   // Auto-send replaces manual sending state
