@@ -1,0 +1,131 @@
+- generic [ref=e145]:
+  - link "← Back to App" [ref=e146] [cursor=pointer]:
+    - /url: /
+  - generic [ref=e147]:
+    - heading "Privacy Policy" [level=1] [ref=e148]
+    - paragraph [ref=e149]: "Last updated: May 2025"
+  - generic [ref=e150]:
+    - heading "Introduction" [level=2] [ref=e151]
+    - paragraph [ref=e153]: This Privacy Policy describes how Just AI It (David Tsur) collects, uses, and protects your personal information when you use the Bond platform. Using the Platform constitutes consent to this policy.
+  - generic [ref=e154]:
+    - heading "Information We Collect" [level=2] [ref=e155]
+    - list [ref=e157]:
+      - listitem [ref=e158]: Full name and email (manually entered or from Google account)
+      - listitem [ref=e159]: Quiz answers (35 numeric values)
+      - listitem [ref=e160]: Calculated scores and persona type
+      - listitem [ref=e161]: AI-generated insight
+      - listitem [ref=e162]: Session data (Live mode only — temporary)
+      - listitem [ref=e163]: IP address and browser info (via Firebase Analytics)
+      - listitem [ref=e164]: Timestamps
+  - generic [ref=e165]:
+    - heading "How We Use Your Information" [level=2] [ref=e166]
+    - list [ref=e168]:
+      - listitem [ref=e169]: Operating the assessment service and generating personalised reports
+      - listitem [ref=e170]: Account management and authentication
+      - listitem [ref=e171]: Service analysis and improvement
+      - listitem [ref=e172]: Anonymous, non-identified research on business behaviour patterns
+      - listitem [ref=e173]: Preventing misuse and securing the system
+  - generic [ref=e174]:
+    - heading "Third-Party Services" [level=2] [ref=e175]
+    - generic [ref=e176]:
+      - paragraph [ref=e177]: The Platform uses the following third-party services. Each service is subject to its own privacy policy.
+      - table [ref=e179]:
+        - rowgroup [ref=e180]:
+          - row "Service Purpose Data shared Server location" [ref=e181]:
+            - columnheader "Service" [ref=e182]
+            - columnheader "Purpose" [ref=e183]
+            - columnheader "Data shared" [ref=e184]
+            - columnheader "Server location" [ref=e185]
+        - rowgroup [ref=e186]:
+          - row "Firebase Authentication User login (Google OAuth + email/password) Email, name, Google account ID Google, USA" [ref=e187]:
+            - cell "Firebase Authentication" [ref=e188]
+            - cell "User login (Google OAuth + email/password)" [ref=e189]
+            - cell "Email, name, Google account ID" [ref=e190]
+            - cell "Google, USA" [ref=e191]
+          - row "Firebase Analytics Usage analytics Pseudonymous usage events, IP address Google, USA" [ref=e192]:
+            - cell "Firebase Analytics" [ref=e193]
+            - cell "Usage analytics" [ref=e194]
+            - cell "Pseudonymous usage events, IP address" [ref=e195]
+            - cell "Google, USA" [ref=e196]
+          - row "Firebase Firestore Database — live session pairing data Session ID, name, email, quiz answers, scores Google, USA" [ref=e197]:
+            - cell "Firebase Firestore" [ref=e198]
+            - cell "Database — live session pairing data" [ref=e199]
+            - cell "Session ID, name, email, quiz answers, scores" [ref=e200]
+            - cell "Google, USA" [ref=e201]
+          - row "Firebase Cloud Functions Server-side AI processing Quiz answers, persona type Google, USA" [ref=e202]:
+            - cell "Firebase Cloud Functions" [ref=e203]
+            - cell "Server-side AI processing" [ref=e204]
+            - cell "Quiz answers, persona type" [ref=e205]
+            - cell "Google, USA" [ref=e206]
+          - row "Google Gemini AI Generates personalised insights Anonymised quiz scores and persona type Google, USA" [ref=e207]:
+            - cell "Google Gemini AI" [ref=e208]
+            - cell "Generates personalised insights" [ref=e209]
+            - cell "Anonymised quiz scores and persona type" [ref=e210]
+            - cell "Google, USA" [ref=e211]
+          - row "Google Apps Script / Sheets Collects quiz results for research Name, email, scores, persona, answers, timestamp Google, USA" [ref=e212]:
+            - cell "Google Apps Script / Sheets" [ref=e213]
+            - cell "Collects quiz results for research" [ref=e214]
+            - cell "Name, email, scores, persona, answers, timestamp" [ref=e215]
+            - cell "Google, USA" [ref=e216]
+          - row "Google OAuth 2.0 Google sign-in Name, email Google, USA" [ref=e217]:
+            - cell "Google OAuth 2.0" [ref=e218]
+            - cell "Google sign-in" [ref=e219]
+            - cell "Name, email" [ref=e220]
+            - cell "Google, USA" [ref=e221]
+          - row "Google Fonts Typography (Inter, Space Grotesk, JetBrains Mono) IP address (font request) Google, USA" [ref=e222]:
+            - cell "Google Fonts" [ref=e223]
+            - cell "Typography (Inter, Space Grotesk, JetBrains Mono)" [ref=e224]
+            - cell "IP address (font request)" [ref=e225]
+            - cell "Google, USA" [ref=e226]
+  - generic [ref=e227]:
+    - heading "Data Security" [level=2] [ref=e228]
+    - paragraph [ref=e230]: "We implement reasonable technical security measures: TLS-encrypted data transfer, restricted access controls, and passwords hashed by Firebase (bcrypt). No system is 100% secure; however, we will notify you promptly of any material security breach."
+  - generic [ref=e231]:
+    - heading "Data Retention" [level=2] [ref=e232]
+    - generic [ref=e233]:
+      - table [ref=e235]:
+        - rowgroup [ref=e236]:
+          - row "Data type Retention period" [ref=e237]:
+            - columnheader "Data type" [ref=e238]
+            - columnheader "Retention period" [ref=e239]
+        - rowgroup [ref=e240]:
+          - row "Session data (Live mode) 7 days" [ref=e241]:
+            - cell "Session data (Live mode)" [ref=e242]
+            - cell "7 days" [ref=e243]
+          - row "User profile & assessment results Until account deletion" [ref=e244]:
+            - cell "User profile & assessment results" [ref=e245]
+            - cell "Until account deletion" [ref=e246]
+          - row "Analytics logs 90 days" [ref=e247]:
+            - cell "Analytics logs" [ref=e248]
+            - cell "90 days" [ref=e249]
+          - row "Research records (Sheets) 2 years" [ref=e250]:
+            - cell "Research records (Sheets)" [ref=e251]
+            - cell "2 years" [ref=e252]
+      - paragraph [ref=e253]: After account deletion, identifiable personal data will be deleted within 30 business days.
+  - generic [ref=e254]:
+    - heading "Your Rights" [level=2] [ref=e255]
+    - generic [ref=e256]:
+      - paragraph [ref=e257]: "Under the Israeli Privacy Protection Law 5741-1981, you have the following rights:"
+      - list [ref=e258]:
+        - listitem [ref=e259]: Right of access — request to view data collected about you
+        - listitem [ref=e260]: Right of correction — request correction of inaccurate data
+        - listitem [ref=e261]: Right of deletion — request deletion of your data (subject to legal obligations)
+        - listitem [ref=e262]: Right of portability — request your personal data in an accessible format
+        - listitem [ref=e263]: Right to object — opt out of marketing communications
+      - paragraph [ref=e264]:
+        - text: To exercise your rights, contact
+        - link "tsur.david@gmail.com" [ref=e265] [cursor=pointer]:
+          - /url: mailto:tsur.david@gmail.com
+        - text: ". Response time: up to 30 business days."
+  - generic [ref=e266]:
+    - heading "Cookies" [level=2] [ref=e267]
+    - paragraph [ref=e269]: The Platform uses functional cookies for session management (Firebase Auth) and anonymous analytics cookies (Firebase Analytics). You can block cookies in browser settings, though this may impair functionality.
+  - generic [ref=e270]:
+    - heading "Policy Changes" [level=2] [ref=e271]
+    - paragraph [ref=e273]: We update this policy from time to time. Material changes will be published on the Platform. Continued use constitutes acceptance of the updated version.
+  - generic [ref=e274]:
+    - heading "Contact" [level=2] [ref=e275]
+    - paragraph [ref=e277]:
+      - text: "For privacy enquiries:"
+      - link "tsur.david@gmail.com" [ref=e278] [cursor=pointer]:
+        - /url: mailto:tsur.david@gmail.com

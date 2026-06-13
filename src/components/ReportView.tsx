@@ -2,33 +2,35 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Grid, List, Zap, Lightbulb, CheckCircle,
-  BrainCircuit, Youtube, Facebook,
+  BrainCircuit,
   ExternalLink, Copy, Star, Target, Hash,
-  Sparkles, Linkedin, Globe, Brain, Loader2,
+  Sparkles, Globe, Brain, Loader2,
   ThumbsUp, ThumbsDown, Info, Send, RefreshCw,
-  Terminal, X, Share2, Users
+  Terminal, X, Share2, Users,
+  User as UserIcon
 } from 'lucide-react';
-import { Language, User, Results, Persona, AxisType, Trait, AICommunicationCoach } from '../types';
+import { CollapsibleSection } from './CollapsibleSection';
+import { Language, User, Persona, AICommunicationCoach } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS, GOOGLE_SCRIPT_URL, PERSONA_DATA, APP_ID } from '../constants';
 import { getAIInsights } from '../geminiService';
+import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../firebaseConfig';
+
 
 interface ReportViewProps {
   user: User;
   answers: Record<number, number>;
   onReset: () => void;
-
   submitError: string | null;
   language: Language;
   t: any;
-  calculateResults: (a: Record<number, number>) => Results;
-  getPersona: (f: string, d: string) => Persona;
   forceDebug?: boolean;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, calculateResults, getPersona, forceDebug }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'ai'>('overview');
+const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, forceDebug }) => {
+  const [activeTab, setActiveTab] = useState<'you' | 'them' | 'together'>('you');
+  const [adhdLens, setAdhdLens] = useState(false);
   // Auto-send replaces manual sending state
   const [aiInsight, setAiInsight] = useState<AICommunicationCoach | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -48,8 +50,12 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const results = useMemo(() => calculateResults(answers), [answers]);
   const { profileData, formal: avgFormal, dominant: avgDominant } = results;
   const currentPersona = useMemo(() => getPersona(avgFormal, avgDominant), [avgFormal, avgDominant]);
+  const affinities = useMemo(
+    () => computePersonaAffinities(parseFloat(avgFormal), parseFloat(avgDominant)),
+    [avgFormal, avgDominant]
+  );
 
-  const isDudiMode = user.name.trim().toLowerCase().includes('dudi') || forceDebug;
+  const isDudiMode = user.email.trim().toLowerCase() === 'tsur.david@gmail.com' || forceDebug;
 
   const colors = {
     red: { bg: 'bg-red-50', text: 'text-red-700', accent: 'text-red-400', from: 'from-red-500', to: 'to-red-700', shadow: 'shadow-red-500/20', border: 'border-red-200', glow: 'shadow-[0_0_20px_rgba(239,68,68,0.15)]' },
@@ -277,12 +283,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const positionX = 15 + ((parseFloat(avgDominant) - 1) / 5) * 70;
   const positionY = 15 + ((6 - parseFloat(avgFormal)) / 5) * 70;
 
-  const tabLabels = {
-    overview: language === 'he' ? 'סקירה' : 'Overview',
-    ai: language === 'he' ? 'ניתוח AI' : 'AI Analysis',
-    matrix: t.report.tabs.matrix
-  };
-
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 relative">
       {/* Debug Trigger (Floating High-Contrast Icon for Dudi) */}
@@ -329,62 +329,150 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         <p className={`text-lg font-black ${colors.text}`}>{currentPersona.title[language]}</p>
       </div>
 
+      {/* ADHD Lens chip */}
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={() => setAdhdLens(v => !v)}
+          aria-pressed={adhdLens}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-black tracking-widest uppercase transition-all border ${
+            adhdLens
+              ? 'bg-[#8c50f0] text-white border-transparent shadow-md'
+              : 'bg-white text-slate-500 border-slate-200 hover:border-[#8c50f0]/40'
+          }`}
+        >
+          <BrainCircuit size={14} />
+          {t.report.adhd_lens_label}
+          <span className={`text-[9px] px-2 py-0.5 rounded-full ${adhdLens ? 'bg-white/20' : 'bg-slate-100'}`}>
+            {adhdLens ? t.report.adhd_lens_on : t.report.adhd_lens_off}
+          </span>
+        </button>
+      </div>
+
+      {/* Tab strip */}
       <div className="flex bg-slate-100 p-1 rounded-2xl no-select">
-        {(['overview', 'ai', 'matrix'] as const).map(tab => (
+        {(['you', 'them', 'together'] as const).map(tab => (
           <button
-            key={tab} onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === tab ? `bg-[#8c50f0] text-white shadow-md` : 'text-slate-500'}`}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            data-testid={`tab-${tab}`}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${
+              activeTab === tab ? 'bg-[#8c50f0] text-white shadow-md' : 'text-slate-500'
+            }`}
           >
-            {tab === 'overview' && <Info size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            {tab === 'ai' && <BrainCircuit size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            {tab === 'matrix' && <Grid size={14} className={activeTab === tab ? 'text-white' : 'text-slate-500'} />}
-            <span>{tabLabels[tab]}</span>
+            {tab === 'you' && <UserIcon size={14} />}
+            {tab === 'them' && <Target size={14} />}
+            {tab === 'together' && <Grid size={14} />}
+            <span>{t.report.tabs[tab]}</span>
           </button>
         ))}
       </div>
 
-      {activeTab === 'overview' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
-          <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
-            <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
+      {activeTab === 'you' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4" data-testid="tab-content-you">
+          {/* 1. Basics */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
                 <Info size={18} />
               </div>
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                {language === 'he' ? 'סיכום הפרופיל' : 'Profile Summary'}
-              </h3>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_basics}</h3>
             </div>
-
-            <div className="p-6 space-y-6">
+            <div className="p-6">
               <p className="text-slate-600 font-medium leading-relaxed text-lg">{currentPersona.description[language]}</p>
-              <PersonaList title={t.report.strengths_title} items={currentPersona.strengths[language]} icon={<Zap size={18} className="text-yellow-500" />} />
-              <PersonaList title={t.report.tips_title} items={currentPersona.tips[language]} icon={<Lightbulb size={18} className={colors.text} />} />
             </div>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'ai' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
-          {/* Card 1: The Vibe Check (Profile) */}
-          {aiInsight && (
-            <div className={`bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden`}>
-              <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
-                <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
-                  <Zap size={18} />
-                </div>
-                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '1. כוח העל שלך' : '1. Your Superpower'}</h3>
+          {/* 2. Your Strengths (Pros) */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-green-50/50 border-b border-green-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-green-100 bg-white shadow-sm text-green-600">
+                <Zap size={18} fill="currentColor" />
               </div>
-              <div className="p-6 text-center space-y-4">
-                <h2 className={`text-2xl font-black ${colors.text}`}>{aiInsight.user_profile.superpower}</h2>
-                <p className="text-slate-600 font-medium leading-relaxed">{language === 'he' ? 'המוח שלך הוא מנוע חדשנות.' : 'Your brain is an innovation engine.'}</p>
-                <div className="inline-block px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-400">
-                  VS Kryptonite: {aiInsight.user_profile.kryptonite}
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_strengths_title}</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {aiInsight && (
+                <p className={`text-lg font-black ${colors.text} leading-snug`}>{aiInsight.user_profile.superpower}</p>
+              )}
+              <PersonaList title="" items={currentPersona.strengths[language]} icon={null} />
+            </div>
+          </div>
+
+          {/* 3. Your Blind Spots (Cons) */}
+          {aiInsight && (
+            <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+              <div className="p-4 bg-red-50/40 border-b border-red-100 flex items-center gap-3">
+                <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
+                  <Target size={18} />
                 </div>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_blind_spots_title}</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-base font-black text-slate-800 leading-snug">{aiInsight.user_profile.kryptonite}</p>
+                {aiInsight.user_profile.challenges && aiInsight.user_profile.challenges.length > 0 && (
+                  <ul className="space-y-3">
+                    {aiInsight.user_profile.challenges.map((c, i) => (
+                      <li key={i} className="bg-slate-50/60 rounded-2xl p-4 border border-slate-100">
+                        <div className={`text-sm font-black ${colors.text} mb-1`}>{c.title}</div>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-2">{c.description}</p>
+                        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                          <span className="text-slate-400">{language === 'he' ? 'צץ ב:' : 'Watch for:'}</span>
+                          <span>{c.watch_for}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}
 
+          {/* 4. Tips for Action */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm ${colors.text}`}>
+                <Lightbulb size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.you_tips_title}</h3>
+            </div>
+            <div className="p-6">
+              <PersonaList title="" items={currentPersona.tips[language]} icon={null} />
+            </div>
+          </div>
+
+          {/* Communication Challenge collapsible (ADHD) — only when lens is ON */}
+          {adhdLens && (
+            <CollapsibleSection
+              title={t.report.your_challenge_title}
+              icon={<Brain size={16} className="text-slate-500" />}
+              isAdhd
+              defaultOpen
+            >
+              <p className="text-slate-600 font-medium text-sm leading-relaxed pt-2">
+                {currentPersona.communication_challenge[language]}
+              </p>
+            </CollapsibleSection>
+          )}
+
+          {/* ADHD Angle collapsible — only when lens is ON */}
+          {adhdLens && (
+            <CollapsibleSection
+              title={t.report.adhd_title}
+              icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+              isAdhd
+              defaultOpen
+            >
+              <p className="text-white font-bold text-sm leading-relaxed italic pt-2 bg-slate-800 p-4 rounded-xl">
+                {currentPersona.adhd_challenge[language]}
+              </p>
+            </CollapsibleSection>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'them' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-4" data-testid="tab-content-them">
           {/* Target Profile Selector */}
           <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-x-auto">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
@@ -395,10 +483,12 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                 <button
                   key={p}
                   onClick={() => setTargetProfile(p)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${targetProfile === p
-                    ? 'btn-gradient text-white shadow-md transform scale-105'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                    }`}
+                  data-testid={`persona-btn-${p.toLowerCase()}`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                    targetProfile === p
+                      ? 'btn-gradient text-white shadow-md transform scale-105'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                  }`}
                 >
                   <span>{p === 'Guardian' ? '🛡️' : p === 'Driver' ? '🎯' : p === 'Integrator' ? '🤝' : '🚀'}</span>
                   <span>{p}</span>
@@ -410,65 +500,111 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           {isLoadingAI ? (
             <div className={`bg-white p-12 rounded-[2.5rem] shadow-sm border-2 ${colors.border} flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]`}>
               <div className="relative">
-                <Brain size={48} className={`${colors.text} animate-bounce transition-colors duration-500`} />
-                <div className={`absolute -inset-2 rounded-full ${colors.bg} opacity-20 animate-ping`} />
+                <Brain size={48} className={`${colors.text} animate-bounce`} />
                 <Loader2 size={24} className={`${colors.accent} animate-spin absolute -top-1 -right-1`} />
               </div>
-              <div className="space-y-2">
-                <h4 className={`text-lg font-black ${colors.text}`}>{language === 'he' ? 'בונה את תוכנת האימון...' : 'Building your coaching brief...'}</h4>
-                <p className="text-slate-400 text-sm font-medium">{language === 'he' ? 'מתאים את האסטרטגיה לפרופיל הנבחר' : 'Tailoring strategy to the selected profile'}</p>
-              </div>
+              <h4 className={`text-lg font-black ${colors.text}`}>{language === 'he' ? 'בונה את תוכנת האימון...' : 'Building your coaching brief...'}</h4>
             </div>
-          ) : aiInsight ? (
-            <div className="space-y-6" data-testid="ai-loaded">
-              {/* Card 2: The Game Plan (Interaction) */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden relative">
-                <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
+          ) : aiInsight && targetProfile ? (
+            <div className="space-y-4" data-testid="ai-loaded">
+              {/* Common Ground */}
+              {aiInsight.interaction_guide.common_ground && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-green-50/50 border-b border-green-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-green-100 bg-white shadow-sm text-green-600">
+                      <CheckCircle size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_common_ground_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.common_ground}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Their Drivers */}
+              {aiInsight.interaction_guide.their_motivation && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-blue-100 bg-white shadow-sm text-blue-500">
+                      <Sparkles size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_their_motivation_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.their_motivation}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Motivation Gap */}
+              {aiInsight.interaction_guide.motivation_gap && (
+                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-yellow-50/50 border-b border-yellow-100 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl border border-yellow-200 bg-white shadow-sm text-yellow-600">
+                      <Hash size={18} />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.them_motivation_gap_title}</h3>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-base text-slate-700 font-medium leading-relaxed">{aiInsight.interaction_guide.motivation_gap}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Friction Point */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
+                <div className="p-4 bg-red-50/50 border-b border-red-100 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl border border-red-100 bg-white shadow-sm text-red-500">
+                    <Zap size={18} />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.friction_title}</h3>
+                </div>
+                <div className="p-6">
+                  <p className="text-lg font-black text-slate-900 leading-relaxed mb-3">{aiInsight.interaction_guide.friction_point}</p>
+                </div>
+              </div>
+
+              {/* Strategy Card */}
+              <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                 <div className="p-4 bg-slate-900 text-white flex items-center gap-2">
                   <Target size={18} className="text-green-400" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">{language === 'he' ? '2. תוכנית משחק' : '2. Game Plan'}</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest">{t.report.strategy_title}</h3>
                 </div>
-                <div className="p-6 space-y-4">
-                  <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-                    <h4 className="text-[10px] font-black uppercase text-red-400 mb-1">{language === 'he' ? 'נקודת חיכוך' : 'Friction Point'}</h4>
-                    <p className="text-red-900 font-bold text-sm">{aiInsight.interaction_guide.friction_point}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-black text-slate-900 flex items-center gap-2">
-                      <ContextIcon profile={targetProfile} />
-                      {aiInsight.interaction_guide.strategy_card.action}
-                    </h4>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 relative">
-                      <span className="absolute -top-2 left-4 bg-slate-200 text-[9px] font-bold px-2 py-0.5 rounded text-slate-500 uppercase">Script</span>
-                      <p className="text-slate-600 italic font-medium">"{aiInsight.interaction_guide.strategy_card.script}"</p>
-                    </div>
+                <div className="p-6 space-y-5">
+                  <h4 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
+                    <ContextIcon profile={targetProfile} />
+                    {aiInsight.interaction_guide.strategy_card.action}
+                  </h4>
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative">
+                    <span className="absolute -top-2 left-4 bg-slate-900 text-white text-[9px] font-bold px-3 py-1 rounded uppercase">💬 Script</span>
+                    <p className="text-lg text-slate-800 italic font-bold leading-relaxed mt-2">"{aiInsight.interaction_guide.strategy_card.script}"</p>
                   </div>
                 </div>
               </div>
 
-              {/* Card 3: Executive Function Tool */}
-              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden relative">
-                <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
-                    <BrainCircuit size={18} />
+              {/* ADHD Hack — only shown when ADHD lens is ON */}
+              {adhdLens && (
+                <CollapsibleSection
+                  title={t.report.adhd_hack_title}
+                  icon={<BrainCircuit size={16} className="text-[#8c50f0]" />}
+                  isAdhd
+                  defaultOpen
+                >
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
+                    <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
+                    {aiInsight.executive_function_tool.template_ready && (
+                      <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
+                        <span>📝</span>
+                        {language === 'he' ? 'פתח דף טיוטה (Parking Lot)' : 'Open Parking Lot Widget'}
+                      </button>
+                    )}
                   </div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{language === 'he' ? '3. כלי לניהול אימפולסיביות' : '3. ADHD Hack'}</h3>
-                </div>
-                <div className="p-6 space-y-4">
-                  <h3 className="text-lg font-black text-slate-800">{aiInsight.executive_function_tool.tool_name}</h3>
-                  <p className="text-slate-600 font-medium text-sm">{aiInsight.executive_function_tool.instruction}</p>
+                </CollapsibleSection>
+              )}
 
-                  {aiInsight.executive_function_tool.template_ready && (
-                    <button className="w-full py-3 bg-[#f3ecff] text-[#8c50f0] font-black rounded-xl text-sm hover:bg-[#e4d7ff] transition-colors flex items-center justify-center gap-2">
-                      <span>📝</span>
-                      {language === 'he' ? 'פתח דף טיוטה (Parking Lot)' : 'Open Parking Lot Widget'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Feedback Section */}
+              {/* Feedback row */}
               <div className="px-6 pb-6 pt-2 flex flex-col items-center gap-4">
                 {aiFeedback === 'positive' || aiFeedback === 'refined' ? (
                   <div className="flex items-center gap-2 text-green-600 bg-green-50 px-6 py-2 rounded-full border border-green-100">
@@ -487,41 +623,111 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
                     </button>
                   </div>
                 )}
-                {/* Share Button */}
+                {aiFeedback === 'negative' && (
+                  <div className="w-full space-y-2">
+                    <textarea
+                      value={refinementText}
+                      onChange={e => setRefinementText(e.target.value)}
+                      placeholder={language === 'he' ? 'מה לשפר?' : 'What should be improved?'}
+                      className="w-full p-3 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#8c50f0]/30"
+                      rows={2}
+                    />
+                    <button
+                      onClick={regenerateWithFeedback}
+                      disabled={!refinementText.trim()}
+                      className="w-full py-2 bg-[#8c50f0] text-white font-black rounded-xl text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw size={14} /> {language === 'he' ? 'שפר ניתוח' : 'Refine Analysis'}
+                    </button>
+                  </div>
+                )}
                 <button onClick={handleShare} className="text-slate-400 text-sm font-bold flex items-center gap-2 hover:text-slate-600">
                   <Share2 size={14} /> Share Brief
                 </button>
               </div>
-
             </div>
           ) : (
-            // Fallback / Error State
             <div className="bg-slate-50 p-8 rounded-[2.5rem] text-center space-y-4 border border-slate-200" data-testid="ai-error">
               {aiError ? (
                 <>
-                  <p className="text-red-500 font-bold">{aiError}</p>
-                  <p className="text-slate-400 text-sm">Please check the console or ensure your API key is correctly configured and has available quota.</p>
+                  <p className="text-red-500 font-bold">AI Request Failed: {aiError}</p>
+                  <p className="text-slate-400 text-sm">Please check the console or ensure your API key is correctly configured.</p>
                 </>
               ) : (
-                <p className="text-slate-400 font-medium">System is thinking...</p>
+                <p className="text-slate-400 font-medium">{language === 'he' ? 'בחר פרופיל כדי להתחיל' : 'Select a profile above to get your coaching brief'}</p>
               )}
-              <button
-                onClick={() => {
-                  lastFetchRef.current = { personaKey: null, targetProfile: undefined };
-                  setAiInsight(null);
-                  setAiError(null);
-                }}
-                className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100"
-              >
-                Retry Analysis
-              </button>
+              {aiError && (
+                <button
+                  onClick={() => {
+                    lastFetchRef.current = { personaKey: null, targetProfile: undefined };
+                    setAiInsight(null);
+                    setAiError(null);
+                  }}
+                  className="px-6 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100"
+                >
+                  Retry Analysis
+                </button>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {activeTab === 'matrix' && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
+      {activeTab === 'together' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6" data-testid="tab-content-together">
+          {/* Persona Resonance — quantified closeness to each persona */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Hash size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.together_resonance_title}</h3>
+            </div>
+            <div className="p-6 space-y-4" data-testid="resonance-bars">
+              {affinities.map(({ key, affinity }) => {
+                const persona = PERSONA_DATA[key];
+                const isTop = key === currentPersona.key;
+                return (
+                  <div key={key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-black ${isTop ? 'text-[#8c50f0]' : 'text-slate-600'}`}>
+                        {persona.title[language]}
+                      </span>
+                      <span className={`text-sm font-black tabular-nums ${isTop ? 'text-[#8c50f0]' : 'text-slate-500'}`}>
+                        {affinity}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${isTop ? 'brand-gradient' : 'bg-slate-300'}`}
+                        style={{ width: `${affinity}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Position Narrative */}
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden">
+            <div className="p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
+                <Sparkles size={18} />
+              </div>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{t.report.together_narrative_title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-base text-slate-700 font-medium leading-relaxed">
+                {aiInsight?.position_narrative
+                  ?? (language === 'he'
+                    ? `הכי קרוב ל-${PERSONA_DATA[affinities[0].key].title.he} (${affinities[0].affinity}%).`
+                    : `Closest to ${PERSONA_DATA[affinities[0].key].title.en} (${affinities[0].affinity}%).`)}
+              </p>
+            </div>
+          </div>
+
+          {/* Matrix Visualization */}
           <div className={`bg-white rounded-[2.5rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] border border-slate-200 overflow-hidden transition-all duration-700`}>
             <div className={`p-4 bg-slate-50/40 border-b border-slate-100 flex items-center gap-3`}>
               <div className="p-2.5 rounded-xl border border-slate-100 bg-white shadow-sm text-[#8c50f0]">
@@ -590,7 +796,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         </div>
       )}
 
-      <ConsultationMobile persona={currentPersona} colors={colors} language={language} t={t} onTrack={trackClick} />
+      <ConsultationMobile persona={currentPersona} colors={colors} language={language} t={t} onTrack={trackClick} showAdhd={adhdLens} />
 
       <div className="flex flex-col gap-2 no-select">
         <div className="flex gap-2">
@@ -608,7 +814,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
 function PersonaList({ title, items, icon }: { title: string, items: string[], icon: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <h4 className="flex items-center gap-2 font-black text-slate-800 text-lg tracking-tight">{icon} {title}</h4>
+      {title && <h4 className="flex items-center gap-2 font-black text-slate-800 text-lg tracking-tight">{icon} {title}</h4>}
       <ul className="space-y-3">
         {items.map((it, i) => (
           <li key={i} className="flex gap-3 text-base text-slate-600 font-medium leading-relaxed">
@@ -621,31 +827,37 @@ function PersonaList({ title, items, icon }: { title: string, items: string[], i
   );
 }
 
-function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona: Persona, colors: any, language: Language, t: any, onTrack: (type: string) => void }) {
+function ConsultationMobile({ persona, colors, language, t, onTrack, showAdhd }: { persona: Persona, colors: any, language: Language, t: any, onTrack: (type: string) => void, showAdhd?: boolean }) {
   const cta = t.report.cta;
   return (
     <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-8 shadow-2xl overflow-hidden relative border border-white/5">
       <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
       <div className="space-y-4 relative z-10">
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 text-purple-300`}>
-            <BrainCircuit size={12} /> ADHD Insight
-          </span>
-        </div>
+        {showAdhd && (
+          <div className="flex items-center justify-between">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/5 text-purple-300`}>
+              <BrainCircuit size={12} /> ADHD Insight
+            </span>
+          </div>
+        )}
 
         <div className="space-y-3">
           <h3 className={`text-2xl font-black leading-tight text-purple-300`}>{cta.title}</h3>
 
-          <p className="text-slate-300 text-sm font-medium leading-relaxed">
-            {persona.communication_challenge[language]}
-          </p>
-
-          <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-2">
-            <h4 className={`text-[10px] font-black uppercase tracking-widest ${colors.accent}`}>{t.report.adhd_title}</h4>
-            <p className="text-white font-bold text-sm leading-relaxed italic">
-              {persona.adhd_challenge[language]}
+          {showAdhd && (
+            <p className="text-slate-300 text-sm font-medium leading-relaxed">
+              {persona.communication_challenge[language]}
             </p>
-          </div>
+          )}
+
+          {showAdhd && (
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-2">
+              <h4 className={`text-[10px] font-black uppercase tracking-widest ${colors.accent}`}>{t.report.adhd_title}</h4>
+              <p className="text-white font-bold text-sm leading-relaxed italic">
+                {persona.adhd_challenge[language]}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -674,31 +886,14 @@ function ConsultationMobile({ persona, colors, language, t, onTrack }: { persona
         </a>
       </div>
 
-      <div className="pt-6 border-t border-white/5 relative z-10 space-y-4 text-center">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{cta.follow}</p>
-        <div className="flex justify-center gap-6">
-          <SocialIcon href={SOCIAL_LINKS.linkedin} icon={<Linkedin size={22} />} label="LinkedIn" onTrack={() => onTrack('linkedin')} />
-          <SocialIcon href={SOCIAL_LINKS.facebook} icon={<Facebook size={22} />} label="Facebook" onTrack={() => onTrack('facebook')} />
-          <SocialIcon href={SOCIAL_LINKS.youtube} icon={<Youtube size={22} />} label="YouTube" onTrack={() => onTrack('youtube')} />
-        </div>
-      </div>
 
       <div className={`absolute top-0 right-0 w-32 h-32 ${colors.from}/10 rounded-full blur-3xl -mr-10 -mt-10`} />
     </div>
   );
 }
 
-function SocialIcon({ href, icon, label, onTrack }: { href: string, icon: React.ReactNode, label: string, onTrack: () => void }) {
-  return (
-    <a
-      href={href} target="_blank" rel="noopener noreferrer"
-      onClick={onTrack}
-      className="text-slate-400 hover:text-white transition-all active:scale-90"
-      aria-label={label}
-    >
-      {icon}
-    </a>
-  );
+function SocialIcon(_props: any) {
+  return null;
 }
 
 
