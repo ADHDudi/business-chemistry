@@ -107,8 +107,8 @@ export default function App() {
   }, []);
 
   const handleGoogleLogin = async () => {
-    await login();
-    if (authUser) {
+    const ok = await login();
+    if (ok) {
       setStep(2);
     }
   };
@@ -147,16 +147,16 @@ export default function App() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    await register(user.email, password);
-    if (!authError) {
+    const ok = await register(user.email, password);
+    if (ok) {
       setPassword('');
       setStep(2);
     }
   };
 
   const handleSignUp = async (email: string, password: string) => {
-    await signUp(email, password);
-    if (!signUpError) {
+    const ok = await signUp(email, password);
+    if (ok) {
       setPassword('');
       setStep(2);
     }

@@ -126,6 +126,22 @@ describe('useAuth – login / logout', () => {
     expect(mockSignInWithPopup).toHaveBeenCalledOnce();
   });
 
+  it('login returns true on success', async () => {
+    mockSignInWithPopup.mockResolvedValueOnce({ user: { displayName: 'G', email: 'g@x.com' } });
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.login(); });
+    expect(ok).toBe(true);
+  });
+
+  it('login returns false on failure', async () => {
+    mockSignInWithPopup.mockRejectedValueOnce(new Error('popup closed'));
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.login(); });
+    expect(ok).toBe(false);
+  });
+
   it('login sets authError on failure', async () => {
     mockSignInWithPopup.mockRejectedValueOnce(new Error('popup closed'));
     const { result } = renderHook(() => useAuth());
@@ -158,6 +174,26 @@ describe('useAuth – register', () => {
     const { result } = renderHook(() => useAuth());
     await act(() => result.current.register('a@b.com', 'pass123'));
     expect(mockSignInWithEmailAndPassword).toHaveBeenCalledWith({}, 'a@b.com', 'pass123');
+  });
+
+  it('register returns true on success', async () => {
+    mockSignInWithEmailAndPassword.mockResolvedValueOnce({
+      user: { displayName: null, email: 'a@b.com' },
+    });
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.register('a@b.com', 'pass123'); });
+    expect(ok).toBe(true);
+  });
+
+  it('register returns false on failure', async () => {
+    const err: any = new Error('wrong-password');
+    err.code = 'auth/wrong-password';
+    mockSignInWithEmailAndPassword.mockRejectedValueOnce(err);
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.register('a@b.com', 'wrong'); });
+    expect(ok).toBe(false);
   });
 
   it('register sets authError on failure', async () => {
@@ -204,6 +240,26 @@ describe('useAuth – signUp', () => {
     const { result } = renderHook(() => useAuth());
     await act(() => result.current.signUp('new@b.com', 'pass123'));
     expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalledWith({}, 'new@b.com', 'pass123');
+  });
+
+  it('signUp returns true on success', async () => {
+    mockCreateUserWithEmailAndPassword.mockResolvedValueOnce({
+      user: { displayName: null, email: 'new@b.com' },
+    });
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.signUp('new@b.com', 'pass123'); });
+    expect(ok).toBe(true);
+  });
+
+  it('signUp returns false on failure', async () => {
+    const err: any = new Error('already-in-use');
+    err.code = 'auth/email-already-in-use';
+    mockCreateUserWithEmailAndPassword.mockRejectedValueOnce(err);
+    const { result } = renderHook(() => useAuth());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.signUp('dup@b.com', 'pass'); });
+    expect(ok).toBe(false);
   });
 
   it('signUp sets signUpError on failure', async () => {

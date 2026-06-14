@@ -30,11 +30,11 @@ export interface UseAuthReturn {
   setShowForgotPasswordForm: (v: boolean) => void;
   setForgotPasswordError: (v: string | null) => void;
 
-  // Handlers
-  login: () => Promise<void>;
+  // Handlers — login/register/signUp return true on success, false on error
+  login: () => Promise<boolean>;
   logout: () => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<boolean>;
+  signUp: (email: string, password: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<void>;
 }
 
@@ -119,12 +119,14 @@ export function useAuth(): UseAuthReturn {
   // JUS-179: Google login / logout
   // ------------------------------------------------------------------
 
-  const login = async (): Promise<void> => {
+  const login = async (): Promise<boolean> => {
     try {
       await signInWithPopup(auth, googleProvider);
+      return true;
     } catch (error: any) {
       console.error('Google login error:', error);
       setAuthError(error?.message || 'Google sign-in failed');
+      return false;
     }
   };
 
@@ -140,15 +142,17 @@ export function useAuth(): UseAuthReturn {
   // JUS-182: Email/password sign-in (register)
   // ------------------------------------------------------------------
 
-  const register = async (email: string, password: string): Promise<void> => {
+  const register = async (email: string, password: string): Promise<boolean> => {
     setAuthError(null);
     setIsAuthLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      return true;
     } catch (error: any) {
       const msg = loginErrorMessage(error.code, error.message);
       setAuthError(msg);
       console.error('Auth error:', error.code, error.message);
+      return false;
     } finally {
       setIsAuthLoading(false);
     }
@@ -158,16 +162,18 @@ export function useAuth(): UseAuthReturn {
   // JUS-185: Sign-up (create account) and forgot password
   // ------------------------------------------------------------------
 
-  const signUp = async (email: string, password: string): Promise<void> => {
+  const signUp = async (email: string, password: string): Promise<boolean> => {
     setSignUpError(null);
     setIsSigningUp(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       setShowSignUpForm(false);
+      return true;
     } catch (error: any) {
       const msg = signUpErrorMessage(error.code, error.message);
       setSignUpError(msg);
       console.error('Sign up error:', error.code, error.message);
+      return false;
     } finally {
       setIsSigningUp(false);
     }
