@@ -1,22 +1,16 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
-  Grid, List, Zap, Lightbulb, CheckCircle,
-  BrainCircuit,
-  ExternalLink, Copy, Star, Target, Hash,
-  Sparkles, Globe, Brain, Loader2,
-  ThumbsUp, ThumbsDown, Info, Send, RefreshCw,
-  Terminal, X, Share2,
+  Grid, BrainCircuit,
+  Target, Sparkles, Globe,
+  Terminal, X,
   User as UserIcon
 } from 'lucide-react';
-import { CollapsibleSection } from './CollapsibleSection';
-import ConsultationMobile from './report/ConsultationMobile';
-import { PersonaList, ContextIcon } from './report/shared';
 import YouTab from './report/YouTab';
 import ThemTab from './report/ThemTab';
 import TogetherTab from './report/TogetherTab';
 import { Language, User, Persona, AICommunicationCoach } from '../types';
-import { getIconComponent as getIcon, SOCIAL_LINKS, PERSONA_DATA } from '../constants';
+import { getIconComponent as getIcon, SOCIAL_LINKS } from '../constants';
 import { buildPayload, saveReport, sendFinalReport } from '../services/reportingService';
 import { getAIInsights } from '../geminiService';
 import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
