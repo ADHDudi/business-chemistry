@@ -22,8 +22,8 @@ import AccessibilityPage from './components/legal/AccessibilityPage';
 import SignUpForm from './components/SignUpForm';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { useSession } from './hooks/useSession';
-import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { auth, googleProvider, analytics } from './firebaseConfig';
+import { analytics } from './firebaseConfig';
+import { useAuth } from './hooks/useAuth';
 import { logEvent } from 'firebase/analytics';
 
 
@@ -69,28 +69,37 @@ export default function App() {
     startSession, joinExistingSession, submitAnswers
   } = useSession();
   const [isSessionMode, setIsSessionMode] = useState(false);
-  const [authUser, setAuthUser] = useState<any>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [showSignUpForm, setShowSignUpForm] = useState(false);
-  const [signUpError, setSignUpError] = useState<string | null>(null);
-  const [isSigningUp, setIsSigningUp] = useState(false);
-  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
-  const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
-  const [isSendingReset, setIsSendingReset] = useState(false);
 
+  // Auth hook — owns all Firebase auth state and handlers
+  const {
+    authUser,
+    authError,
+    isAuthLoading,
+    showSignUpForm,
+    setShowSignUpForm,
+    signUpError,
+    isSigningUp,
+    showForgotPasswordForm,
+    setShowForgotPasswordForm,
+    forgotPasswordError,
+    setForgotPasswordError,
+    isSendingReset,
+    login,
+    logout,
+    register,
+    signUp,
+    forgotPassword,
+  } = useAuth();
+
+  // Sync authUser changes to local user state (name/email for questionnaire)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setAuthUser(fbUser);
-      if (fbUser) {
-        setUser({
-          name: fbUser.displayName || '',
-          email: fbUser.email || ''
-        });
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    if (authUser) {
+      setUser({
+        name: authUser.displayName || '',
+        email: authUser.email || '',
+      });
+    }
+  }, [authUser]);
 
   useEffect(() => {
     const handleHashChange = () => setCurrentHash(window.location.hash);
@@ -99,29 +108,17 @@ export default function App() {
   }, []);
 
   const handleGoogleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      if (result.user) {
-        setUser({
-          name: result.user.displayName || '',
-          email: result.user.email || ''
-        });
-        setStep(2);
-      }
-    } catch (error) {
-      console.error("Google login error:", error);
+    const ok = await login();
+    if (ok) {
+      setStep(2);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser({ name: '', email: '' });
-      setStep(1);
-      setAnswers({});
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await logout();
+    setUser({ name: '', email: '' });
+    setStep(1);
+    setAnswers({});
   };
 
   useEffect(() => {
@@ -151,128 +148,23 @@ export default function App() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthError(null);
-    setIsAuthLoading(true);
-
-    try {
-      // Call Firebase signInWithEmailAndPassword to authenticate
-      const userCredential = await signInWithEmailAndPassword(auth, user.email, password);
-
-      // On success, update user with auth response
-      setUser({
-        name: userCredential.user.displayName || 'Guest',
-        email: userCredential.user.email || user.email
-      });
-      setPassword(''); // Clear password from state
+    const ok = await register(user.email, password);
+    if (ok) {
+      setPassword('');
       setStep(2);
-    } catch (error: any) {
-      // Handle Firebase auth errors
-      let errorMessage = 'Authentication failed';
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email. Please sign up first.';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email format';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many failed login attempts. Please try again later.';
-          break;
-        case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password';
-          break;
-        default:
-          errorMessage = error.message || 'Authentication failed';
-      }
-
-      setAuthError(errorMessage);
-      console.error('Auth error:', error.code, error.message);
-    } finally {
-      setIsAuthLoading(false);
     }
   };
 
   const handleSignUp = async (email: string, password: string) => {
-    setSignUpError(null);
-    setIsSigningUp(true);
-
-    try {
-      // Create user account with Firebase
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Update user state with new account info
-      setUser({
-        name: userCredential.user.displayName || 'User',
-        email: userCredential.user.email || email
-      });
-
-      // Clear form and close modal
-      setShowSignUpForm(false);
+    const ok = await signUp(email, password);
+    if (ok) {
       setPassword('');
-
-      // Advance to step 2 (questionnaire)
       setStep(2);
-    } catch (error: any) {
-      let errorMessage = 'Account creation failed';
-
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'This email is already registered. Please sign in instead.';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Password is too weak. Use at least 6 characters.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email format.';
-          break;
-        case 'auth/operation-not-allowed':
-          errorMessage = 'Account creation is not enabled. Please contact support.';
-          break;
-        default:
-          errorMessage = error.message || 'Account creation failed';
-      }
-
-      setSignUpError(errorMessage);
-      console.error('Sign up error:', error.code, error.message);
-    } finally {
-      setIsSigningUp(false);
     }
   };
 
   const handleForgotPassword = async (email: string) => {
-    setForgotPasswordError(null);
-    setIsSendingReset(true);
-
-    try {
-      // Send password reset email via Firebase
-      await sendPasswordResetEmail(auth, email);
-      // On success, the form component will show the success state
-    } catch (error: any) {
-      let errorMessage = 'Failed to send reset email';
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid email format.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many requests. Please try again later.';
-          break;
-        default:
-          errorMessage = error.message || 'Failed to send reset email';
-      }
-
-      setForgotPasswordError(errorMessage);
-      console.error('Forgot password error:', error.code, error.message);
-    } finally {
-      setIsSendingReset(false);
-    }
+    await forgotPassword(email);
   };
 
 

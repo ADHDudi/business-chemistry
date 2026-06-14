@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
+      environmentMatchGlobs: [['src/hooks/**', 'happy-dom']],
     },
   };
 });
