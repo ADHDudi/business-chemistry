@@ -36,3 +36,4 @@ simulate_session.js
 *.njsproj
 *.sln
 *.sw?
+.worktrees
