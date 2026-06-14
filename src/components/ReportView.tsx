@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { Language, User, Persona, AICommunicationCoach } from '../types';
-import { getIconComponent as getIcon, SOCIAL_LINKS, GOOGLE_SCRIPT_URL, PERSONA_DATA, APP_ID } from '../constants';
+import { getIconComponent as getIcon, SOCIAL_LINKS, PERSONA_DATA } from '../constants';
+import { buildPayload, saveReport, sendFinalReport } from '../services/reportingService';
 import { getAIInsights } from '../geminiService';
 import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
 import { logEvent } from 'firebase/analytics';
@@ -64,44 +65,31 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     blue: { bg: 'bg-blue-50', text: 'text-blue-700', accent: 'text-blue-400', from: 'from-blue-500', to: 'to-blue-700', shadow: 'shadow-blue-500/20', border: 'border-blue-200', glow: 'shadow-[0_0_20px_rgba(59,130,246,0.15)]' }
   }[currentPersona.color];
 
-  const syncToSheet = useCallback(async (overrides: Record<string, any> = {}) => {
-    if (!GOOGLE_SCRIPT_URL || (syncInProgress.current && !overrides.isFinal)) return;
+  const syncToSheet = useCallback(async (overrides: Record<string, unknown> = {}) => {
+    if (syncInProgress.current && !overrides.isFinal) return;
 
     syncInProgress.current = true;
     setSyncStatus('syncing');
 
-    const payload = {
-      appId: APP_ID,
+    const payload = buildPayload(
       user,
-      scores: { formal: avgFormal, dominant: avgDominant },
-      personaKey: currentPersona.key,
-      personaTitle: currentPersona.title[language],
-      personaDetails: {
-        strengths: currentPersona.strengths[language].join('; '),
-        tips: currentPersona.tips[language].join('; '),
-        adhd_challenge: currentPersona.adhd_challenge[language],
-        communication_challenge: currentPersona.communication_challenge[language],
-        consultation_benefit: currentPersona.consultation_benefit[language]
-      },
-      aiInsight: overrides.aiInsight !== undefined ? overrides.aiInsight : (aiInsight || ""),
-      aiFeedback: overrides.aiFeedback !== undefined ? overrides.aiFeedback : (aiFeedback || "Pending"),
-      refinementReason: overrides.refinementReason !== undefined ? overrides.refinementReason : refinementText,
-      clicks: overrides.clicks !== undefined ? overrides.clicks : clicks,
-      answers,
+      { formal: avgFormal, dominant: avgDominant },
+      currentPersona,
       language,
-      isFinal: overrides.isFinal || false,
-      timestamp: new Date().toISOString()
-    };
+      answers,
+      {
+        aiInsight: aiInsight || "",
+        aiFeedback: aiFeedback || "Pending",
+        refinementReason: refinementText,
+        clicks,
+        ...overrides,
+      }
+    );
 
     setLastPayload(payload);
 
     try {
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
+      await saveReport(payload);
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 3000);
     } catch (e) {
@@ -228,45 +216,23 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const hasSentFinalReport = useRef(false);
   const latestPayloadRef = useRef<any>(null);
 
-  // Update ref with latest data whenever it changes
+  // Keep latestPayloadRef in sync for the visibilitychange keepalive send
   useEffect(() => {
-    latestPayloadRef.current = {
-      appId: APP_ID,
+    latestPayloadRef.current = buildPayload(
       user,
-      scores: { formal: avgFormal, dominant: avgDominant },
-      personaKey: currentPersona.key,
-      personaTitle: currentPersona.title[language],
-      personaDetails: {
-        strengths: currentPersona.strengths[language].join('; '),
-        tips: currentPersona.tips[language].join('; '),
-        adhd_challenge: currentPersona.adhd_challenge[language],
-        communication_challenge: currentPersona.communication_challenge[language],
-        consultation_benefit: currentPersona.consultation_benefit[language]
-      },
-      aiInsight: aiInsight || "",
-      aiFeedback: aiFeedback || "Pending",
-      refinementReason: refinementText,
-      clicks: clicks,
-      answers,
+      { formal: avgFormal, dominant: avgDominant },
+      currentPersona,
       language,
-      isFinal: true,
-      timestamp: new Date().toISOString()
-    };
+      answers,
+      { aiInsight: aiInsight || "", aiFeedback: aiFeedback || "Pending", refinementReason: refinementText, clicks, isFinal: true }
+    );
   }, [user, avgFormal, avgDominant, currentPersona, aiInsight, aiFeedback, clicks, answers, language, refinementText]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && !hasSentFinalReport.current && latestPayloadRef.current && GOOGLE_SCRIPT_URL) {
+      if (document.visibilityState === 'hidden' && !hasSentFinalReport.current && latestPayloadRef.current) {
         hasSentFinalReport.current = true;
-
-        // Use fetch with keepalive as a modern alternative to sendBeacon
-        fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          keepalive: true,
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(latestPayloadRef.current)
-        }).catch(err => console.error("Auto-send failed:", err));
+        sendFinalReport(latestPayloadRef.current).catch(err => console.error("Auto-send failed:", err));
       }
     };
 
@@ -311,7 +277,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           <div className="space-y-4">
             <div>
               <p className="font-black text-slate-400 mb-1 border-b uppercase">Target Endpoint:</p>
-              <p className="break-all text-blue-600 bg-slate-50 p-2 rounded">{GOOGLE_SCRIPT_URL}</p>
+              <p className="break-all text-blue-600 bg-slate-50 p-2 rounded">configured in reportingService.ts</p>
             </div>
             <div>
               <p className="font-black text-slate-400 mb-1 border-b uppercase">Last Payload Data (isFinal decision):</p>
