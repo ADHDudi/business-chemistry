@@ -6,6 +6,7 @@ import {
   Terminal, X,
   User as UserIcon
 } from 'lucide-react';
+import ConsultationMobile from './report/ConsultationMobile';
 import YouTab from './report/YouTab';
 import ThemTab from './report/ThemTab';
 import TogetherTab from './report/TogetherTab';
