@@ -5,10 +5,11 @@ import {
   Layers, Gift, Users, X, Copy, Check
 } from 'lucide-react';
 import {
-  TEXT, PERSONA_DATA, traitsList, GOOGLE_SCRIPT_URL, APP_ID, getIconComponent
+  TEXT, PERSONA_DATA, traitsList, getIconComponent
 } from './constants';
 import { Language, User as UserType, Results, Persona, Trait } from './types';
 import { calculateResults, getPersona, generateMockAnswers } from './scoring';
+import { buildPayload, saveReport } from './services/reportingService';
 import ReportView from './components/ReportView';
 import SessionWizard from './components/SessionWizard';
 import SessionLobby from './components/SessionLobby';
@@ -323,40 +324,8 @@ export default function App() {
     const results = calculateResults(answers);
     const persona = getPersona(results.formal, results.dominant);
 
-    // Save to Google Sheets
-    const payload = {
-      appId: APP_ID,
-      user,
-      scores: { formal: results.formal, dominant: results.dominant },
-      personaKey: persona.key,
-      personaTitle: persona.title[language],
-      personaDetails: {
-        strengths: persona.strengths[language].join('; '),
-        tips: persona.tips[language].join('; '),
-        adhd_challenge: persona.adhd_challenge[language],
-        communication_challenge: persona.communication_challenge[language],
-        consultation_benefit: persona.consultation_benefit[language]
-      },
-      aiInsight: "",
-      aiFeedback: "Pending",
-      refinementReason: "",
-      answers,
-      language,
-      isFinal: false,
-      timestamp: new Date().toISOString(),
-      clicks: { website: false, schedule: false, socials: {} },
-
-    };
-
     try {
-      if (GOOGLE_SCRIPT_URL) {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-      }
+      await saveReport(buildPayload(user, results, persona, language, answers));
 
       // Flow Logic
       setStep(3); // Go to Report View
