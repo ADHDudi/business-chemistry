@@ -24,3 +24,18 @@
 - Team: `JustAIit`
 - Project: `Business Chemistry`
 - Issue prefix: `JUS-`
+
+## Agent skills
+
+### Issue tracker
+
+Linear (`JustAIit` team, `Business Chemistry` project). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default mappings to Linear states/labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout (one global `CONTEXT.md` and `docs/adr/`). See `docs/agents/domain.md`.
+
