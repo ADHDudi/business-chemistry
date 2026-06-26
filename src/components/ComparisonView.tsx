@@ -4,6 +4,12 @@ import { SessionData } from '../services/sessionService';
 import { Trait } from '../types';
 import { AlertCircle, CheckCircle, Minus } from 'lucide-react';
 
+/** Returns a clamped `left` value that keeps the 32 px dot within the track. */
+export function dotLeftStyle(score: number): string {
+  const pct = ((score - 1) / 5) * 100;
+  return `clamp(0px, calc(${pct}% - 16px), calc(100% - 32px))`;
+}
+
 interface ComparisonViewProps {
     sessionData: SessionData;
     language: 'he' | 'en';
@@ -33,10 +39,10 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
+            <div className="bg-white rounded-[2.5rem] p-4 sm:p-8 shadow-xl border border-slate-100">
                 <h2 className="text-3xl font-black text-slate-800 mb-6 text-center">{t.title}</h2>
 
-                <div className="flex items-center justify-center gap-6 mb-8 text-xs font-bold text-slate-500">
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-500">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         <span>{t.legend_agreement} (0-1)</span>
@@ -91,7 +97,7 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
                                     {/* User A Dot */}
                                     <div
                                         className="absolute top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#324FA2] text-white flex items-center justify-center font-black text-xs shadow-md z-10 border-2 border-white transition-all duration-500"
-                                        style={{ left: `calc(${((scoreA - 1) / 5) * 100}% - 16px)` }}
+                                        style={{ left: dotLeftStyle(scoreA) }}
                                         title={`${founderAName}: ${scoreA}`}
                                     >
                                         A
@@ -99,7 +105,7 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
                                     {/* User B Dot */}
                                     <div
                                         className="absolute top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#E46B3F] text-white flex items-center justify-center font-black text-xs shadow-md z-10 border-2 border-white transition-all duration-500"
-                                        style={{ left: `calc(${((scoreB - 1) / 5) * 100}% - 16px)` }}
+                                        style={{ left: dotLeftStyle(scoreB) }}
                                         title={`${founderBName}: ${scoreB}`}
                                     >
                                         B
