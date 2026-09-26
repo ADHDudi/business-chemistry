@@ -2,14 +2,65 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import { execFile } from 'child_process';
+import readline from 'readline/promises';
 
 // Flags: --headed shows the browser window (default: headless, runs in the background
-// without touching your own browser); --open opens the HTML report when done.
+// without touching your own browser); --open opens the HTML report when done;
+// --env=local|prod picks the target; --ask prompts for the target when none is given.
 const argv = process.argv.slice(2);
 const HEADED = argv.includes('--headed') || process.env.TEST_HEADED === '1';
 const OPEN_REPORT = argv.includes('--open') || process.env.TEST_OPEN_REPORT === '1';
 const args = argv.filter(a => !a.startsWith('--'));
-const BASE_URL = args[0] || 'https://business-chemistry.web.app/';
+
+const ENVIRONMENTS = {
+    local: 'http://localhost:3002/',
+    prod: 'https://business-chemistry.web.app/',
+};
+
+async function resolveBaseUrl() {
+    if (args[0]) return args[0];
+    const envFlag = (argv.find(a => a.startsWith('--env=')) || '').slice('--env='.length)
+        || process.env.TEST_ENV || '';
+    const envKey = { local: 'local', prod: 'prod', production: 'prod' }[envFlag.toLowerCase()];
+    if (envFlag && !envKey) {
+        console.error(`Unknown environment "${envFlag}" — use local or prod.`);
+        process.exit(1);
+    }
+    if (envKey) return ENVIRONMENTS[envKey];
+    if (!argv.includes('--ask')) return ENVIRONMENTS.prod;
+
+    if (!process.stdin.isTTY) {
+        console.error('No terminal to ask in — pass --env=local or --env=prod.');
+        process.exit(1);
+    }
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    try {
+        while (true) {
+            const answer = (await rl.question(
+                '\nWhich environment should the tests run against?\n' +
+                `  1) local       ${ENVIRONMENTS.local}\n` +
+                `  2) production  ${ENVIRONMENTS.prod}\n` +
+                'Choose 1 or 2: '
+            )).trim().toLowerCase();
+            if (['1', 'l', 'local'].includes(answer)) return ENVIRONMENTS.local;
+            if (['2', 'p', 'prod', 'production'].includes(answer)) return ENVIRONMENTS.prod;
+            console.log('Please type 1 (local) or 2 (production).');
+        }
+    } finally {
+        rl.close();
+    }
+}
+
+const BASE_URL = await resolveBaseUrl();
+
+if (BASE_URL.startsWith('http://localhost')) {
+    try {
+        await fetch(BASE_URL, { signal: AbortSignal.timeout(5000) });
+    } catch {
+        console.error(`\n❌ Nothing is answering at ${BASE_URL} — start the dev server first (npm run dev).`);
+        process.exit(1);
+    }
+}
 const HEADLESS = !HEADED;
 const SLOW_MO = HEADED ? 50 : 0;
 

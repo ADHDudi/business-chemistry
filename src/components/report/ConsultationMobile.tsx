@@ -15,7 +15,7 @@ interface ConsultationMobileProps {
 function ConsultationMobile({ persona, colors, language, t, onTrack, showAdhd }: ConsultationMobileProps) {
   const cta = t.report.cta;
   return (
-    <div className="bg-slate-900 p-4 sm:p-8 rounded-[2.5rem] text-white space-y-4 sm:space-y-8 shadow-2xl overflow-hidden relative border border-white/5">
+    <div className="bg-slate-900 p-4 sm:p-8 rounded-[2.5rem] text-white space-y-4 sm:space-y-8 shadow-2xl overflow-hidden relative border border-white/5" data-testid="consultation-mobile">
       <div className="absolute top-0 left-0 right-0 h-[3px] brand-gradient" />
       <div className="space-y-4 relative z-10">
         {showAdhd && (

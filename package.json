@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "deploy": "sh deploy.sh",
     "test": "node test.js",
-    "test:e2e": "node test.js http://localhost:3002/",
-    "test:e2e:headed": "node test.js http://localhost:3002/ --headed --open",
+    "test:e2e": "node test.js --ask",
+    "test:e2e:headed": "node test.js --ask --headed --open",
     "test:live": "node test-live-session.js",
     "test:unit": "vitest run"
   },
