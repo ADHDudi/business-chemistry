@@ -1,13 +1,27 @@
 import React from 'react';
-import { traitsList } from '../constants'; // Assumes traitsList is exported from constants
+import { traitsList } from '../constants';
 import { SessionData } from '../services/sessionService';
-import { Trait } from '../types';
 import { AlertCircle, CheckCircle, Minus } from 'lucide-react';
+import { calculateResults, getPersona } from '../scoring';
 
 /** Returns a clamped `left` value that keeps the 32 px dot within the track. */
 export function dotLeftStyle(score: number): string {
   const pct = ((score - 1) / 5) * 100;
   return `clamp(0px, calc(${pct}% - 16px), calc(100% - 32px))`;
+}
+
+/** Match score: 100 - (mean absolute delta / 5) * 100, rounded to nearest integer. */
+export function computeMatchScore(
+  answersA: Record<number, number>,
+  answersB: Record<number, number>
+): number {
+  const total = traitsList.length;
+  if (total === 0) return 100;
+  const sumDelta = traitsList.reduce((acc, _, idx) => {
+    return acc + Math.abs((answersA[idx] ?? 0) - (answersB[idx] ?? 0));
+  }, 0);
+  const meanDelta = sumDelta / total;
+  return Math.round(100 - (meanDelta / 5) * 100);
 }
 
 interface ComparisonViewProps {
@@ -18,6 +32,12 @@ interface ComparisonViewProps {
 export default function ComparisonView({ sessionData, language }: ComparisonViewProps) {
     const { answersA, answersB, founderAName, founderBName } = sessionData;
 
+    const resultsA = calculateResults(answersA);
+    const resultsB = calculateResults(answersB);
+    const personaA = getPersona(resultsA.formal, resultsA.dominant);
+    const personaB = getPersona(resultsB.formal, resultsB.dominant);
+    const matchScore = computeMatchScore(answersA, answersB);
+
     const t = {
         he: {
             title: "השוואת תשובות",
@@ -25,7 +45,8 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
             legend_agreement: "הסכמה",
             legend_friction: "חיכוך פוטנציאלי",
             score: "ציון",
-            delta: "הפרש"
+            delta: "הפרש",
+            match: "התאמה",
         },
         en: {
             title: "Answer Comparison",
@@ -33,7 +54,8 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
             legend_agreement: "Agreement",
             legend_friction: "Potential Friction",
             score: "Score",
-            delta: "Delta"
+            delta: "Delta",
+            match: "Match",
         }
     }[language];
 
@@ -42,6 +64,29 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
             <div className="bg-white rounded-[2.5rem] p-4 sm:p-8 shadow-xl border border-slate-100">
                 <h2 className="text-3xl font-black text-slate-800 mb-6 text-center">{t.title}</h2>
 
+                {/* Persona comparison header */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="text-center p-4 bg-[#eef2ff] rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{founderAName}</p>
+                        <p className="font-black text-[#324FA2] text-base leading-tight" data-testid="persona-label">
+                            {personaA.title[language]}
+                        </p>
+                    </div>
+                    <div className="text-center p-4 bg-[#fff4ef] rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{founderBName}</p>
+                        <p className="font-black text-[#E46B3F] text-base leading-tight" data-testid="persona-label">
+                            {personaB.title[language]}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Match score */}
+                <div className="flex items-center justify-center gap-3 mb-8 p-4 bg-slate-50 rounded-2xl">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.match}</span>
+                    <span className="text-4xl font-black text-slate-800" data-testid="match-score">{matchScore}%</span>
+                </div>
+
+                {/* Legend */}
                 <div className="flex flex-wrap items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-500">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
@@ -57,12 +102,12 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
                     </div>
                 </div>
 
+                {/* Trait rows */}
                 <div className="space-y-4">
                     {traitsList.map((trait, idx) => {
                         const scoreA = answersA[idx];
                         const scoreB = answersB[idx];
 
-                        // Skip if not both answered yet
                         if (scoreA === undefined || scoreB === undefined) return null;
 
                         const delta = Math.abs(scoreA - scoreB);
@@ -94,7 +139,6 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
                                 </div>
 
                                 <div className="relative h-2 bg-slate-200/50 rounded-full my-4 mx-2">
-                                    {/* User A Dot */}
                                     <div
                                         className="absolute top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#324FA2] text-white flex items-center justify-center font-black text-xs shadow-md z-10 border-2 border-white transition-all duration-500"
                                         style={{ left: dotLeftStyle(scoreA) }}
@@ -102,7 +146,6 @@ export default function ComparisonView({ sessionData, language }: ComparisonView
                                     >
                                         A
                                     </div>
-                                    {/* User B Dot */}
                                     <div
                                         className="absolute top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#E46B3F] text-white flex items-center justify-center font-black text-xs shadow-md z-10 border-2 border-white transition-all duration-500"
                                         style={{ left: dotLeftStyle(scoreB) }}

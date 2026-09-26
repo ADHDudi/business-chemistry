@@ -3,10 +3,32 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 import { execFile } from 'child_process';
 
-const args = process.argv.slice(2);
+// Flags: --headed shows the browser window (default: headless, runs in the background
+// without touching your own browser); --open opens the HTML report when done.
+const argv = process.argv.slice(2);
+const HEADED = argv.includes('--headed') || process.env.TEST_HEADED === '1';
+const OPEN_REPORT = argv.includes('--open') || process.env.TEST_OPEN_REPORT === '1';
+const args = argv.filter(a => !a.startsWith('--'));
 const BASE_URL = args[0] || 'https://business-chemistry.web.app/';
-const HEADLESS = false;
-const SLOW_MO = 50;
+const HEADLESS = !HEADED;
+const SLOW_MO = HEADED ? 50 : 0;
+
+// Prefer Puppeteer's bundled Chrome; fall back to the system Chrome install
+// (e.g. when only an x64 build is cached on Apple Silicon). Headless runs use a
+// throwaway profile, so they never touch the Chrome window you are working in.
+function resolveChromePath() {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+    try {
+        const bundled = puppeteer.executablePath();
+        if (bundled && fs.existsSync(bundled)) return bundled;
+    } catch { /* not installed */ }
+    const systemPaths = {
+        darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
+        linux: ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'],
+        win32: ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'],
+    }[process.platform] || [];
+    return systemPaths.find(p => fs.existsSync(p));
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reporting Engine
@@ -131,6 +153,7 @@ function generateReport() {
 
     fs.writeFileSync('acceptance_report.html', html);
     console.log('\n📄 Report generated: acceptance_report.html');
+    if (!OPEN_REPORT) return;
     // Use execFile (not exec) — input is a hardcoded filename, no shell injection risk
     const opener = process.platform === 'win32' ? 'cmd'
         : process.platform === 'darwin' ? 'open'
@@ -1194,6 +1217,7 @@ async function runAllTests() {
 
     const browser = await puppeteer.launch({
         headless: HEADLESS,
+        executablePath: resolveChromePath(),
         slowMo: SLOW_MO,
         defaultViewport: { width: 1280, height: 800 },
         protocolTimeout: 300000  // Increase timeout to 5 minutes for Firebase operations

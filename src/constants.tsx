@@ -13,13 +13,6 @@ import {
 } from 'lucide-react';
 import { AxisType, Trait, Persona } from './types';
 
-/**
- * REUSABLE BACKEND CONFIGURATION
- * Replace this URL with your newly deployed Google Apps Script Web App URL
- */
-export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiCjNYNDXlpdAimsI-vOeyLLW4YMR-uFeacXrqba8Mr7eYYuY5tfa31jCQO4uGiiqXiQ/exec"; 
-
-export const APP_ID = "ADHDudi-Chemistry";
 
 export const SOCIAL_LINKS = {
   website: "https://www.adhdudi.com",

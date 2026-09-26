@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
+      setupFiles: ['src/setupTests.ts'],
       environmentMatchGlobs: [['src/hooks/**', 'happy-dom']],
       exclude: ['**/node_modules/**', '**/.worktrees/**'],
     },
