@@ -2,7 +2,7 @@ import { db } from '../firebaseConfig';
 import {
     collection,
     addDoc,
-    getDocs,
+    getDocsFromServer,
     query,
     orderBy,
     limit,
@@ -31,10 +31,15 @@ export async function saveUserReport(
     });
 }
 
+/**
+ * Reads from the server only: plain getDocs() silently resolves with an empty
+ * cached result when Firestore is unreachable, which would look like "no report".
+ * getDocsFromServer() rejects ('unavailable') instead, so callers can show an error.
+ */
 export async function getLatestReport(uid: string): Promise<UserReport | null> {
     const ref = collection(db, 'users', uid, 'reports');
     const q = query(ref, orderBy('createdAt', 'desc'), limit(1));
-    const snap = await getDocs(q);
+    const snap = await getDocsFromServer(q);
     if (snap.empty) return null;
     return snap.docs[0].data() as UserReport;
 }
