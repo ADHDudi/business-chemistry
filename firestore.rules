@@ -7,11 +7,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Solo reports: private to their owner, append-only from the client.
+    // Solo reports: private to their owner. The analysis itself is append-only;
+    // the only later change allowed is the owner's AI-insight feedback.
     match /users/{uid}/reports/{reportId} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn() && request.auth.uid == uid
                     && request.resource.data.uid == uid;
+      allow update: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aiFeedback'])
+                    && validFeedback(request.resource.data.aiFeedback);
+    }
+
+    function validFeedback(f) {
+      return f.rating is int && f.rating >= 1 && f.rating <= 5
+          && f.comment is string && f.comment.size() <= 2000;
     }
 
     // Pair sessions, keyed by a 6-char join code.
