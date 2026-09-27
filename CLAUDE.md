@@ -23,6 +23,13 @@
 - Hook tests run in `happy-dom` environment via `environmentMatchGlobs`
 - Never commit with failing tests
 
+## Deploy
+
+- `npm run deploy` (`deploy.sh`) deploys only an up-to-date, clean `main`; changes reach `main` through PRs
+- Before deploying it runs `npm run test:unit`, starts a dev server on port 3099 and runs the full E2E suite against it (needs `.env.test`); any failure stops the deploy
+- `DRY_RUN=1 npm run deploy` runs every check without deploying; `SKIP_E2E=1` skips E2E (emergencies only)
+- Firestore rules/indexes deploy separately: `firebase deploy --only firestore`
+
 ## Linear
 
 - Team: `JustAIit`

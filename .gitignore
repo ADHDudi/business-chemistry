@@ -38,3 +38,6 @@ simulate_session.js
 *.sln
 *.sw?
 .worktrees
+
+# Firebase CLI deploy cache (rewritten on every deploy)
+.firebase/
