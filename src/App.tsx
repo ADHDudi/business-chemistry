@@ -64,6 +64,7 @@ export default function App() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [logoClicks, setLogoClicks] = useState(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -218,18 +219,20 @@ export default function App() {
     setIsSubmitting(true);
     const results = calculateResults(answers);
     const persona = getPersona(results.formal, results.dominant);
+    setReportId(null);
 
     try {
       if (authUser) {
         // Results are computed locally, so don't hold the report hostage to the save:
         // addDoc never settles while Firestore is unreachable. The write stays queued
         // in the SDK and still syncs if the connection recovers.
-        await withTimeout(saveUserReport(authUser.uid, {
+        const id = await withTimeout(saveUserReport(authUser.uid, {
           answers,
           scores: { formal: results.formal, dominant: results.dominant },
           personaKey: persona.key,
           language,
         }), SAVE_REPORT_TIMEOUT_MS);
+        setReportId(id);
       }
 
       setStep(4);
@@ -639,6 +642,8 @@ export default function App() {
                   answers={answers}
                   onReset={handleReset}
                   submitError={submitError}
+                  uid={authUser?.uid ?? null}
+                  reportId={reportId}
                   language={language}
                   t={t}
                   forceDebug={logoClicks >= 5}

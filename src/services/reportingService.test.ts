@@ -3,20 +3,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 // Firestore mock — vi.hoisted ensures these run before vi.mock hoisting
 // ---------------------------------------------------------------------------
-const { mockAddDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit } = vi.hoisted(() => {
+const { mockAddDoc, mockUpdateDoc, mockDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit } = vi.hoisted(() => {
   const mockAddDoc = vi.fn();
+  const mockUpdateDoc = vi.fn();
+  const mockDoc = vi.fn((...args: unknown[]) => ({ path: args.slice(1).join('/') }));
   const mockGetDocs = vi.fn();
   const mockCollection = vi.fn((...args: string[]) => ({ path: args.join('/') }));
   const mockQuery = vi.fn((...args: unknown[]) => args[0]);
   const mockOrderBy = vi.fn((field: string, dir: string) => ({ _orderBy: field, _dir: dir }));
   const mockLimit = vi.fn((n: number) => ({ _limit: n }));
-  return { mockAddDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit };
+  return { mockAddDoc, mockUpdateDoc, mockDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit };
 });
 
 vi.mock('../firebaseConfig', () => ({ db: {} }));
 
 vi.mock('firebase/firestore', () => ({
   addDoc: mockAddDoc,
+  updateDoc: mockUpdateDoc,
+  doc: mockDoc,
   collection: mockCollection,
   getDocsFromServer: mockGetDocs,
   query: mockQuery,
@@ -25,7 +29,7 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: () => 'SERVER_TIMESTAMP',
 }));
 
-import { saveUserReport, getLatestReport, type UserReport } from './reportingService';
+import { saveUserReport, getLatestReport, saveInsightFeedback, type UserReport } from './reportingService';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -69,6 +73,31 @@ describe('saveUserReport', () => {
     await saveUserReport(uid, fixtureData);
     const [, docData] = mockAddDoc.mock.calls[0];
     expect(docData.createdAt).toBe('SERVER_TIMESTAMP');
+  });
+
+  it('returns the new report id', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'doc-42' });
+    await expect(saveUserReport(uid, fixtureData)).resolves.toBe('doc-42');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// JUS-432: saveInsightFeedback
+// ---------------------------------------------------------------------------
+
+describe('saveInsightFeedback', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('writes rating, comment and the rated insight onto the report doc', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined);
+    const insight = { user_profile: { superpower: 'Focus', extra: undefined } } as any;
+    await saveInsightFeedback(uid, 'rep-1', { rating: 4, comment: 'Spot on', insight, targetProfile: 'PIONEER' });
+
+    const [ref, data] = mockUpdateDoc.mock.calls[0];
+    expect(ref.path).toBe(`users/${uid}/reports/rep-1`);
+    expect(data.aiFeedback).toMatchObject({ rating: 4, comment: 'Spot on', targetProfile: 'PIONEER', submittedAt: 'SERVER_TIMESTAMP' });
+    // undefined fields stripped so Firestore accepts the write
+    expect(data.aiFeedback.insight).toEqual({ user_profile: { superpower: 'Focus' } });
   });
 });
 
