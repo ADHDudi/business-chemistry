@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "deploy": "sh deploy.sh",
     "test": "node test.js",
+    "test:e2e": "node test.js --ask",
+    "test:e2e:headed": "node test.js --ask --headed --open",
+    "test:live": "node test-live-session.js",
     "test:unit": "vitest run"
   },
   "dependencies": {

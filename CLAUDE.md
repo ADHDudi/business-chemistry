@@ -16,6 +16,8 @@
 
 - Unit tests: `npm run test:unit` (Vitest, must pass before any PR)
 - Acceptance tests: `node test.js` (Puppeteer, targets https://business-chemistry.web.app/)
+  - `npm run test:e2e` asks whether to run against local (`http://localhost:3002/`, needs `npm run dev`) or production; skip the question with `npm run test:e2e -- --env=local` or `--env=prod`
+  - Runs headless by default so it never takes over the browser you're using; add `--headed` to watch, `--open` to open the HTML report (`npm run test:e2e:headed` does both)
 - Hook tests run in `happy-dom` environment via `environmentMatchGlobs`
 - Never commit with failing tests
 

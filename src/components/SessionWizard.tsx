@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { Users, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 
 interface SessionWizardProps {
-    onStartSession: (name: string, email: string) => Promise<void>;
-    onJoinSession: (sessionId: string, name: string, email: string) => Promise<void>;
+    onStartSession: () => Promise<void>;
+    onJoinSession: (sessionId: string) => Promise<void>;
     isProcessing: boolean;
     language: 'he' | 'en';
+    error?: string | null;
 }
 
-export default function SessionWizard({ onStartSession, onJoinSession, isProcessing, language }: SessionWizardProps) {
-    const [mode, setMode] = useState<'menu' | 'start' | 'join'>('menu');
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+export default function SessionWizard({ onStartSession, onJoinSession, isProcessing, language, error }: SessionWizardProps) {
+    const [mode, setMode] = useState<'menu' | 'join'>('menu');
     const [joinCode, setJoinCode] = useState('');
 
     const t = {
@@ -20,13 +19,10 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
             subtitle: "השוו תשובות בזמן אמת וקבלו תובנות משותפות",
             start_btn: "יצירת סשן חדש",
             join_btn: "יש לי קוד סשן",
-            name_label: "שם מלא",
-            email_label: "אימייל",
             code_label: "הקלידו את הקוד (6 תווים)",
             submit_start: "יצירה והתחלה",
             submit_join: "התחברות והתחלה",
             back: "חזרה",
-            join_instr: "הזמינו שותף/ה להצטרף אליכם באמצעות הקוד.",
             enter_code_instr: "הזינו את הקוד בן 6 התווים שקיבלתם מהשותף/ה."
         },
         en: {
@@ -34,28 +30,15 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
             subtitle: "Compare answers in real-time and get shared insights",
             start_btn: "Start New Session",
             join_btn: "I Have a Code",
-            name_label: "Full Name",
-            email_label: "Email",
             code_label: "Enter 6-Character Code",
             submit_start: "Create & Start",
             submit_join: "Connect & Start",
             back: "Back",
-            join_instr: "Invite a partner to join you using a unique code.",
             enter_code_instr: "Enter the 6-character code shared by your partner."
         }
     }[language];
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (mode === 'start') {
-            onStartSession(name, email);
-        } else {
-            onJoinSession(joinCode.toUpperCase(), name, email);
-        }
-    };
-
     const isJoinValid = joinCode.length === 6;
-    const isStartValid = name.length > 0 && email.length > 0;
 
     if (mode === 'menu') {
         return (
@@ -75,15 +58,21 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
 
                 <div className="grid gap-4 relative z-10">
                     <button
-                        onClick={() => setMode('start')}
-                        className="w-full py-5 btn-gradient text-white rounded-2xl font-black text-xl hover:shadow-2xl hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-3"
+                        onClick={() => onStartSession()}
+                        disabled={isProcessing}
+                        className="w-full py-5 btn-gradient text-white rounded-2xl font-black text-xl hover:shadow-2xl hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                     >
-                        {t.start_btn}
-                        {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
+                        {isProcessing ? <Loader2 className="animate-spin" size={24} /> : (
+                            <>
+                                {t.start_btn}
+                                {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
+                            </>
+                        )}
                     </button>
                     <button
                         onClick={() => setMode('join')}
-                        className="w-full py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-xl hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95"
+                        disabled={isProcessing}
+                        className="w-full py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-xl hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 disabled:opacity-50"
                     >
                         {t.join_btn}
                     </button>
@@ -104,61 +93,39 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
             </button>
 
             <div className="space-y-2 mb-8">
-                <h2 className="text-3xl font-black text-slate-800 leading-none">
-                    {mode === 'start' ? t.start_btn : t.join_btn}
-                </h2>
-                <p className="text-slate-400 font-bold text-sm">
-                    {mode === 'start' ? t.join_instr : t.enter_code_instr}
-                </p>
+                <h2 className="text-3xl font-black text-slate-800 leading-none">{t.join_btn}</h2>
+                <p className="text-slate-400 font-bold text-sm">{t.enter_code_instr}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">{t.name_label}</label>
-                    <input
-                        type="text" required
-                        value={name} onChange={e => setName(e.target.value)}
-                        className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#8c50f0] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
-                    />
-                </div>
-
-                {mode === 'start' && (
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">{t.email_label}</label>
+            <form onSubmit={(e) => { e.preventDefault(); onJoinSession(joinCode.toUpperCase()); }} className="space-y-6">
+                <div className="space-y-4 pt-4">
+                    <div className="text-center">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">{t.code_label}</label>
                         <input
-                            type="email" required
-                            value={email} onChange={e => setEmail(e.target.value)}
-                            className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-[#8c50f0] focus:bg-white transition-all outline-none font-bold text-lg text-slate-800"
+                            type="text" required maxLength={6}
+                            value={joinCode} onChange={e => setJoinCode(e.target.value)}
+                            placeholder="______"
+                            className="w-full p-6 bg-slate-50 rounded-3xl font-black text-4xl tracking-[0.5em] text-center uppercase text-[#6a2dd0] border-2 border-slate-200 focus:border-[#8c50f0] focus:ring-4 focus:ring-purple-100 outline-none transition-all placeholder:text-slate-200"
+                            style={{ fontFamily: 'monospace' }}
                         />
                     </div>
-                )}
+                </div>
 
-                {mode === 'join' && (
-                    <div className="space-y-4 pt-4">
-                        <div className="text-center">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">{t.code_label}</label>
-                            <input
-                                type="text" required maxLength={6}
-                                value={joinCode} onChange={e => setJoinCode(e.target.value)}
-                                placeholder="______"
-                                className="w-full p-6 bg-slate-50 rounded-3xl font-black text-4xl tracking-[0.5em] text-center uppercase text-[#6a2dd0] border-2 border-slate-200 focus:border-[#8c50f0] focus:ring-4 focus:ring-purple-100 outline-none transition-all placeholder:text-slate-200"
-                                style={{ fontFamily: 'monospace' }}
-                            />
-                        </div>
-                    </div>
+                {error && (
+                    <p className="text-sm font-bold text-red-600 text-center">{error}</p>
                 )}
 
                 <button
                     type="submit"
-                    disabled={isProcessing || (mode === 'join' ? !isJoinValid : !isStartValid)}
+                    disabled={isProcessing || !isJoinValid}
                     className={`w-full py-5 mt-6 rounded-2xl font-black text-xl shadow-xl flex items-center justify-center gap-2 transition-all
-                        ${(mode === 'join' ? !isJoinValid : !isStartValid)
+                        ${!isJoinValid
                             ? 'bg-slate-100 text-slate-300 shadow-none cursor-not-allowed'
                             : 'btn-gradient text-white hover:shadow-2xl hover:brightness-110 active:scale-95'}`}
                 >
                     {isProcessing ? <Loader2 className="animate-spin" /> : (
                         <>
-                            {mode === 'start' ? t.submit_start : t.submit_join}
+                            {t.submit_join}
                             {language === 'he' ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
                         </>
                     )}

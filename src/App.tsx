@@ -9,7 +9,8 @@ import {
 } from './constants';
 import { Language, User as UserType, Results, Persona, Trait } from './types';
 import { calculateResults, getPersona, generateMockAnswers } from './scoring';
-import { buildPayload, saveReport } from './services/reportingService';
+import { saveUserReport } from './services/reportingService';
+import HomeScreen from './components/HomeScreen';
 import ReportView from './components/ReportView';
 import SessionWizard from './components/SessionWizard';
 import SessionLobby from './components/SessionLobby';
@@ -62,13 +63,14 @@ export default function App() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [logoClicks, setLogoClicks] = useState(0);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   // Session Hook
   const {
     sessionId, myRole, sessionData,
-    startSession, joinExistingSession, submitAnswers
+    startSession, joinExistingSession, submitAnswers, exitSession,
+    error: sessionError,
   } = useSession();
-  const [isSessionMode, setIsSessionMode] = useState(false);
 
   // Auth hook — owns all Firebase auth state and handlers
   const {
@@ -121,14 +123,12 @@ export default function App() {
     setAnswers({});
   };
 
+  // Auto-navigate to results when both users are done
   useEffect(() => {
-    if (sessionId && myRole && sessionData) {
-      // Sync external partner's name if joined
-      if (myRole === 'A' && sessionData.founderBName) {
-        // Notification or just UI update handles it
-      }
+    if (sessionData?.status === 'both_ready' && step === 3) {
+      setStep(4);
     }
-  }, [sessionData, myRole, sessionId]);
+  }, [sessionData, step]);
 
   // Sync answers to Firestore if in session
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function App() {
       email: user.email || 'demo@example.com'
     });
     setAnswers(generateMockAnswers(personaKey));
-    setStep(3);
+    setStep(4);
   };
 
   const handleAnswer = (index: number, value: number) => {
@@ -217,15 +217,21 @@ export default function App() {
     const persona = getPersona(results.formal, results.dominant);
 
     try {
-      await saveReport(buildPayload(user, results, persona, language, answers));
+      if (authUser) {
+        await saveUserReport(authUser.uid, {
+          answers,
+          scores: { formal: results.formal, dominant: results.dominant },
+          personaKey: persona.key,
+          language,
+        });
+      }
 
-      // Flow Logic
-      setStep(3); // Go to Report View
+      setStep(4);
 
     } catch (error) {
       console.error("Save error:", error);
       setSubmitError(language === 'he' ? "חלה שגיאה בשמירה, אך ניתן לראות את התוצאות." : "Save error, but you can still view results.");
-      setStep(3);
+      setStep(4);
     } finally {
       setIsSubmitting(false);
     }
@@ -268,7 +274,7 @@ export default function App() {
           </button>
         )}
 
-        {isSessionMode && sessionId ? (
+        {sessionId && (
           <div className="flex items-center gap-2">
             <div
               onClick={copySessionCode}
@@ -279,26 +285,15 @@ export default function App() {
               {copiedCode ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-[#8c50f0]" />}
             </div>
             <button
-              onClick={() => {
-                // Reset session state needs to be handled, for now just toggle mode UI
-                if (window.confirm(language === 'he' ? 'האם לצאת מהסשן?' : 'Exit live session?')) {
-                  setIsSessionMode(false);
-                  // Ideally call exitSession() from hook
-                }
+              onClick={async () => {
+                await exitSession();
+                setStep(2);
               }}
               className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-colors"
             >
               <X size={18} />
             </button>
           </div>
-        ) : (
-          <button
-            onClick={() => setIsSessionMode(!isSessionMode)}
-            className={`flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-full transition-colors ml-2 ${isSessionMode ? 'bg-[#8c50f0] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-          >
-            <Users size={14} />
-            {isSessionMode ? (language === 'he' ? 'חזרה לרגיל' : 'Exit Live') : (language === 'he' ? 'מצב Live' : 'Live Mode')}
-          </button>
         )}
       </header>
 
@@ -325,25 +320,7 @@ export default function App() {
               </>
             </div>
 
-            {isSessionMode ? (
-              <div className="space-y-6">
-                <SessionWizard
-                  onStartSession={async (name, email) => {
-                    await startSession(name, email);
-                    setUser({ name, email });
-                    setStep(2);
-                  }}
-                  onJoinSession={async (id, name, email) => {
-                    await joinExistingSession(id, name, email);
-                    setUser({ name, email });
-                    setStep(2);
-                  }}
-                  isProcessing={isSubmitting} // Reuse for now or add new state
-                  language={language}
-                />
-              </div>
-            ) : (
-              <>
+            <>
 
                 <div className="space-y-4">
                   {/* ORDER: Pain, Cost, Method, WIIFM */}
@@ -450,14 +427,55 @@ export default function App() {
                 )}
 
               </>
-            )}
           </div>
         )
         }
 
 
+        {step === 2 && authUser && (
+          <>
+            <HomeScreen
+              uid={authUser.uid}
+              language={language}
+              onStartSolo={() => setStep(3)}
+              onStartSession={async () => {
+                await startSession(authUser.displayName || '', authUser.email || '', authUser.uid);
+                setStep(3);
+              }}
+              onJoinSession={() => setShowJoinModal(true)}
+            />
+            {showJoinModal && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+                <div className="w-full max-w-lg">
+                  <SessionWizard
+                    onStartSession={async () => {
+                      await startSession(authUser.displayName || '', authUser.email || '', authUser.uid);
+                      setShowJoinModal(false);
+                      setStep(3);
+                    }}
+                    onJoinSession={async (id) => {
+                      await joinExistingSession(id, authUser.displayName || '', authUser.email || '', authUser.uid);
+                      setShowJoinModal(false);
+                      setStep(3);
+                    }}
+                    isProcessing={isSubmitting}
+                    language={language}
+                    error={sessionError}
+                  />
+                  <button
+                    onClick={() => setShowJoinModal(false)}
+                    className="w-full mt-3 py-3 bg-white/90 rounded-2xl font-black text-slate-500 text-sm"
+                  >
+                    {language === 'he' ? 'ביטול' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         {
-          step === 2 && (
+          step === 3 && (
             <div className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
               <div className="mb-6">
                 <div className="bg-white border border-slate-200 rounded-[2rem] shadow-[0_8px_24px_rgba(15,23,42,0.08)] p-5 relative overflow-hidden">
@@ -480,7 +498,7 @@ export default function App() {
                 </div>
               </div>
 
-              {isSessionMode && sessionId && sessionData && myRole && (
+              {sessionId && sessionData && myRole && (
                 <>
                   <SessionLobby
                     sessionData={sessionData}
@@ -546,7 +564,7 @@ export default function App() {
                       onClick={() => {
                         const mockAnswers = generateMockAnswers('PIONEER');
                         setAnswers(mockAnswers);
-                        setStep(3);
+                        setStep(4);
                       }}
                       className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest bg-[#f3ecff] text-[#8c50f0] border border-[#e4d7ff] hover:bg-[#e4d7ff] transition-colors"
                     >
@@ -579,15 +597,24 @@ export default function App() {
                   </div>
                 )}
 
-                {sessionId && (
+                {sessionId && isQuestionnaireComplete && (
+                  <div className="flex flex-col items-center gap-4 pb-4 animate-in fade-in duration-500">
+                    <div className="flex items-center gap-3 px-6 py-4 bg-[#f3ecff] border border-[#e4d7ff] rounded-2xl w-full max-w-xs text-center">
+                      <Loader2 size={20} className="animate-spin text-[#8c50f0] shrink-0" />
+                      <p className="text-sm font-black text-[#6a2dd0]">
+                        {language === 'he' ? 'ממתינים לשותף/ה לסיים...' : 'Waiting for your partner to finish...'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {sessionId && !isQuestionnaireComplete && (
                   <div className="flex justify-center pb-4">
-                    <button
-                      onClick={finishAndSave}
-                      disabled={!isQuestionnaireComplete || isSubmitting}
-                      className={`w-full max-w-xs py-4 rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl ${isQuestionnaireComplete ? 'btn-gradient text-white' : 'bg-slate-100 text-slate-400'}`}
-                    >
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : t.quiz.finish_btn}
-                    </button>
+                    <div className="bg-white border border-slate-100 rounded-2xl px-6 py-3 text-center">
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        {language === 'he' ? 'ענה על כל השאלות כדי לסיים' : 'Answer all questions to finish'}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -596,9 +623,9 @@ export default function App() {
         }
 
         {
-          step === 3 && (
+          step === 4 && (
             <div className="max-w-xl mx-auto p-4">
-              {isSessionMode && sessionId && sessionData ? (
+              {sessionId && sessionData ? (
                 <ComparisonView sessionData={sessionData} language={language} />
               ) : (
                 <ReportView
