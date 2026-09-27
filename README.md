@@ -68,34 +68,29 @@ Cloud Functions require `GEMINI_API_KEY` stored in Firebase Secret Manager (set 
 
 ### Testing
 
-Acceptance tests are written with Puppeteer in `test.js`. They cover 9 suites:
+Unit tests use Vitest (`npm run test:unit`). End-to-end tests use Puppeteer and live in `e2e/`, grouped by area:
 
-| Suite | What it covers |
-|-------|---------------|
-| 1 — Auth: Page Structure | Email/password inputs, submit button, Google button, Sign-up link, Forgot Password link |
-| 2 — Auth: Sign-In Happy Path | Valid credentials reach the questionnaire |
-| 3 — Auth: Sign-In Fail Paths | Empty fields, bad email format, wrong credentials, Sign-up modal |
-| 4 — Auth: Google Sign-In | Button visible, logo loads, real `signInWithPopup` wired |
-| 5 — Auth Modals | Sign-up modal fields; Forgot Password modal + send button |
-| 6 — Report: Tab Structure | All 3 tab buttons (You/Them/Together) present; You tab is default content panel |
-| 7a — Report: AI Load | Guardian persona selected; AI loads within 30s on Them tab (`ai-loaded` visible) |
-| 7b — Report: All Personas | All 4 persona buttons iterated; friction + strategy + ADHD hack verified for each |
-| 8 — Full Flow | Sign-in → questionnaire → report → AI coaching end-to-end |
+| Group | Suites | Needs an account? |
+|-------|--------|-------------------|
+| `auth` | Login page (inputs, links, Google button); sign-in validation (empty/invalid fields, wrong credentials); sign-up (fields, password mismatch, existing email) and password reset | No |
+| `report` | Demo report: tabs, restart; AI coaching for all 4 personas on the Them tab; Together tab; mobile layout at 390px | No — uses the owner-email demo shortcut |
+| `account` | Login lands on HomeScreen; first-time user state; full solo analysis (35 questions → report → home); returning user | Yes |
+| `pair` | Host creates/exits a session; join modal and invalid-code error; two users complete a session and see the comparison together | Yes (two accounts) |
 
 ```bash
-# Run tests against production (default: https://business-chemistry.web.app/)
-npm test
-
-# Run tests against your local dev server
-npm run dev               # in one terminal
-node test.js http://localhost:3002/   # in another
+npm run test:e2e                        # asks: local or production
+npm run test:e2e -- --env=local         # skip the question (needs `npm run dev`)
+npm run test:e2e -- --only=auth,report  # run some groups only
+npm run test:e2e:headed                 # watch the browser, open the report after
+npm test                                # production, no question
 ```
 
 **Notes:**
-- The test runner uses `protocolTimeout: 300000` (5 minutes) to accommodate slow Firebase initialization in browser-driven tests.
-- Tab assertions use `data-testid` attributes (`tab-you`, `tab-them`, `tab-together`) so they stay stable when labels change or are translated.
-- Suites 7a and 7b together cover the AI Them tab: 7a confirms AI loads after selecting a persona; 7b iterates all 4 personas and verifies full output — expect these to take 2–3 minutes combined.
-- A bilingual HTML report is written to `acceptance_report.html` after each run.
+- Runs headless by default, in its own throwaway browser profile, so it never touches the browser you're working in.
+- Each suite gets an isolated browser context, so login state never leaks between suites.
+- Signed-in suites read `TEST_EMAIL_A`, `TEST_PASS_A`, `TEST_EMAIL_B`, `TEST_PASS_B` from `.env.test` (git-ignored) or the environment, and are skipped without them. `account` runs before `pair` because it seeds user A's report.
+- Assertions use `data-testid` attributes so they stay stable when labels change or are translated.
+- An HTML report with a screenshot per step is written to `e2e/report.html` (git-ignored). The run exits non-zero if any step fails.
 
 ---
 
@@ -288,7 +283,7 @@ src/
 functions/
 └── index.js                         # Cloud Functions — generateAIInsights, generateCompatibilityAnalysis
 
-test.js                              # Puppeteer acceptance test suite (9 suites, run with `npm test`)
+e2e/                                 # Puppeteer E2E suite — run.js (entry), lib/ (config, helpers, reporter), suites/
 docs/
 └── functional-spec.md               # Ground-truth functional specification
 ```

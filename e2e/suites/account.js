@@ -9,7 +9,7 @@ import { USER_A, USER_B } from '../lib/config.js';
 import { runSuite, logStep, captureScreenshot } from '../lib/reporter.js';
 import {
     newPage, sleep, clickButton, requireCreds, signIn, fillQuestionnaire, waitForQuestionnaire,
-    hasSessionCode, MOBILE,
+    hasSessionCode, MOBILE, FIRESTORE_TIMEOUT,
 } from '../lib/helpers.js';
 
 const PAIR_TAB_TEXTS = ['Pair Sessions', 'סשנים משותפים'];
@@ -22,7 +22,10 @@ export async function loginLandsOnHome(browser) {
         if (!requireCreds(USER_A, 'User A')) return;
         const page = track(await newPage(browser, MOBILE));
 
-        await signIn(page, USER_A);
+        const { homeLoadMs } = await signIn(page, USER_A);
+        const secs = (homeLoadMs / 1000).toFixed(1);
+        logStep('Profile loads within 10s of signing in', homeLoadMs <= 10000 ? 'PASS' : 'WARN',
+            `HomeScreen ready after ${secs}s${homeLoadMs > 10000 ? ' — "Loading profile…" (getLatestReport) is slow' : ''}`);
         const state = await page.evaluate(() => ({
             home: !!(document.querySelector('[data-testid="persona-summary"]') ||
                      document.querySelector('[data-testid="start-analysis-btn"]')),
@@ -84,14 +87,14 @@ export async function soloFlow(browser) {
         logStep('Answering all 35 questions…', 'INFO');
         await fillQuestionnaire(page);
 
-        await page.waitForSelector('[data-testid="tab-you"], [data-testid="match-score"]', { timeout: 15000 });
+        await page.waitForSelector('[data-testid="tab-you"], [data-testid="match-score"]', { timeout: FIRESTORE_TIMEOUT });
         const isSolo = !!(await page.$('[data-testid="tab-you"]'));
         const isComparison = !!(await page.$('[data-testid="match-score"]'));
         logStep('Solo report shown (not the pair comparison)', isSolo && !isComparison ? 'PASS' : 'FAIL',
             `tab-you=${isSolo}, match-score=${isComparison}`, await captureScreenshot(page));
 
         await clickButton(page, ['Start New Assessment', 'התחל אבחון חדש']);
-        await page.waitForSelector(HOME, { timeout: 10000 });
+        await page.waitForSelector(HOME, { timeout: FIRESTORE_TIMEOUT });
         const onLogin = !!(await page.$('input[type="email"]'));
         logStep('Restart returns to HomeScreen and stays signed in', !onLogin ? 'PASS' : 'FAIL',
             !onLogin ? 'HomeScreen visible' : 'Login form shown — user was signed out', await captureScreenshot(page));

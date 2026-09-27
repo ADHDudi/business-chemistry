@@ -15,9 +15,11 @@
 ## Testing
 
 - Unit tests: `npm run test:unit` (Vitest, must pass before any PR)
-- Acceptance tests: `node test.js` (Puppeteer, targets https://business-chemistry.web.app/)
-  - `npm run test:e2e` asks whether to run against local (`http://localhost:3002/`, needs `npm run dev`) or production; skip the question with `npm run test:e2e -- --env=local` or `--env=prod`
-  - Runs headless by default so it never takes over the browser you're using; add `--headed` to watch, `--open` to open the HTML report (`npm run test:e2e:headed` does both)
+- E2E tests: `npm run test:e2e` (Puppeteer suite in `e2e/`, entry `e2e/run.js`)
+  - Asks whether to run against local (`http://localhost:3002/`, needs `npm run dev`) or production; skip the question with `npm run test:e2e -- --env=local` or `--env=prod` (`npm test` = production)
+  - Runs headless by default so it never takes over the browser you're using; add `--headed` to watch, `--open` to open the report (`npm run test:e2e:headed` does both)
+  - Run one area with `--only=auth,report,account,pair`; report is written to `e2e/report.html` (git-ignored); exits non-zero on any failure
+  - `account` and `pair` suites need test accounts in `.env.test` (`TEST_EMAIL_A/B`, `TEST_PASS_A/B`) and are skipped without them
 - Hook tests run in `happy-dom` environment via `environmentMatchGlobs`
 - Never commit with failing tests
 

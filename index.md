@@ -9,7 +9,7 @@
 - **[package.json](./package.json)** - Workspace dependencies and run scripts
 - **[README.md](./README.md)** - Project overview and documentation
 - **[simulate_session.js](./simulate_session.js)** - Script to simulate partner test scenarios
-- **[test.js](./test.js)** - End-to-end Puppeteer acceptance tests
+- **[e2e/run.js](./e2e/run.js)** - End-to-end Puppeteer test suite (`npm run test:e2e`)
 - **[test_genai.ts](./test_genai.ts)** - Node script returning Gemini AI prompts
 - **[test_module.js](./test_module.js)** - Testing script for module interactions
 - **[tsconfig.json](./tsconfig.json)** - TypeScript compiler configuration

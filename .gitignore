@@ -19,6 +19,7 @@ functions/.env
 functions/*.env
 
 # Test/scratch files
+e2e/report.html
 test_module.js
 test_genai.ts
 simulate_session.js
