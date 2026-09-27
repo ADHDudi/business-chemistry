@@ -7,10 +7,12 @@ interface SessionWizardProps {
     isProcessing: boolean;
     language: 'he' | 'en';
     error?: string | null;
+    /** Skip the Start/Join menu and show only the join-code form (the modal has its own Cancel). */
+    joinOnly?: boolean;
 }
 
-export default function SessionWizard({ onStartSession, onJoinSession, isProcessing, language, error }: SessionWizardProps) {
-    const [mode, setMode] = useState<'menu' | 'join'>('menu');
+export default function SessionWizard({ onStartSession, onJoinSession, isProcessing, language, error, joinOnly = false }: SessionWizardProps) {
+    const [mode, setMode] = useState<'menu' | 'join'>(joinOnly ? 'join' : 'menu');
     const [joinCode, setJoinCode] = useState('');
 
     const t = {
@@ -85,12 +87,14 @@ export default function SessionWizard({ onStartSession, onJoinSession, isProcess
         <div className="p-8 bg-white rounded-[2.5rem] shadow-2xl border-2 border-slate-50 animate-in slide-in-from-bottom-8 duration-500 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#a014f0] via-[#5078ff] to-[#3cdcf0]" />
 
-            <button
-                onClick={() => setMode('menu')}
-                className="text-xs font-black text-slate-400 mb-8 hover:text-[#8c50f0] transition-colors flex items-center gap-1 uppercase tracking-widest"
-            >
-                {language === 'he' ? <ArrowRight size={14} /> : <ArrowLeft size={14} />} {t.back}
-            </button>
+            {!joinOnly && (
+                <button
+                    onClick={() => setMode('menu')}
+                    className="text-xs font-black text-slate-400 mb-8 hover:text-[#8c50f0] transition-colors flex items-center gap-1 uppercase tracking-widest"
+                >
+                    {language === 'he' ? <ArrowRight size={14} /> : <ArrowLeft size={14} />} {t.back}
+                </button>
+            )}
 
             <div className="space-y-2 mb-8">
                 <h2 className="text-3xl font-black text-slate-800 leading-none">{t.join_btn}</h2>

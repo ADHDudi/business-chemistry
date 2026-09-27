@@ -267,6 +267,7 @@ export default function App() {
         {authUser && (
           <button
             onClick={handleLogout}
+            data-testid="logout-btn"
             className="flex items-center gap-1.5 text-xs font-black px-3 py-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors ml-2"
           >
             <X size={14} />
@@ -289,6 +290,8 @@ export default function App() {
                 await exitSession();
                 setStep(2);
               }}
+              data-testid="exit-session-btn"
+              aria-label={language === 'he' ? 'יציאה מהסשן' : 'Exit session'}
               className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-colors"
             >
               <X size={18} />
@@ -461,6 +464,7 @@ export default function App() {
                     isProcessing={isSubmitting}
                     language={language}
                     error={sessionError}
+                    joinOnly
                   />
                   <button
                     onClick={() => setShowJoinModal(false)}
