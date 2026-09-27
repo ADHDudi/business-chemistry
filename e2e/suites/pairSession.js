@@ -7,7 +7,7 @@ import { USER_A, USER_B } from '../lib/config.js';
 import { runSuite, logStep, captureScreenshot } from '../lib/reporter.js';
 import {
     newPage, requireCreds, signIn, fillQuestionnaire, waitForQuestionnaire, getSessionCode,
-    hasSessionCode, submitJoinCode, sleep, MOBILE, FIRESTORE_TIMEOUT,
+    hasSessionCode, submitJoinCode, clickTestId, sleep, MOBILE, FIRESTORE_TIMEOUT,
 } from '../lib/helpers.js';
 
 const HOME = '[data-testid="persona-summary"], [data-testid="start-analysis-btn"]';
@@ -41,12 +41,8 @@ export async function hostSession(browser) {
             !!document.querySelector('span.font-mono.tracking-widest')?.closest('div')?.querySelector('svg'));
         logStep('Copy icon shown next to the code', hasCopyIcon ? 'PASS' : 'WARN');
 
-        // Exit via the X button in the header
-        await page.evaluate(() => {
-            const header = document.querySelector('header');
-            const xBtn = [...(header?.querySelectorAll('button') || [])].find(b => b.querySelector('svg'));
-            xBtn?.click();
-        });
+        // Exit via the ✕ next to the session code in the header
+        await clickTestId(page, 'exit-session-btn');
         await page.waitForSelector(HOME, { timeout: FIRESTORE_TIMEOUT });
         logStep('Exiting the session returns to HomeScreen', 'PASS', '', await captureScreenshot(page));
         logStep('Session code cleared from the header', !(await hasSessionCode(page)) ? 'PASS' : 'FAIL');
@@ -122,7 +118,7 @@ export async function fullPairSession(browser) {
             await Promise.all([waitForQuestionnaire(pageA, FIRESTORE_TIMEOUT), waitForQuestionnaire(pageB, FIRESTORE_TIMEOUT)]);
             logStep('User B joined — both users on the questionnaire', 'PASS', '', await captureScreenshot(pageB));
 
-            await Promise.all([fillQuestionnaire(pageA), fillQuestionnaire(pageB)]);
+            await Promise.all([fillQuestionnaire(pageA, { finish: false }), fillQuestionnaire(pageB, { finish: false })]);
             logStep('Both questionnaires completed', 'PASS');
 
             await Promise.all([

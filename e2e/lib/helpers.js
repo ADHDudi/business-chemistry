@@ -204,8 +204,12 @@ const QUESTION_BUTTONS = '.grid.grid-cols-6.gap-2 button';
 export const waitForQuestionnaire = (page, timeout = 10000) =>
     page.waitForFunction((sel) => document.querySelectorAll(sel).length >= 6, { timeout }, QUESTION_BUTTONS);
 
-/** Click through all 35 questionnaire questions (option 3 each) then click Finish. */
-export async function fillQuestionnaire(page) {
+/**
+ * Click through all 35 questionnaire questions (option 3 each) then click Finish.
+ * Pair sessions have no Finish button (results open once both users are done),
+ * so pass { finish: false } there.
+ */
+export async function fillQuestionnaire(page, { finish = true } = {}) {
     await waitForQuestionnaire(page);
     for (let i = 0; i < 35; i++) {
         const clicked = await page.evaluate((sel) => {
@@ -216,6 +220,7 @@ export async function fillQuestionnaire(page) {
         if (!clicked) throw new Error(`Question ${i + 1}: answer button not found`);
         await sleep(420); // auto-advance is 300ms
     }
+    if (!finish) return;
     const finishTexts = ['סיימתי', "I'm Done"];
     await page.waitForFunction((texts) => {
         const btn = [...document.querySelectorAll('button')].find(b => texts.some(t => b.textContent.includes(t)));
