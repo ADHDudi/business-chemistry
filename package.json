@@ -8,10 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "sh deploy.sh",
-    "test": "node test.js",
-    "test:e2e": "node test.js --ask",
-    "test:e2e:headed": "node test.js --ask --headed --open",
-    "test:live": "node test-live-session.js",
+    "test": "node e2e/run.js --env=prod",
+    "test:e2e": "node e2e/run.js --ask",
+    "test:e2e:headed": "node e2e/run.js --ask --headed --open",
     "test:unit": "vitest run"
   },
   "dependencies": {

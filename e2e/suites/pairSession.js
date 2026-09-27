@@ -7,7 +7,7 @@ import { USER_A, USER_B } from '../lib/config.js';
 import { runSuite, logStep, captureScreenshot } from '../lib/reporter.js';
 import {
     newPage, requireCreds, signIn, fillQuestionnaire, waitForQuestionnaire, getSessionCode,
-    hasSessionCode, submitJoinCode, sleep, MOBILE,
+    hasSessionCode, submitJoinCode, sleep, MOBILE, FIRESTORE_TIMEOUT,
 } from '../lib/helpers.js';
 
 const HOME = '[data-testid="persona-summary"], [data-testid="start-analysis-btn"]';
@@ -31,7 +31,7 @@ export async function hostSession(browser) {
         if (!await signInWithReport(page, USER_A, 'start-session-btn')) return;
 
         await page.click('[data-testid="start-session-btn"]');
-        await waitForQuestionnaire(page, 12000);
+        await waitForQuestionnaire(page, FIRESTORE_TIMEOUT);
         const code = await getSessionCode(page);
         logStep('Starting a session opens the questionnaire with a code in the header', 'PASS',
             `Code: ${code}`, await captureScreenshot(page));
@@ -47,7 +47,7 @@ export async function hostSession(browser) {
             const xBtn = [...(header?.querySelectorAll('button') || [])].find(b => b.querySelector('svg'));
             xBtn?.click();
         });
-        await page.waitForSelector(HOME, { timeout: 10000 });
+        await page.waitForSelector(HOME, { timeout: FIRESTORE_TIMEOUT });
         logStep('Exiting the session returns to HomeScreen', 'PASS', '', await captureScreenshot(page));
         logStep('Session code cleared from the header', !(await hasSessionCode(page)) ? 'PASS' : 'FAIL');
     });
@@ -79,10 +79,13 @@ export async function joinModal(browser) {
         logStep('Cancel closes the modal', cancelled && closed ? 'PASS' : 'FAIL');
 
         // Unknown code → inline error (also covers the "session full" error surface)
-        const modalText = await submitJoinCode(page, 'ZZZZZZ');
-        const hasError = /not found|Session is full|שגיאה|לא נמצא/.test(modalText);
+        await submitJoinCode(page, 'ZZZZZZ');
+        const hasError = await page.waitForFunction(() =>
+            /not found|Session is full|שגיאה|לא נמצא/.test(document.querySelector('.fixed.inset-0')?.textContent || ''),
+            { timeout: FIRESTORE_TIMEOUT }).then(() => true, () => false);
+        const modalText = await page.evaluate(() => document.querySelector('.fixed.inset-0')?.textContent || '');
         logStep('Unknown session code shows an error', hasError ? 'PASS' : 'FAIL',
-            hasError ? 'Error message shown in the modal' : `No error within 3s. Modal text: ${modalText.slice(0, 120)}`,
+            hasError ? 'Error message shown in the modal' : `No error within 60s. Modal text: ${modalText.slice(0, 120)}`,
             await captureScreenshot(page));
     });
 }
@@ -116,15 +119,15 @@ export async function fullPairSession(browser) {
             logStep('User A created a session', 'PASS', `Code: ${code}`, await captureScreenshot(pageA));
 
             await submitJoinCode(pageB, code, 0);
-            await Promise.all([waitForQuestionnaire(pageA, 15000), waitForQuestionnaire(pageB, 15000)]);
+            await Promise.all([waitForQuestionnaire(pageA, FIRESTORE_TIMEOUT), waitForQuestionnaire(pageB, FIRESTORE_TIMEOUT)]);
             logStep('User B joined — both users on the questionnaire', 'PASS', '', await captureScreenshot(pageB));
 
             await Promise.all([fillQuestionnaire(pageA), fillQuestionnaire(pageB)]);
             logStep('Both questionnaires completed', 'PASS');
 
             await Promise.all([
-                pageA.waitForSelector('[data-testid="match-score"]', { timeout: 20000 }),
-                pageB.waitForSelector('[data-testid="match-score"]', { timeout: 20000 }),
+                pageA.waitForSelector('[data-testid="match-score"]', { timeout: FIRESTORE_TIMEOUT }),
+                pageB.waitForSelector('[data-testid="match-score"]', { timeout: FIRESTORE_TIMEOUT }),
             ]);
             logStep('Comparison revealed to both users', 'PASS', '', await captureScreenshot(pageA));
 

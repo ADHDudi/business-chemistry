@@ -10,6 +10,10 @@ export const MOBILE = { width: 390, height: 844, isMobile: true, deviceScaleFact
 
 export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Firestore reads/writes are slow in headless Chrome (its Listen channel keeps
+// reconnecting with backoff), so anything waiting on Firestore gets a long budget.
+export const FIRESTORE_TIMEOUT = 60000;
+
 // Prefer Puppeteer's bundled Chrome; fall back to the system Chrome install
 // (e.g. when only an x64 build is cached on Apple Silicon). Headless runs use a
 // throwaway profile, so they never touch the Chrome window you are working in.
@@ -160,7 +164,7 @@ export function requireCreds(user, label) {
     return false;
 }
 
-/** Sign in with email/password and wait for the HomeScreen to appear. */
+/** Sign in with email/password and wait for the HomeScreen to finish loading. Returns { homeLoadMs }. */
 export async function signIn(page, { email, password }) {
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForSelector('input[type="email"]', { timeout: 15000 });
@@ -177,23 +181,22 @@ export async function signIn(page, { email, password }) {
     if (!filled.hasPass) throw new Error('Password input appears empty after typing');
 
     await page.click('button[type="submit"]');
+    const submittedAt = Date.now();
 
-    // HomeScreen renders a spinner while the latest report loads, then its content
-    await page.waitForFunction(() =>
-        document.querySelector('.animate-spin') ||
-        document.querySelector('[data-testid="start-analysis-btn"]') ||
-        document.querySelector('[data-testid="persona-summary"]'),
-        { timeout: 20000 }
+    // Wait for the login form to go away (auth accepted) — HomeScreen then shows
+    // "Loading profile…" while the latest report is fetched from Firestore
+    await page.waitForFunction(() => !document.querySelector('input[type="password"]'), { timeout: 20000 })
+        .catch(async () => {
+            const authErr = await page.evaluate(() => document.querySelector('.bg-red-50 p')?.textContent || null);
+            throw new Error(`Still on the login form 20s after submitting.\nAuth error on page: ${authErr || 'none'}`);
+        });
+    await page.waitForSelector(
+        '[data-testid="start-analysis-btn"], [data-testid="persona-summary"]', { timeout: FIRESTORE_TIMEOUT }
     ).catch(async () => {
-        const bodyText = await page.evaluate(() => document.body.innerText.slice(0, 300));
-        const authErr = await page.evaluate(() => document.querySelector('.bg-red-50 p')?.textContent || null);
-        throw new Error(`HomeScreen not reached after login.\nAuth error on page: ${authErr || 'none'}\nPage text snippet: ${bodyText}`);
+        const bodyText = await page.evaluate(() => document.body.innerText.slice(0, 200));
+        throw new Error(`HomeScreen did not finish loading within 60s of signing in.\nPage text: ${bodyText}`);
     });
-    await page.waitForFunction(() =>
-        document.querySelector('[data-testid="start-analysis-btn"]') ||
-        document.querySelector('[data-testid="persona-summary"]'),
-        { timeout: 15000 }
-    ).catch(() => { /* still loading — suites do their own waits */ });
+    return { homeLoadMs: Date.now() - submittedAt };
 }
 
 const QUESTION_BUTTONS = '.grid.grid-cols-6.gap-2 button';
@@ -227,7 +230,7 @@ const SESSION_CODE = 'span.font-mono.tracking-widest';
 export async function getSessionCode(page) {
     await page.waitForFunction(
         (sel) => document.querySelector(sel)?.textContent.trim().length === 6,
-        { timeout: 12000 }, SESSION_CODE
+        { timeout: FIRESTORE_TIMEOUT }, SESSION_CODE
     );
     return page.$eval(SESSION_CODE, el => el.textContent.trim());
 }
@@ -235,7 +238,7 @@ export async function getSessionCode(page) {
 export const hasSessionCode = async (page) => !!(await page.$(SESSION_CODE));
 
 /** Open the join modal, submit `code`, and return the modal's text afterwards. */
-export async function submitJoinCode(page, code, waitMs = 3000) {
+export async function submitJoinCode(page, code, waitMs = 0) {
     await page.click('[data-testid="join-session-btn"]');
     const input = await page.waitForSelector('.fixed.inset-0 input[type="text"]', { timeout: 5000 });
     await typeInto(page, input, code);

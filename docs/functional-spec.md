@@ -286,9 +286,9 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 
 ## 9. Test Coverage
 
-**Runner:** Puppeteer (`test.js`), `protocolTimeout: 300000`.
-**Target:** `https://business-chemistry.web.app/` by default; override with `node test.js <url>`.
-**Output:** `acceptance_report.html` (bilingual, auto-opened after run).
+**Runner:** Puppeteer suite in `e2e/` (entry `e2e/run.js`), headless by default, `protocolTimeout: 300000`.
+**Target:** `npm run test:e2e` asks for local (`http://localhost:3002/`) or production (`https://business-chemistry.web.app/`); `--env=local|prod` or a URL argument skips the question.
+**Output:** `e2e/report.html` (step-by-step with screenshots; `--open` opens it). Non-zero exit on any failure.
 
 ### Stable `data-testid` selectors
 
@@ -306,6 +306,7 @@ Accessed via footer links and hash routing. All three pages are bilingual (Hebre
 | `[data-testid="persona-btn-driver"]` | Driver persona picker button |
 | `[data-testid="persona-btn-integrator"]` | Integrator persona picker button |
 | `[data-testid="persona-btn-pioneer"]` | Pioneer persona picker button |
+| `[data-testid="consultation-mobile"]` | Consultation section (`ConsultationMobile`) |
 
 ### Suite summary
 
