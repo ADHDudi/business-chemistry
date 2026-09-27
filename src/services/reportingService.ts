@@ -2,13 +2,15 @@ import { db } from '../firebaseConfig';
 import {
     collection,
     addDoc,
+    doc,
+    updateDoc,
     getDocsFromServer,
     query,
     orderBy,
     limit,
     serverTimestamp,
 } from 'firebase/firestore';
-import { Language } from '../types';
+import { Language, AICommunicationCoach } from '../types';
 
 export interface UserReport {
     uid: string;
@@ -17,17 +19,43 @@ export interface UserReport {
     scores: { formal: string; dominant: string };
     personaKey: string;
     language: Language;
+    aiFeedback?: AIInsightFeedback;
+}
+
+/** A user's rating of the AI insight shown on their report. Stored on the report doc. */
+export interface AIInsightFeedback {
+    rating: number; // 1–5 stars
+    comment: string;
+    insight: AICommunicationCoach | null; // the insight that was rated
+    targetProfile: string | null;
+    submittedAt?: any;
 }
 
 export async function saveUserReport(
     uid: string,
     data: Omit<UserReport, 'uid' | 'createdAt'>
-): Promise<void> {
+): Promise<string> {
     const ref = collection(db, 'users', uid, 'reports');
-    await addDoc(ref, {
+    const docRef = await addDoc(ref, {
         uid,
         createdAt: serverTimestamp(),
         ...data,
+    });
+    return docRef.id;
+}
+
+export async function saveInsightFeedback(
+    uid: string,
+    reportId: string,
+    feedback: Omit<AIInsightFeedback, 'submittedAt'>
+): Promise<void> {
+    await updateDoc(doc(db, 'users', uid, 'reports', reportId), {
+        aiFeedback: {
+            ...feedback,
+            // Firestore rejects undefined values; the AI payload may contain some
+            insight: feedback.insight ? JSON.parse(JSON.stringify(feedback.insight)) : null,
+            submittedAt: serverTimestamp(),
+        },
     });
 }
 

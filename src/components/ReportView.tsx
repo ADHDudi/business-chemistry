@@ -8,11 +8,12 @@ import {
 } from 'lucide-react';
 import ConsultationMobile from './report/ConsultationMobile';
 import YouTab from './report/YouTab';
-import ThemTab from './report/ThemTab';
+import ThemTab, { FeedbackStatus } from './report/ThemTab';
 import TogetherTab from './report/TogetherTab';
 import { Language, User, Persona, AICommunicationCoach } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS } from '../constants';
 import { getAIInsights } from '../geminiService';
+import { saveInsightFeedback } from '../services/reportingService';
 import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../firebaseConfig';
@@ -23,12 +24,14 @@ interface ReportViewProps {
   answers: Record<number, number>;
   onReset: () => void;
   submitError: string | null;
+  uid: string | null;
+  reportId: string | null;
   language: Language;
   t: any;
   forceDebug?: boolean;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, forceDebug }) => {
+const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, uid, reportId, language, t, forceDebug }) => {
   const [activeTab, setActiveTab] = useState<'you' | 'them' | 'together'>('you');
   const [adhdLens, setAdhdLens] = useState(false);
   // Auto-send replaces manual sending state
@@ -36,8 +39,9 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const [aiError, setAiError] = useState<string | null>(null);
   const [targetProfile, setTargetProfile] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState<'positive' | 'negative' | 'refined' | null>(null);
-  const [refinementText, setRefinementText] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatus>('idle');
   const [clicks, setClicks] = useState({ website: false, schedule: false, socials: {} as Record<string, boolean> });
   const [isCopying, setIsCopying] = useState(false);
 
@@ -79,8 +83,21 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     });
   };
 
-  const handleFeedback = (type: 'positive' | 'negative') => {
-    setAiFeedback(type);
+  const submitFeedback = async () => {
+    if (!uid || !reportId || feedbackRating < 1) return;
+    setFeedbackStatus('saving');
+    try {
+      await saveInsightFeedback(uid, reportId, {
+        rating: feedbackRating,
+        comment: feedbackComment.trim(),
+        insight: aiInsight,
+        targetProfile,
+      });
+      setFeedbackStatus('saved');
+    } catch (err) {
+      console.error('Failed to save AI insight feedback:', err);
+      setFeedbackStatus('error');
+    }
   };
 
   const handleShare = async () => {
@@ -151,14 +168,17 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   }, [currentPersona, results, language, targetProfile]);
 
   const regenerateWithFeedback = async () => {
-    if (!refinementText.trim()) return;
+    if (!feedbackComment.trim()) return;
     setIsLoadingAI(true);
     setAiError(null);
     try {
-      const insight = await getAIInsights(currentPersona, results, language, refinementText, targetProfile || undefined);
+      const insight = await getAIInsights(currentPersona, results, language, feedbackComment.trim(), targetProfile || undefined);
       if (!insight) throw new Error('No insight returned');
       setAiInsight(insight);
-      setAiFeedback('refined');
+      // The refined insight is new — let the user rate it afresh
+      setFeedbackRating(0);
+      setFeedbackComment('');
+      setFeedbackStatus('idle');
     } catch (err: any) {
       setAiError(err.message || "Error during refinement.");
     } finally {
@@ -263,16 +283,18 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           aiInsight={aiInsight}
           isLoadingAI={isLoadingAI}
           aiError={aiError}
-          aiFeedback={aiFeedback}
-          refinementText={refinementText}
+          feedbackRating={feedbackRating}
+          feedbackComment={feedbackComment}
+          feedbackStatus={reportId ? feedbackStatus : 'unavailable'}
           targetProfile={targetProfile}
           language={language}
           t={t}
           colors={colors}
           adhdLens={adhdLens}
           onTargetProfileChange={setTargetProfile}
-          onFeedback={handleFeedback}
-          onRefinementTextChange={setRefinementText}
+          onRatingChange={setFeedbackRating}
+          onCommentChange={setFeedbackComment}
+          onFeedbackSubmit={submitFeedback}
           onRefinementSubmit={regenerateWithFeedback}
           onShare={handleShare}
           onRetry={() => {

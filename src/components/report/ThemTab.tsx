@@ -2,19 +2,28 @@ import React from 'react';
 import {
   Zap, CheckCircle, Target, Hash, Sparkles,
   Brain, Loader2, BrainCircuit,
-  ThumbsUp, ThumbsDown, RefreshCw, Share2
+  Star, RefreshCw, Share2
 } from 'lucide-react';
 import { Persona, AICommunicationCoach, Language } from '../../types';
 import { ContextIcon } from './shared';
 import { CollapsibleSection } from '../CollapsibleSection';
+
+/** 'unavailable' = the report wasn't saved, so there is nothing to attach feedback to. */
+export type FeedbackStatus = 'idle' | 'saving' | 'saved' | 'error' | 'unavailable';
+
+const RATING_LABELS = {
+  en: ['Not helpful', 'Slightly helpful', 'Somewhat helpful', 'Helpful', 'Very helpful'],
+  he: ['לא מועיל', 'מעט מועיל', 'די מועיל', 'מועיל', 'מועיל מאוד'],
+};
 
 export interface ThemTabProps {
   currentPersona: Persona;
   aiInsight: AICommunicationCoach | null;
   isLoadingAI: boolean;
   aiError: string | null;
-  aiFeedback: 'positive' | 'negative' | 'refined' | null;
-  refinementText: string;
+  feedbackRating: number;
+  feedbackComment: string;
+  feedbackStatus: FeedbackStatus;
   targetProfile: string | null;
   language: Language;
   t: any;
@@ -30,8 +39,9 @@ export interface ThemTabProps {
   };
   adhdLens: boolean;
   onTargetProfileChange: (profile: string) => void;
-  onFeedback: (type: 'positive' | 'negative') => void;
-  onRefinementTextChange: (text: string) => void;
+  onRatingChange: (rating: number) => void;
+  onCommentChange: (text: string) => void;
+  onFeedbackSubmit: () => void;
   onRefinementSubmit: () => void;
   onShare: () => void;
   onRetry: () => void;
@@ -42,16 +52,18 @@ const ThemTab: React.FC<ThemTabProps> = ({
   aiInsight,
   isLoadingAI,
   aiError,
-  aiFeedback,
-  refinementText,
+  feedbackRating,
+  feedbackComment,
+  feedbackStatus,
   targetProfile,
   language,
   t,
   colors,
   adhdLens,
   onTargetProfileChange,
-  onFeedback,
-  onRefinementTextChange,
+  onRatingChange,
+  onCommentChange,
+  onFeedbackSubmit,
   onRefinementSubmit,
   onShare,
   onRetry,
@@ -189,41 +201,83 @@ const ThemTab: React.FC<ThemTabProps> = ({
             </CollapsibleSection>
           )}
 
-          {/* Feedback row */}
-          <div className="px-6 pb-6 pt-2 flex flex-col items-center gap-4">
-            {aiFeedback === 'positive' || aiFeedback === 'refined' ? (
-              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-6 py-2 rounded-full border border-green-100">
-                <CheckCircle size={16} />
-                <span className="text-[11px] font-black uppercase tracking-tight">
-                  {language === 'he' ? 'התוצאה אושרה - תודה!' : 'Result approved'}
-                </span>
+          {/* Feedback: 1–5 stars + free comment, saved on the report doc */}
+          <div className="px-6 pb-6 pt-2 flex flex-col items-center gap-4" data-testid="ai-feedback">
+            {feedbackStatus === 'saved' ? (
+              <div className="w-full flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 text-green-600 bg-green-50 px-6 py-2 rounded-full border border-green-100" data-testid="feedback-saved">
+                  <CheckCircle size={16} />
+                  <span className="text-[11px] font-black uppercase tracking-tight">
+                    {language === 'he' ? 'תודה על המשוב!' : 'Thanks for your feedback!'}
+                  </span>
+                </div>
+                {feedbackRating <= 3 && feedbackComment.trim() && (
+                  <button
+                    onClick={onRefinementSubmit}
+                    disabled={isLoadingAI}
+                    className="w-full py-2 bg-[#8c50f0] text-white font-black rounded-xl text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={14} /> {language === 'he' ? 'שפר ניתוח לפי ההערה שלי' : 'Refine analysis using my comment'}
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="flex gap-4">
-                <button onClick={() => onFeedback('positive')} className="flex items-center gap-2 px-6 py-2 rounded-full border border-slate-200 text-slate-500 hover:bg-green-50 hover:text-green-600 transition-all">
-                  <ThumbsUp size={16} /> <span className="text-xs font-black">Helpful</span>
-                </button>
-                <button onClick={() => onFeedback('negative')} className="flex items-center gap-2 px-6 py-2 rounded-full border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all">
-                  <ThumbsDown size={16} /> <span className="text-xs font-black">Not Helpful</span>
-                </button>
-              </div>
-            )}
-            {aiFeedback === 'negative' && (
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-3">
+                <p className="text-center text-xs font-black text-slate-500">
+                  {language === 'he' ? 'כמה התובנה הזו מדויקת עבורך?' : 'How accurate is this insight for you?'}
+                </p>
+                <div className="flex justify-center gap-1" dir="ltr" role="radiogroup" aria-label={language === 'he' ? 'דירוג' : 'Rating'}>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={feedbackRating === n}
+                      aria-label={`${n} – ${RATING_LABELS[language][n - 1]}`}
+                      title={RATING_LABELS[language][n - 1]}
+                      onClick={() => onRatingChange(n)}
+                      data-testid={`rating-star-${n}`}
+                      className="p-1.5 rounded-full hover:scale-110 transition-transform"
+                    >
+                      <Star
+                        size={28}
+                        className={n <= feedbackRating ? 'text-amber-400' : 'text-slate-300'}
+                        fill={n <= feedbackRating ? 'currentColor' : 'none'}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {feedbackRating > 0 && (
+                  <p className="text-center text-[11px] font-bold text-slate-400">{RATING_LABELS[language][feedbackRating - 1]}</p>
+                )}
                 <textarea
-                  value={refinementText}
-                  onChange={e => onRefinementTextChange(e.target.value)}
-                  placeholder={language === 'he' ? 'מה לשפר?' : 'What should be improved?'}
+                  value={feedbackComment}
+                  onChange={e => onCommentChange(e.target.value)}
+                  maxLength={2000}
+                  placeholder={language === 'he' ? 'הערות חופשיות (לא חובה)' : 'Any comments? (optional)'}
+                  data-testid="feedback-comment"
                   className="w-full p-3 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#8c50f0]/30"
-                  rows={2}
+                  rows={3}
                 />
                 <button
-                  onClick={onRefinementSubmit}
-                  disabled={!refinementText.trim()}
+                  onClick={onFeedbackSubmit}
+                  disabled={feedbackRating < 1 || feedbackStatus === 'saving' || feedbackStatus === 'unavailable'}
+                  data-testid="feedback-submit"
                   className="w-full py-2 bg-[#8c50f0] text-white font-black rounded-xl text-sm disabled:opacity-40 flex items-center justify-center gap-2"
                 >
-                  <RefreshCw size={14} /> {language === 'he' ? 'שפר ניתוח' : 'Refine Analysis'}
+                  {feedbackStatus === 'saving' && <Loader2 size={14} className="animate-spin" />}
+                  {language === 'he' ? 'שלח משוב' : 'Send feedback'}
                 </button>
+                {feedbackStatus === 'error' && (
+                  <p className="text-center text-xs font-bold text-red-500" data-testid="feedback-error">
+                    {language === 'he' ? 'שמירת המשוב נכשלה. נסה/י שוב.' : "Couldn't save your feedback. Please try again."}
+                  </p>
+                )}
+                {feedbackStatus === 'unavailable' && (
+                  <p className="text-center text-xs font-bold text-slate-400">
+                    {language === 'he' ? 'המשוב זמין רק לניתוח שנשמר.' : 'Feedback is available once your analysis is saved.'}
+                  </p>
+                )}
               </div>
             )}
             <button onClick={onShare} className="text-slate-400 text-sm font-bold flex items-center gap-2 hover:text-slate-600">
