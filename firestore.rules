@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Solo reports: private to their owner, append-only from the client.
+    match /users/{uid}/reports/{reportId} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.uid == uid;
+    }
+
+    // Pair sessions, keyed by a 6-char join code.
+    match /sessions/{sessionId} {
+      function isParticipant(data) {
+        return request.auth.uid == data.founderAUid || request.auth.uid == data.founderBUid;
+      }
+
+      // Joining needs a read by code before the joiner is a participant.
+      allow get: if signedIn();
+      // "My sessions" queries must filter on founderAUid / founderBUid == my uid.
+      allow list: if signedIn() && isParticipant(resource.data);
+
+      allow create: if signedIn()
+                    && request.resource.data.founderAUid == request.auth.uid
+                    && request.resource.data.founderBUid == '';
+
+      allow update: if signedIn()
+                    // Host A can never be reassigned
+                    && request.resource.data.founderAUid == resource.data.founderAUid
+                    && (
+                      // A participant updating answers / status
+                      (isParticipant(resource.data)
+                        && request.resource.data.founderBUid == resource.data.founderBUid)
+                      // Or a second user claiming the empty B slot for themselves
+                      || (resource.data.founderBUid == ''
+                        && request.resource.data.founderBUid == request.auth.uid)
+                    );
+    }
+  }
+}

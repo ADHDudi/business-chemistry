@@ -1,8 +1,8 @@
 /// @vitest-environment happy-dom
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 // ---------------------------------------------------------------------------
 // Mock getLatestReport so we can control what the home screen sees
@@ -18,7 +18,7 @@ vi.mock('../services/reportingService', () => ({
 vi.mock('../firebaseConfig', () => ({ db: {}, analytics: {} }));
 vi.mock('firebase/analytics', () => ({ logEvent: vi.fn() }));
 
-import HomeScreen from './HomeScreen';
+import HomeScreen, { PROFILE_LOAD_TIMEOUT_MS } from './HomeScreen';
 import type { UserReport } from '../services/reportingService';
 
 const fixtureReport: UserReport = {
@@ -85,5 +85,37 @@ describe('HomeScreen — first-time user', () => {
     await screen.findByTestId('start-session-btn');
     expect(screen.getByTestId('start-session-btn')).toBeDisabled();
     expect(screen.getByTestId('join-session-btn')).toBeDisabled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Profile load failures must not leave the spinner up forever
+// ---------------------------------------------------------------------------
+
+describe('HomeScreen — profile load failure', () => {
+  beforeEach(() => { mockGetLatestReport.mockReset(); });
+
+  it('shows an error with a retry button when getLatestReport rejects', async () => {
+    mockGetLatestReport.mockRejectedValueOnce(new Error('unavailable'));
+    render(<HomeScreen {...defaultProps} />);
+    await screen.findByTestId('home-load-error');
+    expect(screen.queryByTestId('start-analysis-btn')).toBeNull();
+  });
+
+  it('shows an error when getLatestReport never settles', async () => {
+    vi.useFakeTimers();
+    mockGetLatestReport.mockReturnValueOnce(new Promise(() => {}));
+    render(<HomeScreen {...defaultProps} />);
+    await act(async () => { vi.advanceTimersByTime(PROFILE_LOAD_TIMEOUT_MS); });
+    expect(screen.getByTestId('home-load-error')).toBeTruthy();
+  });
+
+  it('retries the load when "Try again" is clicked', async () => {
+    mockGetLatestReport.mockRejectedValueOnce(new Error('unavailable'));
+    mockGetLatestReport.mockResolvedValueOnce(fixtureReport);
+    render(<HomeScreen {...defaultProps} />);
+    fireEvent.click(await screen.findByTestId('retry-load-btn'));
+    await screen.findByTestId('persona-summary');
+    expect(mockGetLatestReport).toHaveBeenCalledTimes(2);
   });
 });

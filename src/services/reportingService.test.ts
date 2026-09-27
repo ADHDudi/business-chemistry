@@ -18,7 +18,7 @@ vi.mock('../firebaseConfig', () => ({ db: {} }));
 vi.mock('firebase/firestore', () => ({
   addDoc: mockAddDoc,
   collection: mockCollection,
-  getDocs: mockGetDocs,
+  getDocsFromServer: mockGetDocs,
   query: mockQuery,
   orderBy: mockOrderBy,
   limit: mockLimit,
@@ -108,5 +108,10 @@ describe('getLatestReport', () => {
     });
     const result = await getLatestReport(uid);
     expect(result).toEqual(storedDoc);
+  });
+
+  it('propagates a server error instead of returning an empty cached result', async () => {
+    mockGetDocs.mockRejectedValueOnce(Object.assign(new Error('Failed to get documents from server'), { code: 'unavailable' }));
+    await expect(getLatestReport(uid)).rejects.toMatchObject({ code: 'unavailable' });
   });
 });
