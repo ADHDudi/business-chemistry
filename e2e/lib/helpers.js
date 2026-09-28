@@ -14,31 +14,52 @@ export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 // reconnecting with backoff), so anything waiting on Firestore gets a long budget.
 export const FIRESTORE_TIMEOUT = 60000;
 
-// Prefer Puppeteer's bundled Chrome; fall back to the system Chrome install
-// (e.g. when only an x64 build is cached on Apple Silicon). Headless runs use a
-// throwaway profile, so they never touch the Chrome window you are working in.
-function resolveChromePath() {
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+// Chrome candidates in order: an explicit PUPPETEER_EXECUTABLE_PATH, Puppeteer's
+// bundled Chrome, then the system install. A cached download can be missing or
+// broken (an x64-only build on Apple Silicon, or an interrupted download), so
+// launchBrowser() moves on to the next candidate when one fails to start.
+// Headless runs use a throwaway profile, so they never touch the Chrome window
+// you are working in.
+function chromeCandidates() {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) return [process.env.PUPPETEER_EXECUTABLE_PATH];
+    const candidates = [];
     try {
         const bundled = puppeteer.executablePath();
-        if (bundled && fs.existsSync(bundled)) return bundled;
+        if (bundled && fs.existsSync(bundled)) candidates.push(bundled);
     } catch { /* not installed */ }
     const systemPaths = {
         darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
         linux: ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'],
         win32: ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'],
     }[process.platform] || [];
-    return systemPaths.find(p => fs.existsSync(p));
+    candidates.push(...systemPaths.filter(p => fs.existsSync(p)));
+    return candidates;
 }
 
-export function launchBrowser() {
-    return puppeteer.launch({
+export async function launchBrowser() {
+    const options = {
         headless: !HEADED,
-        executablePath: resolveChromePath(),
         slowMo: SLOW_MO,
         defaultViewport: DESKTOP,
         protocolTimeout: 300000,  // Firebase / AI calls can be slow
-    });
+    };
+    const candidates = chromeCandidates();
+    if (!candidates.length) {
+        throw new Error('No Chrome found — run `npx puppeteer browsers install chrome` or install Google Chrome.');
+    }
+    let lastError;
+    for (const executablePath of candidates) {
+        try {
+            return await puppeteer.launch({ ...options, executablePath });
+        } catch (err) {
+            lastError = err;
+            console.warn(`⚠️  Could not start Chrome at ${executablePath} — ${err.message.split('\n')[0]}`);
+            if (executablePath.includes('.cache/puppeteer')) {
+                console.warn('   The downloaded copy looks broken; `npx puppeteer browsers install chrome` re-downloads it.');
+            }
+        }
+    }
+    throw lastError;
 }
 
 /**
