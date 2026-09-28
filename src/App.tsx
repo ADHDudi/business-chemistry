@@ -10,7 +10,7 @@ import {
 import { Language, User as UserType, Results, Persona, Trait } from './types';
 import { calculateResults, getPersona, generateMockAnswers } from './scoring';
 import { saveUserReport } from './services/reportingService';
-import { withTimeout } from './utils/withTimeout';
+import { withTimeoutRecovery } from './utils/withTimeout';
 import HomeScreen from './components/HomeScreen';
 import ReportView from './components/ReportView';
 import SessionWizard from './components/SessionWizard';
@@ -225,13 +225,15 @@ export default function App() {
       if (authUser) {
         // Results are computed locally, so don't hold the report hostage to the save:
         // addDoc never settles while Firestore is unreachable. The write stays queued
-        // in the SDK and still syncs if the connection recovers.
-        const id = await withTimeout(saveUserReport(authUser.uid, {
+        // in the SDK and still syncs if the connection recovers — withTimeoutRecovery
+        // keeps listening past the timeout so a slow-but-successful save still lands
+        // in reportId (JUS-437: feedback stayed permanently "unavailable" otherwise).
+        const id = await withTimeoutRecovery(saveUserReport(authUser.uid, {
           answers,
           scores: { formal: results.formal, dominant: results.dominant },
           personaKey: persona.key,
           language,
-        }), SAVE_REPORT_TIMEOUT_MS);
+        }), SAVE_REPORT_TIMEOUT_MS, setReportId);
         setReportId(id);
       }
 

@@ -17,3 +17,18 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     });
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
+
+/**
+ * Like withTimeout, but `promise` is never abandoned: if it goes on to resolve
+ * after the timeout already rejected the race, `onLateResolve` still fires with
+ * the value. Without this, a write that's merely slow (not actually failed) gets
+ * silently dropped by the caller once the timeout wins.
+ */
+export function withTimeoutRecovery<T>(
+    promise: Promise<T>,
+    ms: number,
+    onLateResolve: (value: T) => void
+): Promise<T> {
+    promise.then(onLateResolve, () => {});
+    return withTimeout(promise, ms);
+}
