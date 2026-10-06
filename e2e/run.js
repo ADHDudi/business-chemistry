@@ -4,6 +4,7 @@
  *   npm run test:e2e                      asks: local or production
  *   npm run test:e2e -- --env=local       skip the question
  *   npm run test:e2e -- --only=auth,report
+ *   npm run test:e2e:icons                build dist/ and run only the icons group
  *   npm run test:e2e:headed               watch it run, open the report after
  *
  * See e2e/lib/config.js for every flag and the .env.test credentials.
@@ -17,6 +18,7 @@ import * as auth from './suites/auth.js';
 import * as report from './suites/report.js';
 import * as account from './suites/account.js';
 import * as pair from './suites/pairSession.js';
+import * as icons from './suites/icons.js';
 
 // Groups run in this order; within "account" and "pair" the order is load-bearing
 // (see the header of suites/account.js).
@@ -25,6 +27,7 @@ const GROUPS = {
     report: [report.reportTabs, report.aiCoaching, report.togetherTab, report.mobileReport],
     account: [account.loginLandsOnHome, account.firstTimeUser, account.soloFlow, account.returningUser],
     pair: [pair.hostSession, pair.joinModal, pair.fullPairSession],
+    icons: [icons.desktopIcons, icons.mobileIcons],
 };
 
 const unknown = ONLY.filter(name => !GROUPS[name]);

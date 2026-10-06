@@ -1,0 +1,30 @@
+<!--
+  Bond app icon — master artwork (JUS-464).
+  A shield split down the middle with two facing profiles.
+  Colours are the brand tokens from the Tailwind config in index.html only:
+    violet #a014f0 · purple #8c50f0 · soft #f3ecff · border #e4d7ff · white
+  Edit this file, then run `npm run icons` to regenerate every favicon / app icon.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="shieldDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a014f0"/>
+      <stop offset="1" stop-color="#8c50f0"/>
+    </linearGradient>
+    <linearGradient id="shieldLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3ecff"/>
+      <stop offset="1" stop-color="#e4d7ff"/>
+    </linearGradient>
+    <clipPath id="shieldClip">
+      <path d="M256 64 C302 86 354 96 412 96 L412 232 C412 338 344 410 256 452 C168 410 100 338 100 232 L100 96 C158 96 210 86 256 64 Z"/>
+    </clipPath>
+    <!-- Head and shoulders facing right; mirrored for the right-hand profile. -->
+    <path id="profile" d="M116 470 L116 396 C138 376 166 366 178 348 L180 318 C152 304 134 276 134 240 C134 188 170 152 212 152 C230 152 238 162 240 176 C242 190 238 204 240 212 L249 236 C250 240 248 242 244 242 L242 249 L246 253 L241 259 L244 265 C244 276 238 286 228 290 C222 292 220 298 220 304 L222 324 C228 344 244 356 256 360 L256 470 Z"/>
+  </defs>
+  <g id="shield" clip-path="url(#shieldClip)">
+    <rect x="0" y="0" width="256" height="512" fill="url(#shieldDark)"/>
+    <rect x="256" y="0" width="256" height="512" fill="url(#shieldLight)"/>
+    <use href="#profile" fill="#ffffff" fill-opacity="0.38"/>
+    <use href="#profile" fill="url(#shieldDark)" transform="translate(512 0) scale(-1 1)"/>
+  </g>
+</svg>

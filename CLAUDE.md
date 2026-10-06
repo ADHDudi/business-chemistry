@@ -21,6 +21,8 @@
   - Run one area with `--only=auth,report,account,pair`; report is written to `e2e/report.html` (git-ignored); exits non-zero on any failure
   - `account` and `pair` suites need test accounts in `.env.test` (`TEST_EMAIL_A/B`, `TEST_PASS_A/B`) and are skipped without them
 - Hook tests run in `happy-dom` environment via `environmentMatchGlobs`
+- Icon E2E: `npm run test:e2e:icons` builds `dist/`, serves it and runs the `icons` group (`e2e/suites/icons.js`): favicon, apple-touch-icon, manifest and the welcome-screen icon at desktop 1280×800 and mobile 390×844; screenshots in `test-output/`. Pass a URL to check a deployed site (`npm run test:e2e:icons -- https://business-chemistry.web.app/`). The group also runs in the full `npm run test:e2e` / pre-deploy suite
+- Icons are generated: edit `scripts/icons/shield.svg`, then `npm run icons` (never hand-edit `public/favicon.*`, `public/bond-icon.svg`, `public/apple-touch-icon.png`, `public/icons/*`)
 - Never commit with failing tests
 
 ## Deploy

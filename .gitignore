@@ -41,3 +41,6 @@ simulate_session.js
 
 # Firebase CLI deploy cache (rewritten on every deploy)
 .firebase/
+
+# E2E screenshots
+test-output/
