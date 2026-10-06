@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "sh deploy.sh",
-    "test": "node test.js",
+    "test": "node e2e/run.js --env=prod",
+    "test:e2e": "node e2e/run.js --ask",
+    "test:e2e:headed": "node e2e/run.js --ask --headed --open",
     "test:unit": "vitest run",
     "icons": "node scripts/generate-icons.mjs",
     "test:e2e:icons": "node tests/icons.e2e.js"

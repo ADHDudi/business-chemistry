@@ -1,186 +1,146 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { buildPayload, saveReport, sendFinalReport } from './reportingService';
-import { PERSONA_DATA } from '../constants';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Firestore mock — vi.hoisted ensures these run before vi.mock hoisting
+// ---------------------------------------------------------------------------
+const { mockAddDoc, mockUpdateDoc, mockDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit } = vi.hoisted(() => {
+  const mockAddDoc = vi.fn();
+  const mockUpdateDoc = vi.fn();
+  const mockDoc = vi.fn((...args: unknown[]) => ({ path: args.slice(1).join('/') }));
+  const mockGetDocs = vi.fn();
+  const mockCollection = vi.fn((...args: string[]) => ({ path: args.join('/') }));
+  const mockQuery = vi.fn((...args: unknown[]) => args[0]);
+  const mockOrderBy = vi.fn((field: string, dir: string) => ({ _orderBy: field, _dir: dir }));
+  const mockLimit = vi.fn((n: number) => ({ _limit: n }));
+  return { mockAddDoc, mockUpdateDoc, mockDoc, mockGetDocs, mockCollection, mockQuery, mockOrderBy, mockLimit };
+});
 
-const fixtureUser = { name: 'Test User', email: 'test@example.com' };
-const fixtureScores = { formal: '4.50', dominant: '3.20' };
-const fixturePersona = PERSONA_DATA.DRIVER;
-const fixtureLanguage = 'en' as const;
-const fixtureAnswers: Record<number, number> = { 0: 3, 1: 4, 2: 5 };
+vi.mock('../firebaseConfig', () => ({ db: {} }));
 
-// ─── buildPayload ─────────────────────────────────────────────────────────────
+vi.mock('firebase/firestore', () => ({
+  addDoc: mockAddDoc,
+  updateDoc: mockUpdateDoc,
+  doc: mockDoc,
+  collection: mockCollection,
+  getDocsFromServer: mockGetDocs,
+  query: mockQuery,
+  orderBy: mockOrderBy,
+  limit: mockLimit,
+  serverTimestamp: () => 'SERVER_TIMESTAMP',
+}));
 
-describe('buildPayload', () => {
-  it('returns an object with the expected shape', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload).toHaveProperty('appId');
-    expect(payload).toHaveProperty('user');
-    expect(payload).toHaveProperty('scores');
-    expect(payload).toHaveProperty('personaKey');
-    expect(payload).toHaveProperty('personaTitle');
-    expect(payload).toHaveProperty('personaDetails');
-    expect(payload).toHaveProperty('aiInsight');
-    expect(payload).toHaveProperty('aiFeedback');
-    expect(payload).toHaveProperty('refinementReason');
-    expect(payload).toHaveProperty('clicks');
-    expect(payload).toHaveProperty('answers');
-    expect(payload).toHaveProperty('language');
-    expect(payload).toHaveProperty('isFinal');
-    expect(payload).toHaveProperty('timestamp');
+import { saveUserReport, getLatestReport, saveInsightFeedback, type UserReport } from './reportingService';
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+const uid = 'user-abc-123';
+
+const fixtureData = {
+  answers: { 0: 3, 1: 5, 2: 2 },
+  scores: { formal: '4.20', dominant: '2.80' },
+  personaKey: 'DRIVER',
+  language: 'en' as const,
+};
+
+// ---------------------------------------------------------------------------
+// JUS-339: saveUserReport
+// ---------------------------------------------------------------------------
+
+describe('saveUserReport', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('writes to the users/{uid}/reports collection', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'doc-1' });
+    await saveUserReport(uid, fixtureData);
+    expect(mockCollection).toHaveBeenCalledWith({}, 'users', uid, 'reports');
   });
 
-  it('isFinal defaults to false', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.isFinal).toBe(false);
+  it('includes all payload fields in the saved document', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'doc-1' });
+    await saveUserReport(uid, fixtureData);
+    const [, docData] = mockAddDoc.mock.calls[0];
+    expect(docData.uid).toBe(uid);
+    expect(docData.answers).toEqual(fixtureData.answers);
+    expect(docData.scores).toEqual(fixtureData.scores);
+    expect(docData.personaKey).toBe(fixtureData.personaKey);
+    expect(docData.language).toBe(fixtureData.language);
   });
 
-  it('timestamp is a valid ISO string', () => {
-    const before = Date.now();
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    const after = Date.now();
-    const ts = new Date(payload.timestamp).getTime();
-    expect(ts).toBeGreaterThanOrEqual(before);
-    expect(ts).toBeLessThanOrEqual(after);
+  it('sets createdAt to serverTimestamp', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'doc-1' });
+    await saveUserReport(uid, fixtureData);
+    const [, docData] = mockAddDoc.mock.calls[0];
+    expect(docData.createdAt).toBe('SERVER_TIMESTAMP');
   });
 
-  it('overrides isFinal when provided', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers, { isFinal: true });
-    expect(payload.isFinal).toBe(true);
-  });
-
-  it('overrides aiInsight when provided', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers, { aiInsight: 'some insight' });
-    expect(payload.aiInsight).toBe('some insight');
-  });
-
-  it('overrides aiFeedback when provided', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers, { aiFeedback: 'positive' });
-    expect(payload.aiFeedback).toBe('positive');
-  });
-
-  it('personaKey matches the persona key', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.personaKey).toBe(fixturePersona.key);
-  });
-
-  it('scores are passed through correctly', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.scores).toEqual({ formal: '4.50', dominant: '3.20' });
-  });
-
-  it('user is passed through correctly', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.user).toEqual(fixtureUser);
-  });
-
-  it('answers are passed through correctly', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.answers).toEqual(fixtureAnswers);
-  });
-
-  it('language is passed through correctly', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.language).toBe(fixtureLanguage);
-  });
-
-  it('aiInsight defaults to empty string', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.aiInsight).toBe('');
-  });
-
-  it('aiFeedback defaults to Pending', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.aiFeedback).toBe('Pending');
-  });
-
-  it('personaDetails includes required fields', () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    expect(payload.personaDetails).toHaveProperty('strengths');
-    expect(payload.personaDetails).toHaveProperty('tips');
-    expect(payload.personaDetails).toHaveProperty('adhd_challenge');
-    expect(payload.personaDetails).toHaveProperty('communication_challenge');
-    expect(payload.personaDetails).toHaveProperty('consultation_benefit');
+  it('returns the new report id', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'doc-42' });
+    await expect(saveUserReport(uid, fixtureData)).resolves.toBe('doc-42');
   });
 });
 
-// ─── saveReport ───────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// JUS-432: saveInsightFeedback
+// ---------------------------------------------------------------------------
 
-describe('saveReport', () => {
-  const fetchMock = vi.fn();
+describe('saveInsightFeedback', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
 
-  beforeEach(() => {
-    fetchMock.mockResolvedValue({ ok: true });
-    global.fetch = fetchMock;
-  });
+  it('writes rating, comment and the rated insight onto the report doc', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined);
+    const insight = { user_profile: { superpower: 'Focus', extra: undefined } } as any;
+    await saveInsightFeedback(uid, 'rep-1', { rating: 4, comment: 'Spot on', insight, targetProfile: 'PIONEER' });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('POSTs to GOOGLE_SCRIPT_URL with correct headers', async () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    await saveReport(payload);
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, options] = fetchMock.mock.calls[0];
-    expect(typeof url).toBe('string');
-    expect(url.length).toBeGreaterThan(0);
-    expect(options.method).toBe('POST');
-    expect(options.mode).toBe('no-cors');
-    expect(options.headers['Content-Type']).toBe('text/plain;charset=utf-8');
-  });
-
-  it('sends the payload as JSON-serialised body', async () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    await saveReport(payload);
-    const [, options] = fetchMock.mock.calls[0];
-    // Parse both to compare without timestamp drift
-    const sentBody = JSON.parse(options.body);
-    expect(sentBody.appId).toBe(payload.appId);
-    expect(sentBody.personaKey).toBe(payload.personaKey);
-    expect(sentBody.user).toEqual(payload.user);
-    expect(sentBody.answers).toEqual(payload.answers);
-  });
-
-  it('does not include keepalive', async () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    await saveReport(payload);
-    const [, options] = fetchMock.mock.calls[0];
-    expect(options.keepalive).toBeFalsy();
+    const [ref, data] = mockUpdateDoc.mock.calls[0];
+    expect(ref.path).toBe(`users/${uid}/reports/rep-1`);
+    expect(data.aiFeedback).toMatchObject({ rating: 4, comment: 'Spot on', targetProfile: 'PIONEER', submittedAt: 'SERVER_TIMESTAMP' });
+    // undefined fields stripped so Firestore accepts the write
+    expect(data.aiFeedback.insight).toEqual({ user_profile: { superpower: 'Focus' } });
   });
 });
 
-// ─── sendFinalReport ──────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// JUS-339: getLatestReport
+// ---------------------------------------------------------------------------
 
-describe('sendFinalReport', () => {
-  const fetchMock = vi.fn();
+describe('getLatestReport', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
 
-  beforeEach(() => {
-    fetchMock.mockResolvedValue({ ok: true });
-    global.fetch = fetchMock;
+  it('queries users/{uid}/reports ordered by createdAt descending with limit 1', async () => {
+    mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+    await getLatestReport(uid);
+    expect(mockCollection).toHaveBeenCalledWith({}, 'users', uid, 'reports');
+    expect(mockOrderBy).toHaveBeenCalledWith('createdAt', 'desc');
+    expect(mockLimit).toHaveBeenCalledWith(1);
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
+  it('returns null when the user has no reports', async () => {
+    mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+    const result = await getLatestReport(uid);
+    expect(result).toBeNull();
   });
 
-  it('adds keepalive: true', async () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    await sendFinalReport(payload);
-    const [, options] = fetchMock.mock.calls[0];
-    expect(options.keepalive).toBe(true);
+  it('returns the report data when a document exists', async () => {
+    const storedDoc: UserReport = {
+      uid,
+      createdAt: { seconds: 1700000000 },
+      answers: { 0: 4 },
+      scores: { formal: '3.50', dominant: '5.00' },
+      personaKey: 'PIONEER',
+      language: 'he',
+    };
+    mockGetDocs.mockResolvedValueOnce({
+      empty: false,
+      docs: [{ data: () => storedDoc }],
+    });
+    const result = await getLatestReport(uid);
+    expect(result).toEqual(storedDoc);
   });
 
-  it('POSTs to the same URL with correct headers', async () => {
-    const payload = buildPayload(fixtureUser, fixtureScores, fixturePersona, fixtureLanguage, fixtureAnswers);
-    await sendFinalReport(payload);
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, options] = fetchMock.mock.calls[0];
-    expect(typeof url).toBe('string');
-    expect(url.length).toBeGreaterThan(0);
-    expect(options.method).toBe('POST');
-    expect(options.mode).toBe('no-cors');
-    expect(options.headers['Content-Type']).toBe('text/plain;charset=utf-8');
+  it('propagates a server error instead of returning an empty cached result', async () => {
+    mockGetDocs.mockRejectedValueOnce(Object.assign(new Error('Failed to get documents from server'), { code: 'unavailable' }));
+    await expect(getLatestReport(uid)).rejects.toMatchObject({ code: 'unavailable' });
   });
 });

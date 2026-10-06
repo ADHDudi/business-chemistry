@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Users, Loader2 } from 'lucide-react';
+import { Copy, Check, Users, Loader2, AlertCircle } from 'lucide-react';
 import { SessionData } from '../services/sessionService';
 
 interface SessionLobbyProps {
@@ -44,6 +44,17 @@ export default function SessionLobby({ sessionData, myRole, language }: SessionL
 
     const partnerName = myRole === 'A' ? sessionData.founderBName : sessionData.founderAName;
     const isPartnerConnected = !!partnerName;
+
+    if (sessionData.partnerLeft) {
+        return (
+            <div className="flex items-center gap-3 px-5 py-4 bg-red-50 border border-red-200 rounded-2xl mb-6 animate-in fade-in duration-500">
+                <AlertCircle size={20} className="text-red-500 shrink-0" />
+                <p className="text-sm font-black text-red-700">
+                    {language === 'he' ? 'השותף/ה יצא/ה מהסשן' : 'Your partner has left the session'}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded-[2rem] shadow-xl border border-[#e4d7ff] p-6 mb-6 animate-in slide-in-from-top-4 duration-500">

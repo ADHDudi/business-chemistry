@@ -8,12 +8,12 @@ import {
 } from 'lucide-react';
 import ConsultationMobile from './report/ConsultationMobile';
 import YouTab from './report/YouTab';
-import ThemTab from './report/ThemTab';
+import ThemTab, { FeedbackStatus } from './report/ThemTab';
 import TogetherTab from './report/TogetherTab';
 import { Language, User, Persona, AICommunicationCoach } from '../types';
 import { getIconComponent as getIcon, SOCIAL_LINKS } from '../constants';
-import { buildPayload, saveReport, sendFinalReport } from '../services/reportingService';
 import { getAIInsights } from '../geminiService';
+import { saveInsightFeedback } from '../services/reportingService';
 import { calculateResults, getPersona, computePersonaAffinities } from '../scoring';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../firebaseConfig';
@@ -24,12 +24,14 @@ interface ReportViewProps {
   answers: Record<number, number>;
   onReset: () => void;
   submitError: string | null;
+  uid: string | null;
+  reportId: string | null;
   language: Language;
   t: any;
   forceDebug?: boolean;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, language, t, forceDebug }) => {
+const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitError, uid, reportId, language, t, forceDebug }) => {
   const [activeTab, setActiveTab] = useState<'you' | 'them' | 'together'>('you');
   const [adhdLens, setAdhdLens] = useState(false);
   // Auto-send replaces manual sending state
@@ -37,16 +39,13 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   const [aiError, setAiError] = useState<string | null>(null);
   const [targetProfile, setTargetProfile] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState<'positive' | 'negative' | 'refined' | null>(null);
-  const [refinementText, setRefinementText] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatus>('idle');
   const [clicks, setClicks] = useState({ website: false, schedule: false, socials: {} as Record<string, boolean> });
   const [isCopying, setIsCopying] = useState(false);
 
-  // Debug & Sync State
   const [showDebug, setShowDebug] = useState(false);
-  const [lastPayload, setLastPayload] = useState<any>(null);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
-  const syncInProgress = useRef(false);
 
   const results = useMemo(() => calculateResults(answers), [answers]);
   const { profileData, formal: avgFormal, dominant: avgDominant } = results;
@@ -65,40 +64,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     blue: { bg: 'bg-blue-50', text: 'text-blue-700', accent: 'text-blue-400', from: 'from-blue-500', to: 'to-blue-700', shadow: 'shadow-blue-500/20', border: 'border-blue-200', glow: 'shadow-[0_0_20px_rgba(59,130,246,0.15)]' }
   }[currentPersona.color];
 
-  const syncToSheet = useCallback(async (overrides: Record<string, unknown> = {}) => {
-    if (syncInProgress.current && !overrides.isFinal) return;
-
-    syncInProgress.current = true;
-    setSyncStatus('syncing');
-
-    const payload = buildPayload(
-      user,
-      { formal: avgFormal, dominant: avgDominant },
-      currentPersona,
-      language,
-      answers,
-      {
-        aiInsight: aiInsight || "",
-        aiFeedback: aiFeedback || "Pending",
-        refinementReason: refinementText,
-        clicks,
-        ...overrides,
-      }
-    );
-
-    setLastPayload(payload);
-
-    try {
-      await saveReport(payload);
-      setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch (e) {
-      console.error("Sync error:", e);
-      setSyncStatus('error');
-    } finally {
-      syncInProgress.current = false;
-    }
-  }, [user, avgFormal, avgDominant, currentPersona, aiInsight, aiFeedback, clicks, answers, language, refinementText]);
 
   const trackClick = (type: 'website' | 'schedule' | string) => {
     // Log to Google Analytics
@@ -112,19 +77,27 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     });
 
     setClicks(prev => {
-      let newState;
-      if (type === 'website') newState = { ...prev, website: true };
-      else if (type === 'schedule') newState = { ...prev, schedule: true };
-      else newState = { ...prev, socials: { ...prev.socials, [type]: true } };
-
-      syncToSheet({ clicks: newState });
-      return newState;
+      if (type === 'website') return { ...prev, website: true };
+      if (type === 'schedule') return { ...prev, schedule: true };
+      return { ...prev, socials: { ...prev.socials, [type]: true } };
     });
   };
 
-  const handleFeedback = (type: 'positive' | 'negative') => {
-    setAiFeedback(type);
-    syncToSheet({ aiFeedback: type });
+  const submitFeedback = async () => {
+    if (!uid || !reportId || feedbackRating < 1) return;
+    setFeedbackStatus('saving');
+    try {
+      await saveInsightFeedback(uid, reportId, {
+        rating: feedbackRating,
+        comment: feedbackComment.trim(),
+        insight: aiInsight,
+        targetProfile,
+      });
+      setFeedbackStatus('saved');
+    } catch (err) {
+      console.error('Failed to save AI insight feedback:', err);
+      setFeedbackStatus('error');
+    }
   };
 
   const handleShare = async () => {
@@ -180,7 +153,6 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
         if (insight) {
           setAiInsight(insight);
           lastFetchRef.current = { personaKey: currentPersona.key, targetProfile };
-          syncToSheet({ aiInsight: JSON.stringify(insight), isFinal: false });
         } else {
           setAiError("Failed to generate insights from the AI provider.");
         }
@@ -196,15 +168,17 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
   }, [currentPersona, results, language, targetProfile]);
 
   const regenerateWithFeedback = async () => {
-    if (!refinementText.trim()) return;
+    if (!feedbackComment.trim()) return;
     setIsLoadingAI(true);
     setAiError(null);
     try {
-      const insight = await getAIInsights(currentPersona, results, language, refinementText, targetProfile || undefined);
+      const insight = await getAIInsights(currentPersona, results, language, feedbackComment.trim(), targetProfile || undefined);
       if (!insight) throw new Error('No insight returned');
       setAiInsight(insight);
-      setAiFeedback('refined');
-      syncToSheet({ aiInsight: JSON.stringify(insight), aiFeedback: 'refined', refinementReason: refinementText });
+      // The refined insight is new — let the user rate it afresh
+      setFeedbackRating(0);
+      setFeedbackComment('');
+      setFeedbackStatus('idle');
     } catch (err: any) {
       setAiError(err.message || "Error during refinement.");
     } finally {
@@ -212,39 +186,7 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
     }
   };
 
-  // Auto-send report on visibility change (close/switch tab)
-  const hasSentFinalReport = useRef(false);
-  const latestPayloadRef = useRef<any>(null);
 
-  // Keep latestPayloadRef in sync for the visibilitychange keepalive send
-  useEffect(() => {
-    latestPayloadRef.current = buildPayload(
-      user,
-      { formal: avgFormal, dominant: avgDominant },
-      currentPersona,
-      language,
-      answers,
-      { aiInsight: aiInsight || "", aiFeedback: aiFeedback || "Pending", refinementReason: refinementText, clicks, isFinal: true }
-    );
-  }, [user, avgFormal, avgDominant, currentPersona, aiInsight, aiFeedback, clicks, answers, language, refinementText]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && !hasSentFinalReport.current && latestPayloadRef.current) {
-        hasSentFinalReport.current = true;
-        sendFinalReport(latestPayloadRef.current).catch(err => console.error("Auto-send failed:", err));
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    // pagehide is also good for mobile but visibilitychange 'hidden' is generally reliable
-    window.addEventListener("pagehide", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", handleVisibilityChange);
-    };
-  }, []);
 
   const positionX = 15 + ((parseFloat(avgDominant) - 1) / 5) * 70;
   const positionY = 15 + ((6 - parseFloat(avgFormal)) / 5) * 70;
@@ -267,23 +209,13 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           <div className="flex justify-between items-center mb-4 sticky top-0 bg-white py-2 border-b">
             <h2 className="text-sm font-black flex items-center gap-2">
               <Terminal size={14} /> DEBUG CONSOLE
-              <span className={`px-2 py-0.5 rounded-full text-[8px] ${syncStatus === 'success' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                Status: {syncStatus.toUpperCase()}
-              </span>
             </h2>
             <button onClick={() => setShowDebug(false)} className="p-2 bg-slate-100 rounded-lg"><X size={14} /></button>
           </div>
-
           <div className="space-y-4">
             <div>
-              <p className="font-black text-slate-400 mb-1 border-b uppercase">Target Endpoint:</p>
-              <p className="break-all text-blue-600 bg-slate-50 p-2 rounded">configured in reportingService.ts</p>
-            </div>
-            <div>
-              <p className="font-black text-slate-400 mb-1 border-b uppercase">Last Payload Data (isFinal decision):</p>
-              <pre className="bg-slate-50 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap border border-slate-200">
-                {lastPayload ? JSON.stringify(lastPayload, null, 2) : "Syncing..."}
-              </pre>
+              <p className="font-black text-slate-400 mb-1 border-b uppercase">Data Store:</p>
+              <p className="break-all text-blue-600 bg-slate-50 p-2 rounded">Firestore — users/&#123;uid&#125;/reports</p>
             </div>
           </div>
         </div>
@@ -351,16 +283,18 @@ const ReportView: React.FC<ReportViewProps> = ({ user, answers, onReset, submitE
           aiInsight={aiInsight}
           isLoadingAI={isLoadingAI}
           aiError={aiError}
-          aiFeedback={aiFeedback}
-          refinementText={refinementText}
+          feedbackRating={feedbackRating}
+          feedbackComment={feedbackComment}
+          feedbackStatus={reportId ? feedbackStatus : 'unavailable'}
           targetProfile={targetProfile}
           language={language}
           t={t}
           colors={colors}
           adhdLens={adhdLens}
           onTargetProfileChange={setTargetProfile}
-          onFeedback={handleFeedback}
-          onRefinementTextChange={setRefinementText}
+          onRatingChange={setFeedbackRating}
+          onCommentChange={setFeedbackComment}
+          onFeedbackSubmit={submitFeedback}
           onRefinementSubmit={regenerateWithFeedback}
           onShare={handleShare}
           onRetry={() => {
