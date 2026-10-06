@@ -16,6 +16,7 @@ import SessionLobby from './components/SessionLobby';
 import ComparisonView from './components/ComparisonView';
 import LiveProgressBar from './components/LiveProgressBar';
 import Footer from './components/Footer';
+import BrandIcon from './components/BrandIcon';
 import TermsPage from './components/legal/TermsPage';
 import PrivacyPage from './components/legal/PrivacyPage';
 import AccessibilityPage from './components/legal/AccessibilityPage';
@@ -309,13 +310,7 @@ export default function App() {
 
             <div className="text-center space-y-4 mt-8 mb-6">
               <>
-                <div className="flex justify-center mb-4">
-                  <img
-                    src="/bond-icon.svg"
-                    alt="Bond"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-[22%] shadow-[0_6px_16px_rgba(140,80,240,0.20)] ring-1 ring-[#e4d7ff]"
-                  />
-                </div>
+                <BrandIcon className="mb-4" />
                 <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-[#8c50f0]">
                   Workplace Communication OS
                 </p>

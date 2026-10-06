@@ -34,6 +34,27 @@ body {
   color: #94a3b8;
 }
 
+/* ── Brand icon (JUS-467) ──
+   Sized here rather than with Tailwind utilities so the welcome-screen logo
+   keeps its size and centring even when the Tailwind CDN is slow or blocked. */
+.brand-icon {
+  display: block;
+  width: 80px;
+  height: 80px;
+  margin-inline: auto;
+  border-radius: 22%;
+  box-shadow: var(--brand-shadow-sm), 0 0 0 1px #e4d7ff;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+@media (min-width: 640px) {
+  .brand-icon {
+    width: 96px;
+    height: 96px;
+  }
+}
+
 /* ── Button utilities ── */
 .btn-gradient {
   background: var(--brand-gradient);

@@ -186,3 +186,32 @@ describe('JUS-466 – mobile home-screen icons', () => {
     expect(headMeta('apple-mobile-web-app-title')).toBe('Bond');
   });
 });
+
+// ---------------------------------------------------------------------------
+// JUS-467: welcome-screen brand icon (mobile 80 px / desktop 96 px)
+// ---------------------------------------------------------------------------
+
+describe('JUS-467 – welcome-screen brand icon', () => {
+  it('App uses the shared BrandIcon instead of the old inline chat-bubble SVG', () => {
+    const app = read('src/App.tsx');
+    expect(app).toMatch(/import BrandIcon from '\.\/components\/BrandIcon'/);
+    expect(app).toContain('<BrandIcon');
+    expect(app).not.toContain('M 6 13 a5 5'); // old chat-bubble path
+  });
+
+  it('index.css sizes .brand-icon at 80 px on mobile and 96 px from 640 px up', () => {
+    const css = read('src/index.css');
+    const base = css.match(/\.brand-icon\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(base).toMatch(/width:\s*80px/);
+    expect(base).toMatch(/height:\s*80px/);
+    const desktop = css.match(/@media\s*\(min-width:\s*640px\)\s*\{\s*\.brand-icon\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(desktop).toMatch(/width:\s*96px/);
+    expect(desktop).toMatch(/height:\s*96px/);
+  });
+
+  it('centres itself without relying on the Tailwind CDN', () => {
+    const base = read('src/index.css').match(/\.brand-icon\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(base).toMatch(/display:\s*block/);
+    expect(base).toMatch(/margin-inline:\s*auto/);
+  });
+});
