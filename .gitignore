@@ -37,3 +37,6 @@ simulate_session.js
 *.sln
 *.sw?
 .worktrees
+
+# E2E screenshots
+test-output/

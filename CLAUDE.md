@@ -17,6 +17,8 @@
 - Unit tests: `npm run test:unit` (Vitest, must pass before any PR)
 - Acceptance tests: `node test.js` (Puppeteer, targets https://business-chemistry.web.app/)
 - Hook tests run in `happy-dom` environment via `environmentMatchGlobs`
+- Icon E2E: `npm run test:e2e:icons` (Puppeteer, builds `dist/` and serves it locally; checks favicon, apple-touch-icon, manifest and the welcome-screen icon at desktop 1280×800 and mobile 390×844; screenshots in `test-output/`). Set `BASE_URL` to check a deployed site, `PUPPETEER_EXECUTABLE_PATH` to use a local Chrome
+- Icons are generated: edit `scripts/icons/shield.svg`, then `npm run icons` (never hand-edit `public/favicon.*`, `public/bond-icon.svg`, `public/apple-touch-icon.png`, `public/icons/*`)
 - Never commit with failing tests
 
 ## Linear

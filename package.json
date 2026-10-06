@@ -10,7 +10,8 @@
     "deploy": "sh deploy.sh",
     "test": "node test.js",
     "test:unit": "vitest run",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "test:e2e:icons": "node tests/icons.e2e.js"
   },
   "dependencies": {
     "@google/genai": "^1.38.0",
