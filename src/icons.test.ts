@@ -128,3 +128,61 @@ describe('JUS-465 – desktop favicon', () => {
     ]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// JUS-466: mobile home-screen icons (iOS touch icon, web manifest, theme colour)
+// ---------------------------------------------------------------------------
+
+function headMeta(name: string): string | undefined {
+  const tag = read('index.html').match(new RegExp(`<meta\\s+name="${name}"\\s+content="([^"]*)"`));
+  return tag?.[1];
+}
+
+describe('JUS-466 – mobile home-screen icons', () => {
+  const manifest = () => JSON.parse(read('public/manifest.webmanifest'));
+
+  it('manifest describes an installable Bond app in brand colours', () => {
+    expect(manifest()).toMatchObject({
+      name: expect.stringContaining('Bond'),
+      short_name: 'Bond',
+      start_url: '/',
+      display: 'standalone',
+      theme_color: brandTokens().purple,
+      background_color: '#ffffff',
+    });
+  });
+
+  it('every manifest icon exists at the pixel size it declares', () => {
+    const icons: { src: string; sizes: string; type: string }[] = manifest().icons;
+    expect(icons.length).toBeGreaterThan(0);
+    for (const icon of icons) {
+      const file = path.join('public', icon.src);
+      expect(exists(file), icon.src).toBe(true);
+      if (icon.type === 'image/png') {
+        const [w, h] = icon.sizes.split('x').map(Number);
+        expect(pngInfo(readBuf(file)), icon.src).toMatchObject({ width: w, height: h });
+      }
+    }
+  });
+
+  it('offers 192 and 512 px "any" icons and an opaque 512 px maskable icon', () => {
+    const icons: { src: string; sizes: string; purpose: string }[] = manifest().icons;
+    const any = icons.filter(i => i.purpose === 'any').map(i => i.sizes);
+    expect(any).toEqual(expect.arrayContaining(['192x192', '512x512']));
+    const maskable = icons.find(i => i.purpose === 'maskable');
+    expect(maskable?.sizes).toBe('512x512');
+    expect(pngInfo(readBuf(path.join('public', maskable!.src))).colorType).toBe(2);
+  });
+
+  it('apple-touch-icon is 180×180 and opaque, so iOS never shows black corners', () => {
+    expect(pngInfo(readBuf('public/apple-touch-icon.png'))).toEqual({ width: 180, height: 180, colorType: 2 });
+  });
+
+  it('index.html links the touch icon and manifest and sets the brand theme colour', () => {
+    const links = headLinks();
+    expect(links).toContainEqual(expect.objectContaining({ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }));
+    expect(links).toContainEqual(expect.objectContaining({ rel: 'manifest', href: '/manifest.webmanifest' }));
+    expect(headMeta('theme-color')).toBe(brandTokens().purple);
+    expect(headMeta('apple-mobile-web-app-title')).toBe('Bond');
+  });
+});
